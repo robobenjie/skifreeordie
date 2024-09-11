@@ -33,7 +33,12 @@ export class TreeManager {
   }
 
   update(dt, character, ctx) {
-    
+    for (let tree of this.trees) {
+        if (tree.y < character.y - ctx.canvas.height / 2) {
+            // remove tree
+            this.trees.splice(this.trees.indexOf(tree), 1);
+        }
+    }
   }
 
   draw(ctx) {
