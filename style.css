@@ -1,0 +1,14 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden; /* Hide overflow to ensure canvas fits perfectly */
+    height: 100%;
+}
+
+canvas {
+    display: block; /* Remove the margin in the default block */
+    background: #987a6f; /* A default background to see the canvas */
+    width: 100vw;
+    height: 100vh;
+    touch-action: none; /* Prevent scrolling and zooming on touch */
+}
