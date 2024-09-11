@@ -32,12 +32,20 @@ window.addEventListener('load', function () {
         gameTime += dt;
 
         joystick.draw(ctx);
+
+        ctx.save();
+        ctx.translate(
+            canvas.width / 2 - character.x, 
+            canvas.height / 4 - character.y
+        );
+
         character.update(dt, joystick, ctx);
         particleEngine.update(dt);
     
         // Draw the particles
         particleEngine.draw(ctx);
         character.draw(ctx);
+        ctx.restore();
         lastTime = time;
 
 

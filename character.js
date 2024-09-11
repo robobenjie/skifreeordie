@@ -25,10 +25,15 @@ class Character {
         this.sprayFactor = 1;
 
         // set up state vars
-        this.skiAngle = 0;
+        this.skiAngle = Math.PI / 2;
         this.velocity = { x: 0, y: 0 };
         this.skiUnitVector = { x: 1, y: 0 };
         this.edgeForce = { x: 0, y: 0 };
+        this.leftFrontTrail = [];
+        this.rightFrontTrail = [];
+        this.leftRearTrail = [];
+        this.rightRearTrail = [];
+
     }
 
     update(dt, joystick, ctx) {
@@ -55,7 +60,7 @@ class Character {
         const prevVSide = this.velocity.x * -this.skiUnitVector.y + this.velocity.y * this.skiUnitVector.x;
 
         this.skiUnitVector = { x: Math.cos(this.skiAngle + Math.PI / 2), y: Math.sin(this.skiAngle + Math.PI / 2) };
-        
+     
         this.velocity.x = steeringEffect * (prevVForward * this.skiUnitVector.x + prevVSide * -this.skiUnitVector.y) + (1 - steeringEffect) * this.velocity.x;
         this.velocity.y = steeringEffect * (prevVForward * this.skiUnitVector.y + prevVSide * this.skiUnitVector.x) + (1 - steeringEffect) * this.velocity.y;
         
@@ -71,6 +76,26 @@ class Character {
             x: -this.velocity.x * this.drag,
             y: -this.velocity.y * this.drag
         };
+
+
+        const leftSkiCenter = this.leftSkiCenter();
+        const rightSkiCenter = this.rightSkiCenter();
+        const newFrontLeft = { x: leftSkiCenter.x + this.skiLength/2 * this.skiUnitVector.x, y: leftSkiCenter.y + this.skiLength/2 * this.skiUnitVector.y };
+        if (this.leftFrontTrail.length == 0 || newFrontLeft.y - this.leftFrontTrail[this.leftFrontTrail.length - 1].y > 3) {
+            this.leftFrontTrail.push(newFrontLeft);
+            this.rightFrontTrail.push({ x: rightSkiCenter.x + this.skiLength/2 * this.skiUnitVector.x, y: rightSkiCenter.y + this.skiLength/2 * this.skiUnitVector.y });
+            this.leftRearTrail.push({ x: leftSkiCenter.x - this.skiLength/2 * this.skiUnitVector.x, y: leftSkiCenter.y - this.skiLength/2 * this.skiUnitVector.y });
+            this.rightRearTrail.push({ x: rightSkiCenter.x - this.skiLength/2 * this.skiUnitVector.x, y: rightSkiCenter.y - this.skiLength/2 * this.skiUnitVector.y });
+
+            // limit to 100 points
+            if (this.leftFrontTrail.length > 100) {
+                this.leftFrontTrail.shift();
+                this.rightFrontTrail.shift();
+                this.leftRearTrail.shift();
+                this.rightRearTrail.shift();
+            }
+        }
+   
 
         const perpendicularVector = { x: -this.skiUnitVector.y, y: this.skiUnitVector.x };
         const velDotPerpendicular = this.velocity.x * perpendicularVector.x + this.velocity.y * perpendicularVector.y;
@@ -110,7 +135,7 @@ class Character {
         // Now you can update the skier's position or handle other logic
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
-
+        /*
         // loop to top of screen
         if (this.y > ctx.canvas.height) {
             this.y = 0;
@@ -121,20 +146,59 @@ class Character {
         if (this.x < 0) {
             this.x = ctx.canvas.width;
         }
+        */
 
+    }
+
+    leftSkiCenter() {
+        return { x: this.x + this.width * 0.2, y: this.y + this.height };
+    }
+
+    rightSkiCenter() {
+        return { x: this.x + this.width * 0.8, y: this.y + this.height };
     }
 
     draw(ctx) {
 
+        // Draw the left trail:
+        ctx.beginPath();
+        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
+        for (let i = 1; i < this.leftFrontTrail.length; i++) {
+            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+        }
+        // backwards on leftBackTrail
+        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "#F0F0F4";
+        ctx.fill();
+
+        // Draw the right trail:
+        ctx.beginPath();
+        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
+        for (let i = 1; i < this.rightFrontTrail.length; i++) {
+            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
+        }
+        // backwards on rightBackTrail
+        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
+            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = "#F0F0F4";
+        ctx.fill();
+
         // Draw the ski
         ctx.save();
-        ctx.translate(this.x + this.width *     0.2, this.y + this.height);
+        const leftSkiCenter = this.leftSkiCenter();
+        const rightSkiCenter = this.rightSkiCenter();
+        ctx.translate(leftSkiCenter.x, leftSkiCenter.y);
         ctx.rotate(this.skiAngle);
         ctx.fillStyle = "blue";
         ctx.fillRect(0, -this.skiLength / 2, 1, this.skiLength);
         ctx.restore();
         ctx.save();
-        ctx.translate(this.x + this.width * 0.8, this.y + this.height);
+        ctx.translate(rightSkiCenter.x, rightSkiCenter.y);
         ctx.rotate(this.skiAngle);
         ctx.fillStyle = "blue";
         ctx.fillRect(0, -this.skiLength/2, 1, this.skiLength);
