@@ -1,6 +1,7 @@
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import ParticleEngine from './particle_engine.js';
+import TreeManager from './terrain.js';
 
 window.addEventListener('load', function () {
     var canvas = document.getElementById('gameCanvas');
@@ -12,6 +13,8 @@ window.addEventListener('load', function () {
     var particleEngine = new ParticleEngine(1000);
 
     var character = new Character(100, 100, particleEngine);
+    var treeManager = new TreeManager(10);
+    var lastTreeTime = 0;
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -41,6 +44,16 @@ window.addEventListener('load', function () {
 
         character.update(dt, joystick, ctx);
         particleEngine.update(dt);
+
+        if (gameTime - lastTreeTime > .05) {
+            treeManager.addTree(
+                (Math.random() - 0.5) * canvas.width * 4 + character.x ,
+                canvas.height * 1 + character.y
+            );
+            lastTreeTime = gameTime;
+        }
+        treeManager.update(dt, character, ctx);
+        treeManager.draw(ctx);
     
         // Draw the particles
         particleEngine.draw(ctx);
