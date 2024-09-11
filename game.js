@@ -14,17 +14,20 @@ window.addEventListener('load', function () {
 
     var character = new Character(100, 100, particleEngine);
     var treeManager = new TreeManager(10);
-    var lastTreeTime = 0;
+    var lastTreeXpos = 0;
+    var lastTreeYpos = 0;
+    var yDistPerTree = 30;
+    var xDistPerTree = 30;
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         character.x = canvas.width / 2;
         character.y = canvas.height / 4;
+        xDistPerTree = yDistPerTree / canvas.height * canvas.width;
     }
 
     function update(time) {
-        var timeSec = time / 1000.0; // Convert time to seconds
         var dt = (time - lastTime) / 1000.0;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
@@ -45,12 +48,25 @@ window.addEventListener('load', function () {
         character.update(dt, joystick, ctx);
         particleEngine.update(dt);
 
-        if (gameTime - lastTreeTime > .05) {
+        if (character.y - lastTreeYpos > yDistPerTree) {
             treeManager.addTree(
-                (Math.random() - 0.5) * canvas.width * 4 + character.x ,
+                (Math.random() - 0.5) * canvas.width * 2 + character.x ,
                 canvas.height * 1 + character.y
             );
-            lastTreeTime = gameTime;
+            lastTreeYpos = character.y;
+        }
+        if (character.x - lastTreeXpos > xDistPerTree) {
+            var xpos = 0
+            if (character.velocity.x > 0) {
+                xpos = canvas.width * 1.5 + character.x;
+            } else {
+                xpos = -canvas.width * -1.5 + character.x;
+            }
+            treeManager.addTree(
+                xpos,
+                (Math.random() - 0.5) * canvas.height * 2 + character.y
+            );
+            lastTreeXpos = character.x;
         }
         treeManager.update(dt, character, ctx);
         treeManager.draw(ctx);
