@@ -19,11 +19,13 @@ class Character {
         this.edgeDrag = 1.5;
         this.steering = 0.95;
         this.maxUphillAngle = 25 * Math.PI / 180;
+        this.maxTurnRate = 3.5;
 
         // set up state vars
         this.skiAngle = 0;
         this.velocity = { x: 0, y: 0 };
         this.skiUnitVector = { x: 1, y: 0 };
+        this.edgeForce = { x: 0, y: 0 };
     }
 
     update(dt, joystick, ctx) {
@@ -31,7 +33,16 @@ class Character {
         if (joystick.isActive) {
             this.skiAngle = Math.atan2(joystick.currVals.y, joystick.currVals.x) + Math.PI / 2;
         }
+
+        this.skiAngle = Math.min(
+            Math.max(Math.PI / 2 - this.maxUphillAngle, (this.skiAngle + 2 * Math.PI) % (2 * Math.PI)),
+            Math.PI * 1.5 + this.maxUphillAngle
+        );
+        
         let angleChangeRate = Math.abs(this.skiAngle - prevSkiAngle) / dt;
+        if (angleChangeRate > this.maxTurnRate) {
+            this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxTurnRate * dt;
+        }
 
         // Apply the self.steering constant to determine how much momentum is retained
         let steeringEffect = Math.max(0, 1 - angleChangeRate * (1- this.steering));
@@ -40,10 +51,12 @@ class Character {
         const prevVForward = this.velocity.x * this.skiUnitVector.x + this.velocity.y * this.skiUnitVector.y;
         const prevVSide = this.velocity.x * -this.skiUnitVector.y + this.velocity.y * this.skiUnitVector.x;
         
-        this.skiAngle = Math.min(
-            Math.max(Math.PI / 2 - this.maxUphillAngle, (this.skiAngle + 2 * Math.PI) % (2 * Math.PI)),
-            Math.PI * 1.5 + this.maxUphillAngle
-        );
+
+
+
+
+        console.log(this.skiAngle.toFixed(2));
+
         this.skiUnitVector = { x: Math.cos(this.skiAngle + Math.PI / 2), y: Math.sin(this.skiAngle + Math.PI / 2) };
         
         this.velocity.x = steeringEffect * (prevVForward * this.skiUnitVector.x + prevVSide * -this.skiUnitVector.y) + (1 - steeringEffect) * this.velocity.x;
@@ -64,14 +77,14 @@ class Character {
 
         const perpendicularVector = { x: -this.skiUnitVector.y, y: this.skiUnitVector.x };
         const velDotPerpendicular = this.velocity.x * perpendicularVector.x + this.velocity.y * perpendicularVector.y;
-        let edgeDragForce = {
+        this.edgeForce = {
             x: -perpendicularVector.x * velDotPerpendicular * this.edgeDrag,
             y: -perpendicularVector.y * velDotPerpendicular * this.edgeDrag
         };
 
 
 
-        let force = sumForces(gravityForceInSkiDirection, dragForce, edgeDragForce);
+        let force = sumForces(gravityForceInSkiDirection, dragForce, this.edgeForce);
 
 
         // Update skier's velocity or position based on the projected gravity force
@@ -93,8 +106,6 @@ class Character {
             this.x = ctx.canvas.width;
         }
 
-        // Log velocity.y to 2 decimal places
-        console.log(this.velocity.y.toFixed(2));
     }
 
     draw(ctx) {
@@ -115,6 +126,15 @@ class Character {
 
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillStyle = "black";
+        // draw a line from the center of the skier to the edge force
+        ctx.beginPath();
+        ctx.moveTo(this.x + this.width / 2, this.y + this.height / 2);
+        const scale = -0.3;
+        ctx.lineTo(this.x + this.width / 2 + this.edgeForce.x * scale, this.y + this.height / 2 + this.edgeForce.y * scale);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = 'black';
+        ctx.stroke();
 
     }
 }
