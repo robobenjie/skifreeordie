@@ -7,10 +7,11 @@ function sumForces(...forces) {
     return result;
 }
 class Character {
-    constructor(x, y, particleEngine) {
+    constructor(x, y, particleEngine, treeManager) {
         this.x = x;
         this.y = y;
         this.particleEngine = particleEngine;
+        this.treeManager = treeManager;
         this.width = 10;
         this.height = 25;
         this.color = "red";
@@ -122,11 +123,15 @@ class Character {
                 0.25);
         }
 
-
         this.particleEngine
 
         let force = sumForces(gravityForceInSkiDirection, dragForce, this.edgeForce);
 
+        const collidingTrees = this.treeManager.collidesWith(this.x, this.y, this.width)
+        if (collidingTrees.length > 0) {
+            this.velocity.x = this.skiUnitVector.x * 10;
+            this.velocity.y = this.skiUnitVector.y * 10;
+        }
 
         // Update skier's velocity or position based on the projected gravity force
         this.velocity.x += force.x * dt;
@@ -135,18 +140,7 @@ class Character {
         // Now you can update the skier's position or handle other logic
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
-        /*
-        // loop to top of screen
-        if (this.y > ctx.canvas.height) {
-            this.y = 0;
-        }
-        if (this.x > ctx.canvas.width) {
-            this.x = 0;
-        }
-        if (this.x < 0) {
-            this.x = ctx.canvas.width;
-        }
-        */
+
 
     }
 
@@ -158,8 +152,7 @@ class Character {
         return { x: this.x + this.width * 0.8, y: this.y + this.height };
     }
 
-    draw(ctx) {
-
+    drawTrail(ctx) {
         // Draw the left trail:
         ctx.beginPath();
         ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
@@ -187,6 +180,11 @@ class Character {
         ctx.closePath();
         ctx.fillStyle = "#F0F0F4";
         ctx.fill();
+    }   
+
+    draw(ctx) {
+
+
 
         // Draw the ski
         ctx.save();
