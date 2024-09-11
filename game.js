@@ -13,6 +13,8 @@ window.addEventListener('load', function () {
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        character.x = canvas.width / 2;
+        character.y = canvas.height / 4;
     }
 
     function update(time) {
@@ -27,10 +29,11 @@ window.addEventListener('load', function () {
         gameTime += dt;
 
         joystick.draw(ctx);
-        character.update(dt, joystick);
+        character.update(dt, joystick, ctx);
 
-        
+
         character.draw(ctx);
+        lastTime = time;
 
 
     }

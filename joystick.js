@@ -16,7 +16,7 @@ class VirtualJoystick {
             ctx.beginPath();
             ctx.arc(this.startPos.x, this.startPos.y, this.maxRadius, 0, 2 * Math.PI, false);
             ctx.lineWidth = 2;
-            ctx.strokeStyle = 'red';
+            ctx.strokeStyle = 'gray';
             ctx.stroke();
 
             // Draw a line from the center of the joystick to the current touch position
@@ -24,7 +24,7 @@ class VirtualJoystick {
             ctx.moveTo(this.startPos.x, this.startPos.y);
             ctx.lineTo(this.startPos.x + this.currVals.x, this.startPos.y + this.currVals.y);
             ctx.lineWidth = 2;
-            ctx.strokeStyle = 'red';
+            ctx.strokeStyle = 'gray';
             ctx.stroke();
         }
     }
