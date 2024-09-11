@@ -1,5 +1,6 @@
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
+import ParticleEngine from './particle_engine.js';
 
 window.addEventListener('load', function () {
     var canvas = document.getElementById('gameCanvas');
@@ -8,7 +9,9 @@ window.addEventListener('load', function () {
     var gameTime = 0; // Total time elapsed since start
 
     var joystick = new VirtualJoystick(canvas);
-    var character = new Character(100, 100);
+    var particleEngine = new ParticleEngine(1000);
+
+    var character = new Character(100, 100, particleEngine);
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -30,8 +33,10 @@ window.addEventListener('load', function () {
 
         joystick.draw(ctx);
         character.update(dt, joystick, ctx);
-
-
+        particleEngine.update(dt);
+    
+        // Draw the particles
+        particleEngine.draw(ctx);
         character.draw(ctx);
         lastTime = time;
 
