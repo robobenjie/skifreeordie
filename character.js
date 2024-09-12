@@ -12,6 +12,75 @@ const CharacterState = {
     JUMPING: 1,
 };
 
+class Trail{
+    constructor(x, y){
+        this.leftFrontTrail = [];
+        this.rightFrontTrail = [];
+        this.leftRearTrail = [];
+        this.rightRearTrail = [];
+        this.color = "#F0F0F4"
+    }
+    update(character){
+        const leftSkiCenter = character.leftSkiCenter();
+        const rightSkiCenter = character.rightSkiCenter();
+        const newFrontLeft = { x: leftSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y };
+        if (this.leftFrontTrail.length == 0 
+            || Math.abs(newFrontLeft.y - this.leftFrontTrail[this.leftFrontTrail.length - 1].y) > 3
+            || Math.abs(newFrontLeft.x - this.leftFrontTrail[this.leftFrontTrail.length - 1].x) > 3
+        ) {
+            this.leftFrontTrail.push(newFrontLeft);
+            this.rightFrontTrail.push({ x: rightSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y });
+            this.leftRearTrail.push({ x: leftSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
+            this.rightRearTrail.push({ x: rightSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
+
+            // limit to 100 points
+            if (this.leftFrontTrail.length > 100) {
+                this.leftFrontTrail.shift();
+                this.rightFrontTrail.shift();
+                this.leftRearTrail.shift();
+                this.rightRearTrail.shift();
+            }
+        }
+    }
+
+    draw(ctx){
+        // Draw the left trail:
+        if (this.leftFrontTrail.length < 2) {
+            return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
+        for (let i = 1; i < this.leftFrontTrail.length; i++) {
+            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+        }
+        // backwards on leftBackTrail
+        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+
+        // Draw the right trail:
+        ctx.beginPath();
+        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
+        for (let i = 1; i < this.rightFrontTrail.length; i++) {
+            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
+        }
+        // backwards on rightBackTrail
+        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
+            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    }
+
+    isOffScreen(character){
+        return this.leftFrontTrail[this.leftFrontTrail.length - 1].y < character.y - 1000;
+    }
+}
+
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick) {
         this.x = x;
@@ -49,15 +118,10 @@ class Character {
         this.velocity = { x: 0, y: 0, z: 0 };
         this.skiUnitVector = { x: 1, y: 0 };
         this.edgeForce = { x: 0, y: 0 };
-        this.leftFrontTrail = [];
-        this.rightFrontTrail = [];
-        this.leftRearTrail = [];
-        this.rightRearTrail = [];
+        this.trails = [new Trail()]
+
         this.zVelocity = 0;
 
-        this.joystick.addTapListener(() => {
-            console.log("Jump!");
-        });
         this.joystick.addTapListener(() => {
             this.jump(this.clickJumpSpeed);
         });
@@ -73,6 +137,7 @@ class Character {
     }
 
     update(dt, ctx) {
+
         let prevSkiAngle = this.skiAngle;
         if (this.joystick.isActive) {
             this.skiAngle = Math.atan2(this.joystick.currVals.y, this.joystick.currVals.x) + Math.PI / 2;
@@ -96,12 +161,7 @@ class Character {
                 this.zVelocity -= this.jumpGravityDown * dt;
             }
             const windSpeed = this.zVelocity - this.velocity.y * this.mountainSlope;
-            console.log(
-                this.zVelocity.toFixed(2).padEnd(6, '\t') +
-                (this.velocity.y * this.mountainSlope).toFixed(2).padEnd(6, '\t') +
-                windSpeed.toFixed(2)
-            );
-                        const windForce = windSpeed * this.floatDrag;
+            const windForce = windSpeed * this.floatDrag;
             this.zVelocity -= windForce * dt;
             // force.y = this.jumpDownhillAccelleration;
             this.z += this.zVelocity * dt;
@@ -110,7 +170,7 @@ class Character {
                 this.z = 0;
                 this.zVelocity = 0;
                 this.state = CharacterState.NORMAL;
-                console.log("done jumping");
+                this.trails.push(new Trail());
 
             }
 
@@ -147,23 +207,7 @@ class Character {
             };
 
 
-            const leftSkiCenter = this.leftSkiCenter();
-            const rightSkiCenter = this.rightSkiCenter();
-            const newFrontLeft = { x: leftSkiCenter.x + this.skiLength/2 * this.skiUnitVector.x, y: leftSkiCenter.y + this.skiLength/2 * this.skiUnitVector.y };
-            if (this.leftFrontTrail.length == 0 || newFrontLeft.y - this.leftFrontTrail[this.leftFrontTrail.length - 1].y > 3) {
-                this.leftFrontTrail.push(newFrontLeft);
-                this.rightFrontTrail.push({ x: rightSkiCenter.x + this.skiLength/2 * this.skiUnitVector.x, y: rightSkiCenter.y + this.skiLength/2 * this.skiUnitVector.y });
-                this.leftRearTrail.push({ x: leftSkiCenter.x - this.skiLength/2 * this.skiUnitVector.x, y: leftSkiCenter.y - this.skiLength/2 * this.skiUnitVector.y });
-                this.rightRearTrail.push({ x: rightSkiCenter.x - this.skiLength/2 * this.skiUnitVector.x, y: rightSkiCenter.y - this.skiLength/2 * this.skiUnitVector.y });
-
-                // limit to 100 points
-                if (this.leftFrontTrail.length > 100) {
-                    this.leftFrontTrail.shift();
-                    this.rightFrontTrail.shift();
-                    this.leftRearTrail.shift();
-                    this.rightRearTrail.shift();
-                }
-            }
+            this.trails[this.trails.length - 1].update(this)
     
 
             const perpendicularVector = { x: -this.skiUnitVector.y, y: this.skiUnitVector.x };
@@ -210,7 +254,10 @@ class Character {
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
 
-
+        if (this.trails.length > 0 && this.trails[0].isOffScreen(this)) {
+            // remove it
+            this.trails.shift();
+        }
     }
 
     leftSkiCenter() {
@@ -222,33 +269,9 @@ class Character {
     }
 
     drawTrail(ctx) {
-        // Draw the left trail:
-        ctx.beginPath();
-        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
-        for (let i = 1; i < this.leftFrontTrail.length; i++) {
-            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+        for (let trail of this.trails) {
+            trail.draw(ctx);
         }
-        // backwards on leftBackTrail
-        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = "#F0F0F4";
-        ctx.fill();
-
-        // Draw the right trail:
-        ctx.beginPath();
-        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
-        for (let i = 1; i < this.rightFrontTrail.length; i++) {
-            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
-        }
-        // backwards on rightBackTrail
-        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
-            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = "#F0F0F4";
-        ctx.fill();
     }   
 
     drawShadow(ctx) {
