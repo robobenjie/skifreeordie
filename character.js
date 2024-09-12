@@ -16,6 +16,8 @@ class Character {
         this.height = 25;
         this.color = "red";
         this.skiLength = 30;
+        this.hitBoxSizeX = 10;
+        this.hitBoxSizeY =  5;
 
         this.accelleration = 400;
         this.drag = 0.5;
@@ -123,16 +125,14 @@ class Character {
                 0.25);
         }
 
-        this.particleEngine
-
         let force = sumForces(gravityForceInSkiDirection, dragForce, this.edgeForce);
 
-        const collidingTrees = this.treeManager.collidesWith(this.x, this.y, this.width)
+        const collidingTrees = this.treeManager.collidesWith(this.x, this.y + this.height/2 + this.hitBoxSizeY, this.hitBoxSizeX, this.hitBoxSizeY);
         if (collidingTrees.length > 0) {
             this.velocity.x = this.skiUnitVector.x * 10;
             this.velocity.y = this.skiUnitVector.y * 10;
         }
-
+ 
         // Update skier's velocity or position based on the projected gravity force
         this.velocity.x += force.x * dt;
         this.velocity.y += force.y * dt;
@@ -140,7 +140,6 @@ class Character {
         // Now you can update the skier's position or handle other logic
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
-
 
     }
 

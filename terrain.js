@@ -40,6 +40,10 @@ function _isColliding(tree, box) {
 export class TreeManager {
   constructor() {
     this.trees = [];
+    this.lastTreeXpos = 0;
+    this.lastTreeYpos = 0;
+    this.yDistPerTree = 50;
+    this.xDistPerTree = 30;
   }
 
     // Binary search to find the correct index for insertion
@@ -65,6 +69,10 @@ export class TreeManager {
         this.trees.splice(index, 0, tree);
     }
 
+    onCanvasResize(ctx) {
+        this.xDistPerTree = this.yDistPerTree / ctx.height * ctx.width;
+    }
+
     removeTreesByPosition(threshold) {
         let i = 0;
         // Iterate from the beginning and remove trees with position.y less than the threshold
@@ -76,7 +84,7 @@ export class TreeManager {
         this.trees = this.trees.slice(i);
     }
 
-    collidesWith(x, y, size) {
+    collidesWith(x, y, sizeX, sizeY) {
         let collidingTrees = [];
         
         // Find the starting index for the given y position
@@ -84,10 +92,10 @@ export class TreeManager {
         
         // Define the bounding box for the object to check collision with
         const box = {
-            left: x - size / 2,
-            right: x + size / 2,
-            top: y - size / 2,
-            bottom: y + size / 2
+            left: x - sizeX / 2,
+            right: x + sizeX / 2,
+            top: y - sizeY / 2,
+            bottom: y + sizeY / 2
         };
     
         // Check backward from the found index
@@ -120,6 +128,26 @@ export class TreeManager {
     }
 
     update(dt, character, ctx) {
+        if (character.y - this.lastTreeYpos >this.yDistPerTree) {
+            this.addTree(
+                (Math.random() - 0.5) * ctx.canvas.width * 2 + character.x ,
+                ctx.canvas.height * 1 + character.y
+            );
+            this.lastTreeYpos = character.y;
+        }
+        if (Math.abs(character.x - this.lastTreeXpos) > this.xDistPerTree) {
+            var xpos = 0
+            if (character.velocity.x > 0) {
+                xpos = ctx.canvas.width * 0.65 + character.x;
+            } else {
+                xpos = -ctx.canvas.width * 0.65 + character.x;
+            }
+            this.addTree(
+                xpos,
+                (Math.random() - 0.5) * ctx.canvas.height * 2 + character.y
+            );
+            this.lastTreeXpos = character.x;
+        }
         this.removeTreesByPosition(character.y - ctx.canvas.height / 2);
     }
 
