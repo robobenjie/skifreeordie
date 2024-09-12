@@ -30,14 +30,15 @@ class Character {
         this.accelleration = 400;
         this.drag = 0.5;
         this.edgeDrag = 1.5;
+        this.floatDrag = 10;
         this.steering = 0.95;
         this.maxUphillAngle = 25 * Math.PI / 180;
         this.maxTurnRate = 7.5;
         this.sprayFactor = 1;
         this.jumpGravityUp = 40;
-        this.jumpGravityDown = 15;
+        this.jumpGravityDown = 40;
         this.jumpDownhillAccelleration = 200;
-        this.mountainSlope = 0.009;
+        this.mountainSlope = 0.0035;
 
         // set up state vars
         this.state = CharacterState.NORMAL;
@@ -56,7 +57,7 @@ class Character {
             console.log("Jump!");
         });
         this.joystick.addTapListener(() => {
-            this.jump(5);
+            this.jump(10);
         });
 
     }
@@ -87,14 +88,21 @@ class Character {
 
         var force = { x: 0, y: 0};
         if (this.state == CharacterState.JUMPING) {
-            console.log(this.zVelocity, this.z)
             if (this.zVelocity > 0) {
                 this.zVelocity -= this.jumpGravityUp * dt;
             } else {
                 this.zVelocity -= this.jumpGravityDown * dt;
             }
+            const windSpeed = this.zVelocity - this.velocity.y * this.mountainSlope;
+            console.log(
+                this.zVelocity.toFixed(2).padEnd(6, '\t') +
+                (this.velocity.y * this.mountainSlope).toFixed(2).padEnd(6, '\t') +
+                windSpeed.toFixed(2)
+            );
+                        const windForce = windSpeed * this.floatDrag;
+            this.zVelocity -= windForce * dt;
             // force.y = this.jumpDownhillAccelleration;
-            this.z += (this.zVelocity + this.mountainSlope * this.velocity.y) * dt;
+            this.z += this.zVelocity * dt;
             
             if (this.z < 0) {
                 this.z = 0;
