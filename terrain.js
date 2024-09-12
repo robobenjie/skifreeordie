@@ -42,7 +42,7 @@ export class TreeManager {
     this.trees = [];
     this.lastTreeXpos = 0;
     this.lastTreeYpos = 0;
-    this.yDistPerTree = 50;
+    this.yDistPerTree = 100;
     this.xDistPerTree = 30;
   }
 

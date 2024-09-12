@@ -9,6 +9,8 @@ class VirtualJoystick {
         this.canvas.addEventListener('touchmove', this.handleTouchMove.bind(this), false);
         this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this), false);
         this.canvas.addEventListener('touchcancel', this.handleTouchEnd.bind(this), false);
+        this.touchStartTimestamp = 0;
+        this.onTap = [];
     }
 
     draw(ctx) {
@@ -29,6 +31,10 @@ class VirtualJoystick {
         }
     }
 
+    addTapListener(callback) {
+        this.onTap.push(callback);
+    }
+
     handleTouchStart(event) {
         event.preventDefault();
         if (event.touches.length > 0) {
@@ -36,6 +42,7 @@ class VirtualJoystick {
             this.startPos.x = touch.clientX - this.currVals.x;
             this.startPos.y = touch.clientY - this.currVals.y;
             this.isActive = true;
+            this.touchStartTimestamp = event.timeStamp;
         }
     }
 
@@ -61,6 +68,11 @@ class VirtualJoystick {
 
     handleTouchEnd(event) {
         this.isActive = false;
+        if (event.timeStamp - this.touchStartTimestamp < 200) {
+            for (let callback of this.onTap) {
+                callback();
+            }
+        }
     }
 };
 

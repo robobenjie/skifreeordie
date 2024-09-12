@@ -13,7 +13,7 @@ window.addEventListener('load', function () {
     var joystick = new VirtualJoystick(canvas);
     var particleEngine = new ParticleEngine(1000);
     var treeManager = new TreeManager();
-    var character = new Character(100, 100, particleEngine, treeManager);
+    var character = new Character(100, 100, particleEngine, treeManager, joystick);
     var renderer = new Renderer(ctx, character, treeManager, particleEngine);
 
 
@@ -38,7 +38,7 @@ window.addEventListener('load', function () {
 
         joystick.draw(ctx);
 
-        character.update(dt, joystick, ctx);
+        character.update(dt, ctx);
         particleEngine.update(dt);
         treeManager.update(dt, character, ctx);
 
