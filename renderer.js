@@ -11,11 +11,11 @@ class Renderer {
         this.character.drawTrail(this.ctx);
         this.character.drawShadow(this.ctx);
         for (let i = 0; i < character_index; i++) {
-            this.treeManager.trees[i].draw(this.ctx);
+            this.treeManager.entities[i].draw(this.ctx);
         }
         this.character.draw(this.ctx);
-        for (let i = character_index; i < this.treeManager.trees.length; i++) {
-            this.treeManager.trees[i].draw(this.ctx);
+        for (let i = character_index; i < this.treeManager.entities.length; i++) {
+            this.treeManager.entities[i].draw(this.ctx);
         }
         this.particleEngine.draw(this.ctx);
     }

@@ -30,13 +30,15 @@ class Character {
         this.accelleration = 400;
         this.drag = 0.5;
         this.edgeDrag = 1.5;
-        this.floatDrag = 10;
+        this.floatDrag = 6;
         this.steering = 0.95;
         this.maxUphillAngle = 25 * Math.PI / 180;
         this.maxTurnRate = 7.5;
         this.sprayFactor = 1;
-        this.jumpGravityUp = 40;
-        this.jumpGravityDown = 40;
+        this.clickJumpSpeed = 6;
+        this.rampJumpFactor = 0.04
+        this.jumpGravityUp = 30;
+        this.jumpGravityDown = 30;
         this.jumpDownhillAccelleration = 200;
         this.mountainSlope = 0.0035;
 
@@ -57,7 +59,7 @@ class Character {
             console.log("Jump!");
         });
         this.joystick.addTapListener(() => {
-            this.jump(10);
+            this.jump(this.clickJumpSpeed);
         });
 
     }
@@ -191,10 +193,15 @@ class Character {
 
             force = sumForces(gravityForceInSkiDirection, dragForce, this.edgeForce);
 
-            const collidingTrees = this.treeManager.collidesWith(this.x, this.y + this.height/2 + this.hitBoxSizeY, this.hitBoxSizeX, this.hitBoxSizeY);
-            if (collidingTrees.length > 0) {
-                this.velocity.x = this.skiUnitVector.x * 10;
-                this.velocity.y = this.skiUnitVector.y * 10;
+            const collidingEntities = this.treeManager.collidesWith(this.x, this.y + this.height/2 + this.hitBoxSizeY, this.hitBoxSizeX, this.hitBoxSizeY, this.velocity.y * dt);
+            for (let entity of collidingEntities) {
+                if (entity.type == "tree") {
+                    this.velocity.x = this.skiUnitVector.x * 10;
+                    this.velocity.y = this.skiUnitVector.y * 10;
+                }
+                if (entity.type == "jumpRamp") {
+                    this.jump(this.rampJumpFactor * this.velocity.y);
+                }
             }
         }
         this.velocity.x += force.x * dt;

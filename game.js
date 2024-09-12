@@ -1,7 +1,7 @@
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import ParticleEngine from './particle_engine.js';
-import TreeManager from './terrain.js';
+import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 
 window.addEventListener('load', function () {
@@ -12,7 +12,7 @@ window.addEventListener('load', function () {
 
     var joystick = new VirtualJoystick(canvas);
     var particleEngine = new ParticleEngine(1000);
-    var treeManager = new TreeManager();
+    var treeManager = new TerrainManager();
     var character = new Character(100, 100, particleEngine, treeManager, joystick);
     var renderer = new Renderer(ctx, character, treeManager, particleEngine);
 
