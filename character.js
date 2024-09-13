@@ -18,7 +18,7 @@ class Trail{
         this.rightFrontTrail = [];
         this.leftRearTrail = [];
         this.rightRearTrail = [];
-        this.color = "#F0F0F4"
+        this.color = "#E8E8F0"
     }
     update(character){
         const leftSkiCenter = character.leftSkiCenter();
@@ -182,14 +182,22 @@ class Character {
             const windSpeed = this.zVelocity - this.velocity.y * this.mountainSlope;
             const windForce = windSpeed * this.currFloatDrag;
             this.zVelocity -= windForce * dt;
-            
-            const glideVel = {
-                x: this.joystick.currVals.x * this.floatMoveSpeedX / this.joystick.maxRadius,
-                y: this.joystick.currVals.y * this.floatMoveSpeedY / this.joystick.maxRadius
+            var glideForce = {
+                x: 0,
+                y: 0
+            }
+            console.log(this.velocity.y);
+            if (this.joystick.isActive) {
+                if (this.joystick.currVals.x * this.velocity.x < 0 || (Math.abs(this.velocity.y) > Math.abs(this.velocity.x) && Math.abs(this.velocity.y) > 200)) {
+                    glideForce = {
+                        x: this.joystick.currVals.x * this.floatMoveSpeedX / this.joystick.maxRadius,
+                        y: this.joystick.currVals.y * this.floatMoveSpeedY / this.joystick.maxRadius
+                    }
+                }
             }
 
-            this.velocity.x += glideVel.x * dt;
-            this.velocity.y += glideVel.y * dt;
+            this.velocity.x += glideForce.x * dt;
+            this.velocity.y += glideForce.y * dt;
             this.z += this.zVelocity * dt;
             
             if (this.z < 0) {

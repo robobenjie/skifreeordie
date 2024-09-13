@@ -36,7 +36,7 @@ window.addEventListener('load', function () {
         // Game Not Paused:
         gameTime += dt;
 
-        joystick.draw(ctx);
+
 
         character.update(dt, ctx);
         particleEngine.update(dt);
@@ -50,6 +50,7 @@ window.addEventListener('load', function () {
         character.drawTrail(ctx);
         renderer.render();
         ctx.restore();
+        joystick.draw(ctx);
         lastTime = time;
 
 
