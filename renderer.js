@@ -13,11 +13,12 @@ class Renderer {
         for (let i = 0; i < character_index; i++) {
             this.treeManager.entities[i].draw(this.ctx);
         }
+        this.particleEngine.draw(this.ctx);
         this.character.draw(this.ctx);
         for (let i = character_index; i < this.treeManager.entities.length; i++) {
             this.treeManager.entities[i].draw(this.ctx);
         }
-        this.particleEngine.draw(this.ctx);
+
     }
 }
 export default Renderer;

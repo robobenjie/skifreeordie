@@ -120,6 +120,7 @@ class Character {
         this.jumpGravityDown = 30;
         this.jumpDownhillAccelleration = 200;
         this.mountainSlope = 0.0035;
+        this.stompSprayFactor = 10;
 
         // set up state vars
         this.currFloatDrag = this.floatDrag;
@@ -192,9 +193,26 @@ class Character {
             this.z += this.zVelocity * dt;
             
             if (this.z < 0) {
+
+                this.state = CharacterState.NORMAL;
+                let num_particles = Math.floor(Math.abs(this.zVelocity) * this.stompSprayFactor);
+                console.log("Stomp!", num_particles);
+                for (let i = 0; i < num_particles; i++) {
+                    let angle = Math.random() * Math.PI * 2;
+                    let vel = Math.random() * this.velocity.y * 0.5;
+                    let lifetime = Math.random() * num_particles / 100;
+                    this.particleEngine.emit(
+                        this.x + this.width / 2,
+                        this.y + this.height,
+                        { 
+                            x: Math.cos(angle) * vel + this.velocity.x,
+                            y: Math.sin(angle) * vel * 0.4 + this.velocity.y * 1.3
+                        },
+                        lifetime
+                    );
+                }
                 this.z = 0;
                 this.zVelocity = 0;
-                this.state = CharacterState.NORMAL;
                 this.trails.push(new Trail());
             }
 
