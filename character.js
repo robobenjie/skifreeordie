@@ -77,6 +77,9 @@ class Trail{
     }
 
     isOffScreen(character){
+        if (this.leftFrontTrail.length == 0) {
+            return false;
+        }
         return this.leftFrontTrail[this.leftFrontTrail.length - 1].y < character.y - 1000;
     }
 }
@@ -99,12 +102,19 @@ class Character {
         this.accelleration = 400;
         this.drag = 0.5;
         this.edgeDrag = 1.5;
-        this.floatDrag = 6;
+
         this.steering = 0.95;
         this.maxUphillAngle = 25 * Math.PI / 180;
-        this.maxTurnRate = 7.5;
+        this.maxInAirTurnRate = 7.5
+        this.maxTurnRate = 3.5;
         this.sprayFactor = 1;
+
+        // Jumping parameters
+        this.floatMoveSpeedX = 500;
+        this.floatMoveSpeedY = 0;
+        this.floatDrag = 6;
         this.clickJumpSpeed = 6;
+        this.stompSpeed = 8;
         this.rampJumpFactor = 0.04
         this.jumpGravityUp = 30;
         this.jumpGravityDown = 30;
@@ -112,6 +122,7 @@ class Character {
         this.mountainSlope = 0.0035;
 
         // set up state vars
+        this.currFloatDrag = this.floatDrag;
         this.state = CharacterState.NORMAL;
         this.skiAngle = Math.PI / 2;
         this.prevContactSkiAngle = Math.PI / 2;
@@ -126,14 +137,20 @@ class Character {
             this.jump(this.clickJumpSpeed);
         });
 
+        //this.joystick.addTapListener(this.stomp.bind(this));
+
     }
 
     jump(jumpVel) {
-        if (this.state != CharacterState.NORMAL) {
-            return;
+        if (this.state == CharacterState.NORMAL) {
+            this.state = CharacterState.JUMPING;
+            this.currFloatDrag = this.floatDrag;
+            this.zVelocity = jumpVel;
+        } else if (this.state == CharacterState.JUMPING) {
+            this.currFloatDrag = 0;
+            this.zVelocity -=this.stompSpeed;
         }
-        this.state = CharacterState.JUMPING;
-        this.zVelocity = jumpVel;
+
     }
 
     update(dt, ctx) {
@@ -149,21 +166,29 @@ class Character {
         );
 
         let angleChangeRate = Math.abs(this.skiAngle - prevSkiAngle) / dt;
-        if (angleChangeRate > this.maxTurnRate) {
-            this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxTurnRate * dt;
-        }
+
 
         var force = { x: 0, y: 0};
         if (this.state == CharacterState.JUMPING) {
+            if (angleChangeRate > this.maxTurnRate) {
+                this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxInAirTurnRate * dt;
+            }
             if (this.zVelocity > 0) {
                 this.zVelocity -= this.jumpGravityUp * dt;
             } else {
                 this.zVelocity -= this.jumpGravityDown * dt;
             }
             const windSpeed = this.zVelocity - this.velocity.y * this.mountainSlope;
-            const windForce = windSpeed * this.floatDrag;
+            const windForce = windSpeed * this.currFloatDrag;
             this.zVelocity -= windForce * dt;
-            // force.y = this.jumpDownhillAccelleration;
+            
+            const glideVel = {
+                x: this.joystick.currVals.x * this.floatMoveSpeedX / this.joystick.maxRadius,
+                y: this.joystick.currVals.y * this.floatMoveSpeedY / this.joystick.maxRadius
+            }
+
+            this.velocity.x += glideVel.x * dt;
+            this.velocity.y += glideVel.y * dt;
             this.z += this.zVelocity * dt;
             
             if (this.z < 0) {
@@ -171,10 +196,12 @@ class Character {
                 this.zVelocity = 0;
                 this.state = CharacterState.NORMAL;
                 this.trails.push(new Trail());
-
             }
 
         } else if (this.state == CharacterState.NORMAL) {
+            if (angleChangeRate > this.maxTurnRate) {
+                this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxTurnRate * dt;
+            }
             this.zVelocity = 0;
             this.z = 0;
 
