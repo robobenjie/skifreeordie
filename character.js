@@ -98,6 +98,7 @@ class Character {
         this.hitBoxSizeX = 10;
         this.hitBoxSizeY =  5;
         this.joystick = joystick;
+        this.maxHealth = 100;
 
         this.accelleration = 400;
         this.drag = 0.5;
@@ -108,6 +109,9 @@ class Character {
         this.maxInAirTurnRate = 7.5
         this.maxTurnRate = 3.5;
         this.sprayFactor = 1;
+
+        // Collision damage parameters
+        this.speedDamageFactor = 0.01;
 
         // Jumping parameters
         this.floatMoveSpeedX = 500;
@@ -123,6 +127,7 @@ class Character {
         this.stompSprayFactor = 10;
 
         // set up state vars
+        this.health = this.maxHealth;
         this.currFloatDrag = this.floatDrag;
         this.state = CharacterState.NORMAL;
         this.skiAngle = Math.PI / 2;
@@ -152,6 +157,36 @@ class Character {
             this.zVelocity -=this.stompSpeed;
         }
 
+    }
+
+    isJumping() {
+        return this.state == CharacterState.JUMPING;
+    }
+
+    collideWithMob(mob) {
+        const collisionVel = {
+            x: this.velocity.x - mob.velocity.x,
+            y: this.velocity.y - mob.velocity.y
+        }
+        const speed = Math.sqrt(collisionVel.x * collisionVel.x + collisionVel.y * collisionVel.y);
+        const damage = speed * this.speedDamageFactor;
+        const damageDealt = Math.min(damage, mob.health);
+        mob.damage(damageDealt);
+        this.damage(damage);
+        const velUnitVector = {
+            x: collisionVel.x / speed,
+            y: collisionVel.y / speed
+        };
+        this.velocity.x -= velUnitVector.x * damageDealt / this.speedDamageFactor;
+        this.velocity.y -= velUnitVector.y * damageDealt / this.speedDamageFactor;
+
+    }
+
+    damage(damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.health = 0;
+        }
     }
 
     update(dt, ctx) {
@@ -186,7 +221,6 @@ class Character {
                 x: 0,
                 y: 0
             }
-            console.log(this.velocity.y);
             if (this.joystick.isActive) {
                 if (this.joystick.currVals.x * this.velocity.x < 0 || (Math.abs(this.velocity.y) > Math.abs(this.velocity.x) && Math.abs(this.velocity.y) > 200)) {
                     glideForce = {
@@ -204,7 +238,6 @@ class Character {
 
                 this.state = CharacterState.NORMAL;
                 let num_particles = Math.floor(Math.abs(this.zVelocity) * this.stompSprayFactor);
-                console.log("Stomp!", num_particles);
                 for (let i = 0; i < num_particles; i++) {
                     let angle = Math.random() * Math.PI * 2;
                     let vel = Math.random() * this.velocity.y * 0.5;
@@ -259,7 +292,9 @@ class Character {
                 y: -this.velocity.y * this.drag
             };
 
-
+            if (this.trails.length == 0) {
+                this.trails.push(new Trail());
+            }
             this.trails[this.trails.length - 1].update(this)
     
 
@@ -293,6 +328,8 @@ class Character {
             const collidingEntities = this.treeManager.collidesWith(this.x, this.y + this.height/2 + this.hitBoxSizeY, this.hitBoxSizeX, this.hitBoxSizeY, this.velocity.y * dt);
             for (let entity of collidingEntities) {
                 if (entity.type == "tree") {
+                    const damage = Math.max((Math.abs(this.velocity.y) - 100) * 0.01, 0);
+                    this.damage(damage);
                     this.velocity.x = this.skiUnitVector.x * 10;
                     this.velocity.y = this.skiUnitVector.y * 10;
                 }
@@ -349,6 +386,22 @@ class Character {
         ctx.rotate(this.skiAngle - skiSplay);
         ctx.fillRect(-1, -this.skiLength/2, 3, this.skiLength);
         ctx.restore();
+
+    }
+
+    drawHealthBar(ctx) {
+        // Draw a health bar across the top of the screen
+        const padding_x = 10;
+        const padding_y = 10;
+        const width = ctx.canvas.width - 2 * padding_x;
+        const height = 12;
+        const healthWidth = width * this.health / this.maxHealth;
+        ctx.fillStyle = "#cccccc";
+        ctx.fillRect(padding_x-1, padding_y-1, width+2, height+2);
+        ctx.fillStyle = "#f55742";
+        ctx.fillRect(padding_x, padding_y, healthWidth, height);
+        ctx.fillStyle = "#ff9f85";
+        ctx.fillRect(padding_x, padding_y + 2, healthWidth, 4);
 
     }
 

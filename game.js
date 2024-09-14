@@ -3,6 +3,7 @@ import Character from './character.js';
 import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
+import MobManager from './mob.js';
 
 window.addEventListener('load', function () {
     var canvas = document.getElementById('gameCanvas');
@@ -12,9 +13,11 @@ window.addEventListener('load', function () {
 
     var joystick = new VirtualJoystick(canvas);
     var particleEngine = new ParticleEngine(1000);
-    var treeManager = new TerrainManager();
+    var treeManager = new TerrainManager(canvas);
     var character = new Character(100, 100, particleEngine, treeManager, joystick);
-    var renderer = new Renderer(ctx, character, treeManager, particleEngine);
+    var mobManager = new MobManager(character, treeManager);
+    var renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
+
 
 
     function resizeCanvas() {
@@ -24,6 +27,13 @@ window.addEventListener('load', function () {
         character.y = canvas.height / 4;
         treeManager.onCanvasResize(canvas);
     }
+
+    // resetOnFocus
+    window.onfocus = function() {
+        lastTime = performance.now();
+    }
+
+    var lastGoblinSpawn = 0;
 
     function update(time) {
         var dt = (time - lastTime) / 1000.0;
@@ -36,11 +46,15 @@ window.addEventListener('load', function () {
         // Game Not Paused:
         gameTime += dt;
 
-
+        if (gameTime - lastGoblinSpawn > 0.25) {
+            mobManager.spawnGoblin();
+            lastGoblinSpawn = gameTime;
+        }
 
         character.update(dt, ctx);
         particleEngine.update(dt);
         treeManager.update(dt, character, ctx);
+        mobManager.update(dt);
 
         ctx.save();
         ctx.translate(
@@ -51,6 +65,7 @@ window.addEventListener('load', function () {
         renderer.render();
         ctx.restore();
         joystick.draw(ctx);
+        character.drawHealthBar(ctx);
         lastTime = time;
 
 

@@ -62,7 +62,7 @@ function _isColliding(tree, box) {
 }
 
 export class TerrainManager {
-  constructor() {
+  constructor(canvas) {
     this.entities = [];
     this.lastTreeXpos = 0;
     this.lastTreeYpos = 0;
@@ -70,6 +70,7 @@ export class TerrainManager {
     this.xDistPerTree = 30;
     this.yDistPerJumpRamp = 200;
     this.lastJumpRampYpos = 0;
+    this.canvas = canvas;
   }
 
     // Binary search to find the correct index for insertion
@@ -159,25 +160,41 @@ export class TerrainManager {
         return collidingTrees;
     }
 
+    offBottomOfScreen(character) {
+       return {
+            x: (Math.random() - 0.5) * this.canvas.width * 2 + character.x ,
+            y: this.canvas.height * 1 + character.y
+       }
+    }
+
+    offLeftOfScreen(character) {
+        return {
+            x: -this.canvas.width * 0.65 + character.x,
+            y: (Math.random() - 0.5) * this.canvas.height * 2 + character.y
+        }
+    }
+
+    offRightOfScreen(character) {
+        return {
+            x: this.canvas.width * 0.65 + character.x,
+            y: (Math.random() - 0.5) * this.canvas.height * 2 + character.y
+        }
+    }
+
     update(dt, character, ctx) {
         if (character.y - this.lastTreeYpos >this.yDistPerTree) {
-            this.addTree(
-                (Math.random() - 0.5) * ctx.canvas.width * 2 + character.x ,
-                ctx.canvas.height * 1 + character.y
-            );
+            var loc = this.offBottomOfScreen(character);
+            this.addTree(loc.x, loc.y);
             this.lastTreeYpos = character.y;
         }
         if (Math.abs(character.x - this.lastTreeXpos) > this.xDistPerTree) {
             var xpos = 0
             if (character.velocity.x > 0) {
-                xpos = ctx.canvas.width * 0.65 + character.x;
+                var loc = this.offRightOfScreen(character);
             } else {
-                xpos = -ctx.canvas.width * 0.65 + character.x;
+                var loc = this.offLeftOfScreen(character);
             }
-            this.addTree(
-                xpos,
-                (Math.random() - 0.5) * ctx.canvas.height * 2 + character.y
-            );
+            this.addTree(loc.x, loc.y);
             this.lastTreeXpos = character.x;
         }
         if (character.y - this.lastJumpRampYpos > this.yDistPerJumpRamp) {
