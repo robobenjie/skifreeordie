@@ -29,7 +29,6 @@ class Character {
         this.floatMoveSpeedY = 0;
 
         this.clickJumpSpeed = 6;
-        this.stompSpeed = 8;
 
         // set up state vars
         this.health = this.maxHealth;
@@ -113,7 +112,6 @@ class Character {
                     });
                 }
                 if (entity.type == "jumpRamp") {
-                    console.log("jumping");
                     this.skiPhysics.rampJump()
                 }   
             }
