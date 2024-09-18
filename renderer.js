@@ -8,7 +8,7 @@ class Renderer {
     }
 
     render() {
-        const character_index = this.treeManager._findInsertIndex(this.character.y + this.character.height / 2);
+        const character_index = this.treeManager._findInsertIndex(this.character.y);
         this.character.drawTrail(this.ctx);
         this.character.drawShadow(this.ctx);
 

@@ -10,12 +10,12 @@ export class Tree {
     draw(ctx) {
         ctx.save();
         ctx.fillStyle = "#8B4513";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
         ctx.fillStyle = "#228B22";
         ctx.beginPath();
-        ctx.moveTo(this.x + this.width/2, this.y - 50);
-        ctx.lineTo(this.x + this.width/2 + 15, this.y);
-        ctx.lineTo(this.x + this.width/2 - 15, this.y);
+        ctx.moveTo(this.x + this.width/2, this.y - 50 - this.height);
+        ctx.lineTo(this.x + this.width/2 + 15, this.y - this.height);
+        ctx.lineTo(this.x + this.width/2 - 15, this.y - this.height);
         ctx.fill();
         ctx.restore();
     }
@@ -189,7 +189,7 @@ export class TerrainManager {
         }
         if (Math.abs(character.x - this.lastTreeXpos) > this.xDistPerTree) {
             var xpos = 0
-            if (character.velocity.x > 0) {
+            if (character.skiPhysics.velocity.x > 0) {
                 var loc = this.offRightOfScreen(character);
             } else {
                 var loc = this.offLeftOfScreen(character);
