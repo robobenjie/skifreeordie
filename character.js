@@ -4,6 +4,7 @@ import SkiPhysics from "./skiPhysics.js";
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick) {
         this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager);
+        this.skiPhysics.maxTurnRate = 5.0;
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
         this.x = x;
