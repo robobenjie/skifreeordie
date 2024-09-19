@@ -50,7 +50,7 @@ window.addEventListener('load', function () {
         gameTime += dt;
 
         if (gameTime - lastGoblinSpawn > 2) {
-            if (mobManager.mobs.length < 3) {
+            if (mobManager.mobs.length < 1) {
                 mobManager.spawnAxeOrc();
             }   
             lastGoblinSpawn = gameTime;
