@@ -230,7 +230,6 @@ class SkiPhysics {
 
             this.z += this.zVelocity * dt;
             
-            console.log(this.zVelocity.toFixed(1), this.z.toFixed(1));
             if (this.z < 0) {
 
                 this.state = CharacterState.NORMAL;

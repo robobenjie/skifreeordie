@@ -1,5 +1,6 @@
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
+import { Camera } from './camera.js';
 import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
@@ -15,8 +16,7 @@ window.addEventListener('load', function () {
     let particleEngine = new ParticleEngine(1000);
     let treeManager = new TerrainManager(canvas);
     let character = new Character(100, 100, particleEngine, treeManager, joystick);
-    let cameraPoint = {x: character.x, y: character.y};
-    let cameraVel = {x: 0, y: 0};
+    let camera = new Camera(canvas, character);
     let mobManager = new MobManager(character, treeManager, particleEngine);
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
 
@@ -50,7 +50,7 @@ window.addEventListener('load', function () {
         gameTime += dt;
 
         if (gameTime - lastGoblinSpawn > 2) {
-            if (mobManager.mobs.length < 4) {
+            if (mobManager.mobs.length < 7) {
                 if (Math.random() > 0.5) {
                     mobManager.spawnAxeOrc();
                 } else {
@@ -61,27 +61,13 @@ window.addEventListener('load', function () {
         }
 
         character.update(dt, ctx);
+        camera.update(dt);
         particleEngine.update(dt);
         treeManager.update(dt, character, ctx);
         mobManager.update(dt);
 
-        let CameraDamping = 15;
-        let camerStiffness = 150;
-        let cameraForce = {
-            x: (character.x + 0.15 * character.velocity.x - cameraPoint.x) * camerStiffness - cameraVel.x * CameraDamping,
-            y: (character.y - cameraPoint.y) * camerStiffness - cameraVel.y * CameraDamping
-        };
-        cameraVel.x += cameraForce.x * dt;
-        cameraVel.y += cameraForce.y * dt;
-        
-        cameraPoint.x += cameraVel.x * dt;
-        cameraPoint.y += cameraVel.y * dt;
-
         ctx.save();
-        ctx.translate(
-            canvas.width / 2 - cameraPoint.x, 
-            canvas.height / 4 - cameraPoint.y
-        );
+        camera.applyTransform(ctx);
         character.drawTrail(ctx);
         renderer.render();
         ctx.restore();

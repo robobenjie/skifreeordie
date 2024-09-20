@@ -1,4 +1,5 @@
 import SkiPhysics from "./skiPhysics.js";
+import {randomCentered} from "./utils.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles
@@ -14,9 +15,8 @@ class MobManager {
     }
 
     spawnGoblin() {
-        console.log('Spawning goblin');
         let loc = this.terrain.offBottomOfScreen(this.character); // {x: this.character.x, y:this.character.y + 100}; //
-        let angle = Math.random() * Math.PI / 2 - Math.PI / 4;
+        let angle = randomCentered(Math.PI / 4);
         let vx = Math.sin(angle) * 100;
         let vy = Math.cos(angle) * 100;
         this.addMob(new Goblin(loc.x, loc.y, vx, vy, this.character));
@@ -26,7 +26,7 @@ class MobManager {
         //const onLeft = Math.random() < 0.5;
         //var loc = onLeft? this.terrain.offLeftOfScreen(this.character) : this.terrain.offRightOfScreen(this.character);
         let loc = this.terrain.offBottomOfScreen(this.character);
-        this.addMob(new AxeOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
+        this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
     }
 
     spawnSpearOrc() {
@@ -117,7 +117,7 @@ class Mob {
     }
 }
 
-class AxeOrc extends Mob {
+class AxeBoarderOrc extends Mob {
     constructor(x, y, vx, vy, character, terrain, snowParticles) {
         super(x, y, vx, vy, 5, 8, 25, 'orange', character);
         this.terrain = terrain;
@@ -130,12 +130,13 @@ class AxeOrc extends Mob {
 
 
         this.targetDistanceX = 40 + Math.random() * 50;
-        this.sinAmplitude = Math.PI / 4;
-        this.sinFrequency = 4;
-        this.skiPhysics.drag = 0.6;
+        this.targetDistanceY = randomCentered(30);
+        this.sinAmplitude = Math.PI / 3;
+        this.sinFrequency = 10;
+        this.skiPhysics.drag = 0.50 + randomCentered(0.05);
         this.skiPhysics.accelleration = 800;
         this.skiPhysics.steering = 0.5;
-        this.skiPhysics.edgeDrag = 5.0;
+        this.skiPhysics.edgeDrag = 4.0;
         this.skiPhysics.sprayFactor = 0.25;
         this.skiPhysics.maxTurnRate = 7;
         this.skiPhysics.maxInAirTurnRate = 12;
@@ -164,12 +165,15 @@ class AxeOrc extends Mob {
         const dx = this.x - this.character.x - this.targetDistanceX;
         const dy = this.y - this.character.y +(this.skiPhysics.velocity.y  - this.character.skiPhysics.velocity.y) * lookaheadTime;
 
-        this.targetAngle = Math.atan2(dx, -dy);
+        let Kp = 0.05;
+        this.targetAngle = Kp * dx;
+        this.targetAngle = Math.max(Math.min(this.targetAngle, Math.PI / 4), -Math.PI / 4);
 
 
+        let startSlowing = -100;
+        let stopping = 400;
         //Below character
-        if (dy > 200) {
-            console.log("Stopping")
+        if (dy > stopping) {
             this.slowing = false;
             if (Math.abs(this.skiPhysics.velocity.y) > 50 || Math.abs(this.skiPhysics.velocity.x) > 50) {
                 let motionAngle = -Math.atan2(this.skiPhysics.velocity.x, this.skiPhysics.velocity.y);
@@ -178,14 +182,15 @@ class AxeOrc extends Mob {
             } else {
                 this.targetAngle  = Math.PI / 2;
             }
-        } else if (dy > 0) {
+        } else if (dy > startSlowing) {
             if (!this.slowing) {
                 this.slowing = true;
                 this.t = 0;
             }
-            console.log("Slowing");
+            let slowingAmount = (dy - startSlowing)/(stopping - startSlowing);
+            slowingAmount = Math.sqrt(slowingAmount);
             this.t += dt;
-            this.targetAngle += Math.sin(this.t * this.sinFrequency) * this.sinAmplitude;
+            this.targetAngle += Math.sin(this.t * this.sinFrequency) * this.sinAmplitude * slowingAmount;
 
         } else {
             this.slowing = false;
@@ -241,7 +246,10 @@ class SpearOrc extends Mob {
     update(dt) {
         let lookaheadTime = 0.5; // seconds (when the y should match the character's y, at current vel)
         const dx = this.x - this.character.x;
-        const dy = this.y - this.character.y +(this.skiPhysics.velocity.y  - this.character.skiPhysics.velocity.y) * lookaheadTime;
+        let dy = this.y - this.character.y;
+        if (Math.abs(dx) > 50) {
+            dy += (this.skiPhysics.velocity.y  - this.character.skiPhysics.velocity.y) * lookaheadTime;
+        }
         this.skiPhysics.maxTurnRate = 1.5;
         this.skiPhysics.maxInAirTurnRate = 12;
 
@@ -257,7 +265,6 @@ class SpearOrc extends Mob {
             if (dy > 120 ) {
                 this.skiPhysics.drag = 4;
                 if (Math.abs(this.targetAngle - this.skiPhysics.skiAngle) > 0.2) {
-                    console.log("Mob Jumping");
                     this.skiPhysics.jump(5);
                 }
             } else {
@@ -271,7 +278,6 @@ class SpearOrc extends Mob {
             this.targetAngle = Math.atan2(dx, -dy);
 
             if (Math.abs(this.targetAngle - this.skiPhysics.skiAngle) > 0.2 && Math.abs(this.skiPhysics.velocity.y) < 50) {
-                console.log("Mob Jumping");
                 this.skiPhysics.jump(5);
             }
         }
