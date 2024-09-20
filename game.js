@@ -17,7 +17,8 @@ window.addEventListener('load', function () {
     let treeManager = new TerrainManager(canvas);
     let character = new Character(100, 100, particleEngine, treeManager, joystick);
     let camera = new Camera(canvas, character);
-    let mobManager = new MobManager(character, treeManager, particleEngine);
+    treeManager.setCamera(camera);
+    let mobManager = new MobManager(character, treeManager, particleEngine, camera);
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
 
 

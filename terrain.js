@@ -62,16 +62,88 @@ function _isColliding(tree, box) {
 }
 
 export class TerrainManager {
-  constructor(canvas) {
-    this.entities = [];
-    this.lastTreeXpos = 0;
-    this.lastTreeYpos = 0;
-    this.yDistPerTree = 100;
-    this.xDistPerTree = 30;
-    this.yDistPerJumpRamp = 200;
-    this.lastJumpRampYpos = 0;
-    this.canvas = canvas;
-  }
+    constructor(canvas) {
+        this.entities = [];
+        this.canvas = canvas;
+        this.camera = null;
+
+        // Entity spawn densities (pixels² per entity)
+        this.treeDensityY = 64000;      // Trees per vertical exposed area
+        this.treeDensityX = 64000;      // Trees per horizontal exposed area
+        this.jumpRampDensityY = 120000; // Jump ramps per vertical exposed area
+
+        // Accumulated exposed area
+        this.accumulatedExposedAreaY = 0;
+        this.accumulatedExposedAreaX = 0;
+        this.accumulatedExposedAreaJumpRampY = 0;
+    }
+
+    /**
+     * Associates the TerrainManager with a Camera instance.
+     * @param {Camera} camera - The Camera instance.
+     */
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
+    /**
+     * Updates the terrain by spawning trees and jump ramps based on exposed area.
+     * @param {number} dt - Delta time since last update (in seconds).
+     */
+    update(dt) {
+        if (!this.camera) {
+            console.warn("Camera not set for TerrainManager.");
+            return;
+        }
+
+        // Calculate exposed areas (pixels²) based on camera movement and scale
+        const exposedAreaY = this.camera.getExposedAreaY() * dt; // Vertical exposed area per second
+        const exposedAreaX = this.camera.getExposedAreaX() * dt; // Horizontal exposed area per second
+
+        // Accumulate exposed areas
+        this.accumulatedExposedAreaY += exposedAreaY;
+        this.accumulatedExposedAreaX += exposedAreaX;
+        this.accumulatedExposedAreaJumpRampY += exposedAreaY;
+
+        // Spawn vertical trees based on accumulated vertical exposed area
+        while (this.accumulatedExposedAreaY >= this.treeDensityY) {
+            const loc = this.camera.offBottomOfScreen();
+            this.addTree(loc.x, loc.y);
+            this.accumulatedExposedAreaY -= this.treeDensityY;
+        }
+
+        // Spawn horizontal trees based on accumulated horizontal exposed area
+        while (this.accumulatedExposedAreaX >= this.treeDensityX) {
+            let loc;
+            if (this.camera.velocity.x > 0) {
+                loc = this.camera.offRightOfScreen();
+            } else if (this.camera.velocity.x < 0) {
+                loc = this.camera.offLeftOfScreen();
+            } else {
+                // If no horizontal movement, default to one side (e.g., right)
+                loc = this.camera.offRightOfScreen();
+            }
+            this.addTree(loc.x, loc.y);
+            this.accumulatedExposedAreaX -= this.treeDensityX;
+        }
+
+        // Spawn jump ramps based on accumulated vertical exposed area
+        while (this.accumulatedExposedAreaJumpRampY >= this.jumpRampDensityY) {
+            // Randomly choose a horizontal offset within the canvas width
+            const randomXOffset = (Math.random() - 0.5) * this.canvas.width * 2;
+            const spawnX = this.camera.x + randomXOffset;
+            const spawnY = this.camera.y + this.canvas.height + 100; // 100 pixels below the screen
+
+            this.addJumpRamp(spawnX, spawnY);
+            this.accumulatedExposedAreaJumpRampY -= this.jumpRampDensityY;
+        }
+
+        // Remove entities that are no longer relevant
+        const removalThresholdY = this.camera.topOfScreen() - 50;;
+        this.removeEntitiesByPosition(removalThresholdY);
+    }
+
+
 
     // Binary search to find the correct index for insertion
     _findInsertIndex(y) {
@@ -158,53 +230,6 @@ export class TerrainManager {
         }
     
         return collidingTrees;
-    }
-
-    offBottomOfScreen(character) {
-       return {
-            x: (Math.random() - 0.5) * this.canvas.width * 2 + character.x ,
-            y: this.canvas.height * 1 + character.y
-       }
-    }
-
-    offLeftOfScreen(character) {
-        return {
-            x: -this.canvas.width * 0.65 + character.x,
-            y: (Math.random() - 0.5) * this.canvas.height * 2 + character.y
-        }
-    }
-
-    offRightOfScreen(character) {
-        return {
-            x: this.canvas.width * 0.65 + character.x,
-            y: (Math.random() - 0.5) * this.canvas.height * 2 + character.y
-        }
-    }
-
-    update(dt, character, ctx) {
-        if (character.y - this.lastTreeYpos >this.yDistPerTree) {
-            var loc = this.offBottomOfScreen(character);
-            this.addTree(loc.x, loc.y);
-            this.lastTreeYpos = character.y;
-        }
-        if (Math.abs(character.x - this.lastTreeXpos) > this.xDistPerTree) {
-            var xpos = 0
-            if (character.skiPhysics.velocity.x > 0) {
-                var loc = this.offRightOfScreen(character);
-            } else {
-                var loc = this.offLeftOfScreen(character);
-            }
-            this.addTree(loc.x, loc.y);
-            this.lastTreeXpos = character.x;
-        }
-        if (character.y - this.lastJumpRampYpos > this.yDistPerJumpRamp) {
-            this.addJumpRamp(
-                (Math.random() - 0.5) * ctx.canvas.width * 2 + character.x,
-                ctx.canvas.height * 1 + character.y
-            );
-            this.lastJumpRampYpos = character.y;
-        }
-        this.removeEntitiesByPosition(character.y - ctx.canvas.height / 2);
     }
 
     draw(ctx) {

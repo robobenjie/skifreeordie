@@ -2,12 +2,13 @@ import SkiPhysics from "./skiPhysics.js";
 import {randomCentered} from "./utils.js";
 
 class MobManager {
-    constructor(character, terrain, snowParticles
+    constructor(character, terrain, snowParticles, camera
     ) {
         this.character = character;
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.mobs = [];
+        this.camera = camera;
     }
 
     addMob(mob) {
@@ -15,7 +16,7 @@ class MobManager {
     }
 
     spawnGoblin() {
-        let loc = this.terrain.offBottomOfScreen(this.character); // {x: this.character.x, y:this.character.y + 100}; //
+        let loc = this.camera.offBottomOfScreen(this.character); // {x: this.character.x, y:this.character.y + 100}; //
         let angle = randomCentered(Math.PI / 4);
         let vx = Math.sin(angle) * 100;
         let vy = Math.cos(angle) * 100;
@@ -24,14 +25,14 @@ class MobManager {
 
     spawnAxeOrc() {
         //const onLeft = Math.random() < 0.5;
-        //var loc = onLeft? this.terrain.offLeftOfScreen(this.character) : this.terrain.offRightOfScreen(this.character);
-        let loc = this.terrain.offBottomOfScreen(this.character);
+        //var loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
+        let loc = this.camera.offBottomOfScreen(this.character);
         this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
     }
 
     spawnSpearOrc() {
         const onLeft = Math.random() < 0.5;
-        let loc = onLeft? this.terrain.offLeftOfScreen(this.character) : this.terrain.offRightOfScreen(this.character);
+        let loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
         this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
     }
 
