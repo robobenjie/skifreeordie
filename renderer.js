@@ -12,34 +12,43 @@ class Renderer {
         this.character.drawTrail(this.ctx);
         this.character.drawShadow(this.ctx);
         this.mobManager.drawUnderMob(this.ctx);
-    
-        // Prepare arrays and indices for merging
-        let mobs = this.mobManager.mobs;            // Sorted by y
-        let trees = this.treeManager.entities;      // Sorted by y
-        let character = this.character;             // The character entity
+        this.mobManager.drawUnderProjectile(this.ctx);
     
         let i = 0; // Index for trees
         let j = 0; // Index for mobs
+        let k = 0; // Index for projectiles
+
+        let trees = this.treeManager.entities;
+        let mobs = this.mobManager.mobs;
+        let projectiles = this.mobManager.projectiles;
+        let characterInserted = false;
+        const entitiesToDraw = [];
     
-        let entitiesToDraw = []; // Merged array of entities
-        let characterInserted = false; // Flag to check if character has been inserted
-    
-        // Merge the arrays while maintaining the sort order
-        while (i < trees.length || j < mobs.length || !characterInserted) {
+        while (i < trees.length || j < mobs.length || k < projectiles.length || !characterInserted) {
             let treeY = (i < trees.length) ? trees[i].y : Infinity;
             let mobY = (j < mobs.length) ? mobs[j].y : Infinity;
-            let characterY = (!characterInserted) ? character.y : Infinity;
+            let projectileY = (k < projectiles.length) ? projectiles[k].y : Infinity;
+            let characterY = (!characterInserted) ? this.character.y : Infinity;
     
-            // Compare y-values and push the entity with the smallest y-value
-            if (treeY <= mobY && treeY <= characterY) {
+            // Determine the smallest y-value
+            let minY = Math.min(treeY, mobY, projectileY, characterY);
+    
+            if (minY === treeY) {
                 entitiesToDraw.push(trees[i]);
                 i++;
-            } else if (mobY <= treeY && mobY <= characterY) {
+            } else if (minY === mobY) {
                 entitiesToDraw.push(mobs[j]);
                 j++;
-            } else {
-                entitiesToDraw.push(character);
+            } else if (minY === projectileY) {
+                entitiesToDraw.push(projectiles[k]);
+                k++;
+            } else if (minY === characterY) {
+                entitiesToDraw.push(this.character);
                 characterInserted = true;
+            } else {
+                // Prevent infinite loop by breaking if no condition is met
+                console.error("No matching condition found. Breaking the loop to prevent infinite iteration.");
+                break;
             }
         }
     

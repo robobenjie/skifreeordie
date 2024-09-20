@@ -96,6 +96,22 @@ export class Camera {
         return (0 - this.canvas.height * this.characterFraction) * this.scale + this.y;
     }
 
+    bottomOfScreen() {
+        return (this.canvas.height - this.canvas.height * this.characterFraction) * this.scale + this.y;
+    }
+
+    leftOfScreen() {
+        return (-this.canvas.width / 2) * this.scale + this.x;
+    }
+
+    rightOfScreen() {
+        return (this.canvas.width / 2) * this.scale + this;
+    }
+
+    isOnScreen(x, y) {
+        return x > this.leftOfScreen() && x < this.rightOfScreen() && y > this.topOfScreen() && y < this.bottomOfScreen();
+    }
+
 
     /**
      * Generates a random point 35 pixels to the left of the visible canvas.

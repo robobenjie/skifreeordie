@@ -1,5 +1,6 @@
 import SkiPhysics from "./skiPhysics.js";
 import {randomCentered} from "./utils.js";
+import Projectile from "./projectile.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles, camera
@@ -8,11 +9,18 @@ class MobManager {
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.mobs = [];
+        this.projectiles = [];
         this.camera = camera;
     }
 
     addMob(mob) {
         this.mobs.push(mob);
+        mob.setManager(this);
+        mob.setCamera(this.camera);
+    }
+
+    addProjectile(projectile) {
+        this.projectiles.push(projectile);
     }
 
     spawnGoblin() {
@@ -37,19 +45,34 @@ class MobManager {
     }
 
     update(dt) {
+
         this.mobs = this.mobs.filter(mob => mob.health > 0);
+        // filter out inactive projectiles
+        this.projectiles = this.projectiles.filter(projectile => projectile.active);
+
         for (let mob of this.mobs) {
             mob.update(dt);
         }
+        for (let projectile of this.projectiles) {
+            projectile.update(dt);
+        }
+                
 
         // Sort by mob.y
         this.mobs.sort((a, b) => a.y - b.y);
+        this.projectiles.sort((a, b) => a.y - b.y);
     }
 
     drawUnderMob(ctx) {
         for (let mob of this.mobs) {
             mob.drawTrail(ctx);
             mob.drawShadow(ctx);
+        }
+    }
+
+    drawUnderProjectile(ctx) {
+        for (let projectile of this.projectiles) {
+            projectile.drawShadow(ctx);
         }
     }
 
@@ -76,9 +99,22 @@ class Mob {
         this.timeSinceDamagedCharacter = 0;
     }
 
+    setManager(manager) {
+        this.manager = manager;
+    }
+
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
     damage(amount) {
         this.health -= amount;
     }
+
+    fireProjectile(projectile) {
+        this.manager.addProjectile(projectile);
+    }
+
 
     update(dt) {
         this.timeSinceDamagedCharacter += dt;
@@ -128,7 +164,8 @@ class AxeBoarderOrc extends Mob {
         this.skiPhysics.skiWidth = 6;
         this.skiSpacing = 0;
 
-
+        this.AxeThrowInterval = 2;
+        this.AxeSpeed = 300;
 
         this.targetDistanceX = 40 + Math.random() * 50;
         this.targetDistanceY = randomCentered(30);
@@ -153,6 +190,8 @@ class AxeBoarderOrc extends Mob {
         }
         this.slowing = false;
         this.t = 0;
+
+        this.timeSinceAxeThrown = 0;
     }
 
     onCollideWithCharacter(character) {
@@ -162,6 +201,29 @@ class AxeBoarderOrc extends Mob {
     }
 
     update(dt) {
+        // Axe throwing
+        if (true || this.camera.isOnScreen(this.x, this.y)) {
+            this.timeSinceAxeThrown += dt;
+        } else {
+            this.timeSinceAxeThrown = 0;
+        }
+
+        if (this.timeSinceAxeThrown > this.AxeThrowInterval) {
+            console.log("Throwing axe");
+            this.timeSinceAxeThrown = 0;
+            let angle = Math.atan2(this.character.y - this.y, this.character.x - this.x);
+            let projectile = new Projectile(this.x, this.y, 
+                { 
+                    x: Math.cos(angle) * this.AxeSpeed + this.character.velocity.x, 
+                    y: Math.sin(angle) * this.AxeSpeed + this.character.velocity.y, 
+                    z: 50,
+                }, 
+                this.camera);
+            this.fireProjectile(projectile);
+        }
+
+
+        // Movement
         let lookaheadTime = 0.1; // seconds (when the y should match the character's y, at current vel)
         const dx = this.x - this.character.x - this.targetDistanceX;
         const dy = this.y - this.character.y +(this.skiPhysics.velocity.y  - this.character.skiPhysics.velocity.y) * lookaheadTime;
