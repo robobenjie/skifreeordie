@@ -40,9 +40,8 @@ window.addEventListener('load', function () {
     //mobManager.spawnAxeOrc();
     mobManager.spawnGoblin();
 
-    for (let i = 0; i < 100; i++) {
-        treeManager.addSkierBoundary(-30 + -i*10, i*50, -30 + -(i+1)*10, (i+1)*50);
-    }
+    treeManager.addSkierBoundary(-30, -30, 500, 1000);
+    treeManager.addSkierBoundary(80, -30, 580, 1000);
 
 
 

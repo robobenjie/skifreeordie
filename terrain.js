@@ -33,9 +33,9 @@ export class SkiBoundary {
         this.y = Math.min(y1, y2); // Top y-coordinate
         this.type = "skiBoundary";
 
-        this.fenceHeight = 15; // Height of the vertical poles
-        this.flagHeight = 7;   // Height the flags hang down
-        this.flagWidth = 4;    // Width of each flag at the base
+        this.fenceHeight = 18; // Height of the vertical poles
+        this.flagHeight = 9;   // Height the flags hang down
+        this.flagWidth = 5;    // Width of each flag at the base
 
         let dx = this.x2 - this.x1;
         let dy = this.y2 - this.y1;
@@ -307,6 +307,17 @@ export class TerrainManager {
     }
 
     addSkierBoundary(x1, y1, x2, y2) {
+        const len = Math.hypot(x2 - x1, y2 - y1);
+        if (len > 50) {
+            const numSegments = Math.ceil(len / 50);
+            const dx = (x2 - x1) / numSegments;
+            const dy = (y2 - y1) / numSegments;
+            for (let i = 0; i < numSegments; i++) {
+                const x = x1 + dx * i;
+                const y = y1 + dy * i;
+                this.addSkierBoundary(x, y, x + dx, y + dy);
+            }
+        }
         let skiBoundary = new SkiBoundary(x1, y1, x2, y2);
         const index = this._findInsertIndex(skiBoundary.y1);
         this.entities.splice(index, 0, skiBoundary);
