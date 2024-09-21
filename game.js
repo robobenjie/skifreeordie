@@ -37,7 +37,9 @@ window.addEventListener('load', function () {
     }
 
     let lastGoblinSpawn = 0;
-    mobManager.spawnAxeOrc();
+    //mobManager.spawnAxeOrc();
+    mobManager.spawnGoblin();
+
 
     function update(time) {
         let dt = (time - lastTime) / 1000.0;
@@ -50,16 +52,18 @@ window.addEventListener('load', function () {
         // Game Not Paused:
         gameTime += dt;
 
-        if (gameTime - lastGoblinSpawn > 2) {
-            if (mobManager.mobs.length < 1) {
-                if (Math.random() > 0.5) {
-                    mobManager.spawnAxeOrc();
-                } else {
-                    mobManager.spawnSpearOrc();
-                }
-            }   
+        if (gameTime - lastGoblinSpawn > 0.1) {
+            if (mobManager.numGoblins() < 15) {
+                mobManager.spawnGoblin();
+            }
+            if (mobManager.numAxeOrcs() < 2) {
+                mobManager.spawnAxeOrc();
+            }
+            if (mobManager.numSpearOrcs() < 1) {
+                mobManager.spawnSpearOrc();
+            }
             lastGoblinSpawn = gameTime;
-        }
+        }   
 
         character.update(dt, ctx);
         camera.update(dt);

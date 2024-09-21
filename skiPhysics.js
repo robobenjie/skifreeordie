@@ -356,7 +356,7 @@ class SkiPhysics {
     
 
     drawSkis(ctx, color, skiSplay) {
-        this.skiSplay = skiSplay;
+        this.skiSplay = skiSplay * (1 - Math.abs(this.skiAngle / (Math.PI / 2)));
     
         if (this.isSnowboard) {
             // Draw the snowboard with rounded ends and dynamic width

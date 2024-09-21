@@ -23,12 +23,25 @@ class MobManager {
         this.projectiles.push(projectile);
     }
 
+    numAxeOrcs() {
+        return this.mobs.filter(mob => mob instanceof AxeBoarderOrc).length;
+    }
+
+    numSpearOrcs() {
+        return this.mobs.filter(mob => mob instanceof SpearOrc).length;
+    }
+
+    numGoblins() {
+        return this.mobs.filter(mob => mob instanceof Goblin).length;
+    }
+
     spawnGoblin() {
-        let loc = this.camera.offBottomOfScreen(this.character); // {x: this.character.x, y:this.character.y + 100}; //
+        console.log("Spawning goblin");
+        let loc = this.camera.offBottomOfScreen(); // {x: this.character.x, y:this.character.y + 100}; //
         let angle = randomCentered(Math.PI / 4);
         let vx = Math.sin(angle) * 100;
         let vy = Math.cos(angle) * 100;
-        this.addMob(new Goblin(loc.x, loc.y, vx, vy, this.character));
+        this.addMob(new Goblin(loc.x, loc.y, vx, vy, this.character, this.terrain, this.snowParticles, this.camera));
     }
 
     spawnAxeOrc() {
@@ -216,7 +229,6 @@ class AxeBoarderOrc extends Mob {
         } else {
             this.timeSinceAxeThrown = 0;
         }
-        console.log(this.timeSinceAxeThrown.toFixed(2));
 
         if (this.timeSinceAxeThrown > this.AxeThrowInterval) {
             console.log("Throwing axe");
@@ -390,45 +402,69 @@ class SpearOrc extends Mob {
 }
 
 class Goblin extends Mob {
-    constructor(x, y, vx, vy, character) {
+    constructor(x, y, vx, vy, character, terrain, snowParticles, camera) {
         super(x, y, vx, vy, 3, 8, 15, 'green', character);
+        this.maxHealth = 3;
+        this.health = 3;
+        this.camera = camera;
+
+        this.terrain = terrain;
+        this.snowParticles = snowParticles;
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain);
+        if (x < character.x) {
+            this.targetAngle = -Math.PI / 6;
+        } else {
+            this.targetAngle = Math.PI / 6;
+        }
+        
+        this.sinAmplitude = Math.PI / 6;
+        this.sinFrequency = 5;
+        this.skiPhysics.drag = 3.5 + randomCentered(0.05);
+        this.skiPhysics.maxTurnRate = 5;
+        this.skiPhysics.skiSpacing = 15;
+        this.skiSplay = 0.2;
+
+        this.gameTime = 0;
     }
 
+    update(dt) {
+        this.gameTime += dt;
+        this.skiPhysics.update(dt, this.targetAngle + Math.sin(this.gameTime * this.sinFrequency) * this.sinAmplitude);
+        this.velocity = this.skiPhysics.velocity;
+        super.update(dt);
+        this.x = this.skiPhysics.x;
+        this.y = this.skiPhysics.y;
+        this.z = this.skiPhysics.z;
+
+        let aboveScreen = this.camera.distanceOffScreenY(this.y);
+        if (aboveScreen < -700) {
+            this.health = 0;
+            console.log("Goblin off screen");
+        }
+
+    }
+
+
     onCollideWithCharacter(character) {
-        if (this.timeSinceDamagedCharacter < this.damageCooldown) return;
-        this.timeSinceDamagedCharacter = 0;
         character.collideWithMob(this);
-        //character.damage(5);
+    }
+
+    drawTrail(ctx) {
+        this.skiPhysics.drawTrail(ctx);
     }
 
     draw(ctx) {
-        ctx.save();
-        // draw skis
-        ctx.fillStyle = 'black';
-        ctx.save();
-        let velAngle = Math.atan2(this.velocity.x, this.velocity.y);
-        ctx.translate(this.x + this.width / 2, this.y + this.height);
-        ctx.rotate(-velAngle);
-        ctx.save();
-        ctx.rotate(-0.25);    
-        ctx.fillRect(-5, -this.height / 2, 1, this.height);
-        ctx.restore();
-        ctx.save();
-        ctx.rotate(0.25);
-        ctx.fillRect(5, -this.height / 2, 1, this.height);
-        ctx.restore();
-        ctx.restore();
-        ctx.restore();
+        this.skiPhysics.drawSkis(ctx, "red", this.skiSplay);
         ctx.fillStyle = "brown";
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
         //Draw green head
         ctx.fillStyle = 'green';
         ctx.beginPath();
-        ctx.arc(this.x + this.width / 2, this.y - 2, 8, 0, Math.PI * 2);
+        ctx.arc(this.x, this.y - 2 - this.height, 8, 0, Math.PI * 2);
         ctx.fill();
         // draw ears
         ctx.fillStyle = 'green';
-
+        super.draw(ctx);
     }
 }
 
