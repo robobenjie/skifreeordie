@@ -105,7 +105,7 @@ export class Camera {
     }
 
     rightOfScreen() {
-        return (this.canvas.width / 2) * this.scale + this;
+        return (this.canvas.width / 2) * this.scale + this.x;
     }
 
     isOnScreen(x, y) {

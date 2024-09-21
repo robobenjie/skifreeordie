@@ -211,11 +211,12 @@ class AxeBoarderOrc extends Mob {
 
     update(dt) {
         // Axe throwing
-        if (true || this.camera.isOnScreen(this.x, this.y)) {
+        if (this.camera.isOnScreen(this.x, this.y)) {
             this.timeSinceAxeThrown += dt;
         } else {
             this.timeSinceAxeThrown = 0;
         }
+        console.log(this.timeSinceAxeThrown.toFixed(2));
 
         if (this.timeSinceAxeThrown > this.AxeThrowInterval) {
             console.log("Throwing axe");
