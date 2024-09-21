@@ -195,7 +195,11 @@ class Character {
                 }
                 if (entity.type == "jumpRamp") {
                     this.skiPhysics.rampJump()
-                }   
+                }
+                if (entity.type == "firstAid") {
+                    this.health = Math.min(this.health + 30, this.maxHealth);
+                    entity.claim();
+                }
             }
         }
         this.x = this.skiPhysics.x;

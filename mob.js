@@ -147,10 +147,13 @@ class Mob {
     }
 
     draw(ctx) {
-        ctx.save();
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-        ctx.restore();
+        const barWidth = this.maxHealth * 4;
+        if (this.health < this.maxHealth) {
+            ctx.fillStyle = '#f2c7bd'; // Background color
+            ctx.fillRect(this.x - barWidth / 2, this.y - this.height - 13 - this.z * 70, barWidth, 3);
+            ctx.fillStyle = '#509e47';  // Green color
+            ctx.fillRect(this.x - barWidth / 2, this.y - this.height - 13 - this.z * 70, barWidth * this.health / this.maxHealth, 3);
+        }
     }
 
     drawShadow(ctx) {
@@ -294,6 +297,7 @@ class AxeBoarderOrc extends Mob {
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
         ctx.restore();
+        super.draw(ctx);
     }
 }
 
@@ -380,6 +384,7 @@ class SpearOrc extends Mob {
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
         ctx.restore();
+        super.draw(ctx);
     }
 }
 

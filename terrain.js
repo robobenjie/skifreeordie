@@ -23,6 +23,35 @@ export class Tree {
     
 }
 
+export class FirstAid {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 110;
+        this.image_uri = "images/first_aid.svg";
+        this.type = "firstAid";
+        this.image = new Image();
+        this.image.src = this.image_uri;
+        this.image.onload = () => {
+            this.loaded = true;
+        }
+        this.claimed = false;
+    }
+
+    draw(ctx) {
+        if (!this.loaded) {
+            return;
+        }
+        const imageRatio = this.image.width / this.image.height;
+        const imageHeight = this.width / imageRatio;
+        ctx.drawImage(this.image, this.x - this.width / 2, this.y - imageHeight, this.width, imageHeight);
+    }
+
+    claim() {
+        this.claimed = true;
+    }
+}
+
 export class JumpRamp {
     constructor(x, y) {
         this.x = x;
@@ -71,11 +100,13 @@ export class TerrainManager {
         this.treeDensityY = 64000;      // Trees per vertical exposed area
         this.treeDensityX = 64000;      // Trees per horizontal exposed area
         this.jumpRampDensityY = 120000; // Jump ramps per vertical exposed area
+        this.firstAidDensityY = 4220000; // First aid per vertical exposed area
 
         // Accumulated exposed area
         this.accumulatedExposedAreaY = 0;
         this.accumulatedExposedAreaX = 0;
         this.accumulatedExposedAreaJumpRampY = 0;
+        this.accumulatedExposedAreaFirstAidY = 0;
     }
 
     /**
@@ -104,6 +135,7 @@ export class TerrainManager {
         this.accumulatedExposedAreaY += exposedAreaY;
         this.accumulatedExposedAreaX += exposedAreaX;
         this.accumulatedExposedAreaJumpRampY += exposedAreaY;
+        this.accumulatedExposedAreaFirstAidY += exposedAreaY;
 
         // Spawn vertical trees based on accumulated vertical exposed area
         while (this.accumulatedExposedAreaY >= this.treeDensityY) {
@@ -127,15 +159,19 @@ export class TerrainManager {
             this.accumulatedExposedAreaX -= this.treeDensityX;
         }
 
-        // Spawn jump ramps based on accumulated vertical exposed area
+        // Jump Ramp
         while (this.accumulatedExposedAreaJumpRampY >= this.jumpRampDensityY) {
-            // Randomly choose a horizontal offset within the canvas width
-            const randomXOffset = (Math.random() - 0.5) * this.canvas.width * 2;
-            const spawnX = this.camera.x + randomXOffset;
-            const spawnY = this.camera.y + this.canvas.height + 100; // 100 pixels below the screen
-
-            this.addJumpRamp(spawnX, spawnY);
+            const loc = this.camera.offBottomOfScreen();
+            this.addJumpRamp(loc.x, loc.y);
             this.accumulatedExposedAreaJumpRampY -= this.jumpRampDensityY;
+        }
+
+        // First Aid
+        while (this.accumulatedExposedAreaFirstAidY >= this.firstAidDensityY) {
+            console.log("Adding first aid");
+            const loc = this.camera.offBottomOfScreen();
+            this.addFirstAid(loc.x, loc.y);
+            this.accumulatedExposedAreaFirstAidY -= this.firstAidDensityY;
         }
 
         // Remove entities that are no longer relevant
@@ -172,6 +208,12 @@ export class TerrainManager {
         var jumpRamp = new JumpRamp(x, y);
         const index = this._findInsertIndex(jumpRamp.y);
         this.entities.splice(index, 0, jumpRamp);
+    }
+
+    addFirstAid(x, y) {
+        var firstAid = new FirstAid(x, y);
+        const index = this._findInsertIndex(firstAid.y);
+        this.entities.splice(index, 0, firstAid);
     }
 
     onCanvasResize(ctx) {
