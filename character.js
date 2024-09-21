@@ -19,6 +19,8 @@ class Character {
         this.joystick = joystick;
         this.maxHealth = 100;
         this.maxUphillAngle = 25 * Math.PI / 180;
+        this.mass = 100;
+        this.COR = 0.5;
 
         this.targetSkiAngle = this.skiPhysics.skiAngle;
 
@@ -50,28 +52,107 @@ class Character {
 
 
     collideWithMob(mob) {
-        const collisionVel = {
-            x: this.velocity.x - mob.velocity.x,
-            y: this.velocity.y - mob.velocity.y
-        }
-        const speed = Math.sqrt(collisionVel.x * collisionVel.x + collisionVel.y * collisionVel.y);
-        const damage = speed * this.speedDamageFactor;
-        const damageDealt = Math.min(damage, mob.health);
-        mob.damage(damageDealt);
-        this.damage(damage);
-        const velUnitVector = {
-            x: collisionVel.x / speed,
-            y: collisionVel.y / speed
-        };
-        this.velocity.x -= velUnitVector.x * damageDealt / this.speedDamageFactor;
-        this.velocity.y -= velUnitVector.y * damageDealt / this.speedDamageFactor;
+        console.log("Collided with mob");
+        // Calculate the vector between player and mob
+        const dx = mob.x - this.x;
+        const dy = mob.y - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
 
+        // Prevent division by zero if entities are at the same position
+        if (distance === 0) {
+            console.error("Entities are at the same position; cannot compute collision normal.");
+            return;
+        }
+
+        // Calculate the normal vector (unit vector)
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        // Calculate relative velocity
+        const rvx = mob.velocity.x - this.velocity.x;
+        const rvy = mob.velocity.y - this.velocity.y;
+
+        // Calculate relative velocity along the normal
+        const velAlongNormal = -rvx * nx + -rvy * ny;
+
+        // Do not resolve if velocities are separating
+        if (velAlongNormal < 0) {
+            return;
+        }
+
+        // Calculate average Coefficient of Restitution
+        const COR = (this.COR + mob.COR) / 2;
+
+        // Calculate impulse scalar
+        const impulseScalar = (1 + COR) * velAlongNormal / (1 / this.mass + 1 / mob.mass);
+
+        // Calculate impulse vector
+        const impulseX = impulseScalar * nx;
+        const impulseY = impulseScalar * ny;
+
+        // Apply impulse to player and mob
+        const velReductionX = impulseX / this.mass;
+        const velReductionY = impulseY / this.mass;
+
+        // Calculate speeds
+        const playerSpeed = Math.sqrt(this.velocity.x ** 2 + this.velocity.y ** 2);
+        const mobSpeed = Math.sqrt(mob.velocity.x ** 2 + mob.velocity.y ** 2);
+
+        // Define deadband and scaling factor for damage
+        const deadband = 100;        // Units per second
+        const damageScaling = 0.02;     // Adjust this factor as needed
+
+        // Initialize damage variables
+        let damageToMob = 0;
+        let damageToPlayer = 0;
+
+        // Determine which entity is moving faster
+        if (playerSpeed > mobSpeed) {
+            // Player is faster; calculate damage to mob
+            if (velAlongNormal > deadband) {
+                damageToMob = (velAlongNormal - deadband) * damageScaling;
+                console.log("Damage to mob: " + damageToMob);
+            }
+        } else if (mobSpeed > playerSpeed) {
+            // Mob is faster; calculate damage to player
+            if (velAlongNormal > deadband) {
+                damageToPlayer = (velAlongNormal - deadband) * damageScaling;
+                console.log("Damage to player: " + damageToPlayer);
+            }
+        }
+
+        // Apply damage to mob
+        if (damageToMob > 0) {
+            const mobOriginalHealth = mob.health;
+            mob.damage(damageToMob);
+
+            // Check if mob is killed
+            if (mob.health <= 0) {
+                const excessDamage = damageToMob - mobOriginalHealth;
+                if (excessDamage > 0) {
+                    const momentumConservationFactor = Math.min(excessDamage / 50, 1.0);
+                    this.velocity.x += velReductionX * momentumConservationFactor;
+                    this.velocity.y += velReductionY * momentumConservationFactor;
+                }
+            }
+        }
+        // Apply damage to player
+        if (damageToPlayer > 0) {
+            this.damage(damageToPlayer);
+        }
+
+        this.velocity.x -= velReductionX;
+        this.velocity.y -= velReductionY;
+        mob.velocity.x += (impulseX / mob.mass);
+        mob.velocity.y += (impulseY / mob.mass);
     }
 
     damage(damage) {
         this.health -= damage;
         if (this.health <= 0) {
             this.health = 0;
+            // refresh the page
+            window.location.reload();
         }
     }
 
@@ -144,6 +225,12 @@ class Character {
         ctx.fillRect(padding_x, padding_y, healthWidth, height);
         ctx.fillStyle = "#ff9f85";
         ctx.fillRect(padding_x, padding_y + 2, healthWidth, 4);
+
+        // Below the health bar print speed and y distance
+        ctx.fillStyle = "black";
+        ctx.font = "12px Arial";
+        ctx.fillText("Speed: " + (Math.max(0, this.skiPhysics.velocity.y) / 8).toFixed(0) + " mph", padding_x, padding_y + height + 20);
+        ctx.fillText("Distance: " + ((this.y - 100)/10).toFixed(0) + " feet", padding_x, padding_y + height + 40);
 
     }
 

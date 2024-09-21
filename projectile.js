@@ -1,8 +1,9 @@
 export class Projectile {
-    constructor(x, y, velocity, camera) {
+    constructor(x, y, damage, velocity, camera) {
         this.x = x;
         this.y = y;
         this.z = 15;
+        this.damage = damage;
         this.velocity = velocity;
         this.camera = camera;
         this.gravity = 50;
@@ -18,11 +19,25 @@ export class Projectile {
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
         this.z += this.velocity.z * dt;
-        console.log(this.z.toFixed(4));
 
         if (this.z < 0) {
             this.active = false;
         }
+    }
+
+    onCollision(entity) {
+        entity.damage(this.damage);
+        this.active = false;
+    }
+
+    collides(entity) {
+        if (this.x > entity.x - entity.width / 2 &&
+            this.x < entity.x + entity.width / 2 &&
+            this.y > entity.y - entity.height / 2 &&
+            this.y < entity.y + entity.height / 2) {
+            return true;
+        }
+        return false;
     }
 
     drawShadow(ctx) {

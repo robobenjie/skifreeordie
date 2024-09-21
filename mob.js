@@ -55,7 +55,11 @@ class MobManager {
         }
         for (let projectile of this.projectiles) {
             projectile.update(dt);
+            if (projectile.collides(this.character)) {
+                projectile.onCollision(this.character);
+            }
         }
+
                 
 
         // Sort by mob.y
@@ -97,6 +101,8 @@ class Mob {
         this.color = color;
         this.damageCooldown = 0.25;
         this.timeSinceDamagedCharacter = 0;
+        this.mass = 80;
+        this.COR = 0.5;
     }
 
     setManager(manager) {
@@ -164,7 +170,7 @@ class AxeBoarderOrc extends Mob {
         this.skiPhysics.skiWidth = 6;
         this.skiSpacing = 0;
 
-        this.AxeThrowInterval = 2;
+        this.AxeThrowInterval = 2 + randomCentered(0.5);
         this.AxeSpeed = 300;
 
         this.targetDistanceX = 40 + Math.random() * 50;
@@ -212,7 +218,10 @@ class AxeBoarderOrc extends Mob {
             console.log("Throwing axe");
             this.timeSinceAxeThrown = 0;
             let angle = Math.atan2(this.character.y - this.y, this.character.x - this.x);
-            let projectile = new Projectile(this.x, this.y, 
+            let projectile = new Projectile(
+                this.x, 
+                this.y, 
+                5,
                 { 
                     x: Math.cos(angle) * this.AxeSpeed + this.character.velocity.x, 
                     y: Math.sin(angle) * this.AxeSpeed + this.character.velocity.y, 
@@ -262,10 +271,11 @@ class AxeBoarderOrc extends Mob {
         this.targetAngle = this.skiPhysics.getSnowboardAngle(this.targetAngle);
 
         this.skiPhysics.update(dt, this.targetAngle);
+        this.velocity = this.skiPhysics.velocity;
+        super.update(dt);
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
-        super.update(dt);
     }
 
     drawShadow(ctx) {
@@ -347,10 +357,11 @@ class SpearOrc extends Mob {
         this.targetAngle = Math.max(Math.min(this.targetAngle, Math.PI / 2), -Math.PI / 2);
 
         this.skiPhysics.update(dt, this.targetAngle);
+        this.velocity = this.skiPhysics.velocity;
+        super.update(dt);
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
-        super.update(dt);
     }
 
     drawShadow(ctx) {

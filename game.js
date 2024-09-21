@@ -37,7 +37,7 @@ window.addEventListener('load', function () {
     }
 
     let lastGoblinSpawn = 0;
-    mobManager.spawnAxeOrc();
+    mobManager.spawnSpearOrc();
 
     function update(time) {
         let dt = (time - lastTime) / 1000.0;
@@ -51,7 +51,7 @@ window.addEventListener('load', function () {
         gameTime += dt;
 
         if (gameTime - lastGoblinSpawn > 2) {
-            if (mobManager.mobs.length < 5) {
+            if (mobManager.mobs.length < 1) {
                 if (Math.random() > 0.5) {
                     mobManager.spawnAxeOrc();
                 } else {
