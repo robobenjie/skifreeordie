@@ -23,6 +23,133 @@ export class Tree {
     
 }
 
+export class SkiBoundary {
+    constructor(x1, y1, x2, y2) {
+        this.x1 = x1; // Starting x-coordinate
+        this.y1 = y1; // Starting y-coordinate
+        this.x2 = x2; // Ending x-coordinate
+        this.y2 = y2; // Ending y-coordinate
+        this.x = Math.min(x1, x2); // Left x-coordinate
+        this.y = Math.min(y1, y2); // Top y-coordinate
+        this.type = "skiBoundary";
+
+        this.fenceHeight = 15; // Height of the vertical poles
+        this.flagHeight = 7;   // Height the flags hang down
+        this.flagWidth = 4;    // Width of each flag at the base
+
+        let dx = this.x2 - this.x1;
+        let dy = this.y2 - this.y1;
+        this.length = Math.hypot(dx, dy);
+        if (this.length === 0) {
+            // Handle the case where the boundary is a point
+            this.normalX = 0;
+            this.normalY = 0;
+        } else {
+            this.normalX = -dy / this.length;
+            this.normalY = dx / this.length;
+        }
+        console.log("Normal: ", this.normalX, this.normalY);
+    }
+
+    isUphillFrom(x, y) {
+        // Calculate the cross product (determinant)
+        let value = (this.x2 - this.x1) * (y - this.y1) - (this.y2 - this.y1) * (x - this.x1);
+        return value < 0;
+    }
+
+    couldCollide(x, y) {
+        let minX = Math.min(this.x1, this.x2);
+        let maxX = Math.max(this.x1, this.x2);
+        let minY = Math.min(this.y1, this.y2);
+        let maxY = Math.max(this.y1, this.y2);
+
+        return x >= minX && x <= maxX && y >= minY && y <= maxY;
+    }
+
+    draw(ctx) {
+        // Draw the orange top line of the fence
+        ctx.beginPath();
+        ctx.moveTo(this.x1, this.y1 - this.fenceHeight);
+        ctx.lineTo(this.x2, this.y2 - this.fenceHeight);
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "orange";
+        ctx.stroke();
+
+        // Calculate the total length of the fence line
+        let dx = this.x2 - this.x1;
+        let dy = this.y2 - this.y1;
+
+        // Determine the number of segments (number of poles minus one)
+        let maxSegmentLength = 50; // Maximum length between poles along the fence
+        let numberOfSegments = Math.ceil(this.length / maxSegmentLength);
+
+        // Calculate the actual segment length
+        let segmentLength = this.length / numberOfSegments;
+
+        // Calculate the unit vector along the fence line
+        let unitDx = dx / this.length;
+        let unitDy = dy / this.length;
+
+        // Draw vertical poles at start, end, and evenly spaced positions
+        for (let i = 0; i <= numberOfSegments; i++) {
+            // Position of the current pole
+            let x = this.x1 + unitDx * segmentLength * i;
+            let y = this.y1 + unitDy * segmentLength * i;
+
+            // Draw vertical pole at (x, y)
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y - this.fenceHeight);
+            ctx.strokeStyle = "orange";
+            ctx.stroke();
+        }
+
+        // Draw the continuous series of triangular flags along the top line
+        // Determine the number of flags needed along the fence
+        let flagCount = Math.ceil(this.length / this.flagWidth);
+        let actualFlagWidth = this.length / flagCount; // Adjust flag width to fit exactly along the fence
+
+        // Starting point for the flags (top left corner)
+        let startX = this.x1;
+        let startY = this.y1 - this.fenceHeight;
+
+        ctx.fillStyle = "orange";
+        ctx.beginPath();
+
+        // Move to the starting point
+        ctx.moveTo(startX, startY);
+
+        let xTop = 0;
+        let yTop = 0;
+        for (let i = 0; i <= flagCount; i++) {
+            // Calculate the position along the top line
+            let t = (i * actualFlagWidth) / this.length; // Parameter from 0 to 1
+            xTop = this.x1 + t * dx - unitDy * (0); // No offset perpendicular to the line
+            yTop = this.y1 + t * dy - unitDx * (0) - this.fenceHeight;
+
+            // Calculate the bottom point of the flag (hanging down)
+            let xBottom = xTop + unitDx;
+            let yBottom = yTop + this.flagHeight;
+
+            // Alternate between moving to top point and bottom point to create triangles
+            if (i % 2 === 0) {
+                // Even index: move to bottom point
+                ctx.lineTo(xBottom, yBottom);
+            } else {
+                // Odd index: move back to top point
+                ctx.lineTo(xTop, yTop);
+            }
+        }
+        ctx.lineTo(xTop, yTop);
+
+        // Close the path and fill
+        ctx.closePath();
+        ctx.fill();
+    }
+}
+
+
+
 export class FirstAid {
     constructor(x, y) {
         this.x = x;
@@ -177,6 +304,13 @@ export class TerrainManager {
         // Remove entities that are no longer relevant
         const removalThresholdY = this.camera.topOfScreen() - 50;;
         this.removeEntitiesByPosition(removalThresholdY);
+    }
+
+    addSkierBoundary(x1, y1, x2, y2) {
+        let skiBoundary = new SkiBoundary(x1, y1, x2, y2);
+        const index = this._findInsertIndex(skiBoundary.y1);
+        this.entities.splice(index, 0, skiBoundary);
+        return skiBoundary;
     }
 
 

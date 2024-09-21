@@ -14,40 +14,49 @@ class Renderer {
         this.mobManager.drawUnderMob(this.ctx);
         this.mobManager.drawUnderProjectile(this.ctx);
     
-        let i = 0; // Index for trees
-        let j = 0; // Index for mobs
-        let k = 0; // Index for projectiles
-
-        let trees = this.treeManager.entities;
-        let mobs = this.mobManager.mobs;
-        let projectiles = this.mobManager.projectiles;
+        // Copy lists to manipulate them
+        let trees = [...this.treeManager.entities];
+        let mobs = [...this.mobManager.mobs];
+        let projectiles = [...this.mobManager.projectiles];
         let characterInserted = false;
         const entitiesToDraw = [];
     
-        while (i < trees.length || j < mobs.length || k < projectiles.length || !characterInserted) {
-            let treeY = (i < trees.length) ? trees[i].y : Infinity;
-            let mobY = (j < mobs.length) ? mobs[j].y : Infinity;
-            let projectileY = (k < projectiles.length) ? projectiles[k].y : Infinity;
+        while (trees.length > 0 || mobs.length > 0 || projectiles.length > 0 || !characterInserted) {
+            // Determine the next entity to draw based on y-values
+            let nextTree = trees[0];
+            let nextMob = mobs[0];
+            let nextProjectile = projectiles[0];
             let characterY = (!characterInserted) ? this.character.y : Infinity;
     
-            // Determine the smallest y-value
+            let treeY = nextTree ? nextTree.y : Infinity;
+            let mobY = nextMob ? nextMob.y : Infinity;
+            let projectileY = nextProjectile ? nextProjectile.y : Infinity;
+    
+            // Find the smallest y-value
             let minY = Math.min(treeY, mobY, projectileY, characterY);
     
             if (minY === treeY) {
-                entitiesToDraw.push(trees[i]);
-                i++;
+                let tree = trees.shift(); // Remove the tree from the list
+                if (tree.type === "skiBoundary") {
+                    // Handle the skiBoundary
+                    this.processSkiBoundary(tree, mobs, projectiles, characterInserted, entitiesToDraw);
+                    // Update the characterInserted flag if needed
+                    if (this.characterInsertedDuringBoundary) {
+                        characterInserted = true;
+                    }
+                } else {
+                    // Regular tree
+                    entitiesToDraw.push(tree);
+                }
             } else if (minY === mobY) {
-                entitiesToDraw.push(mobs[j]);
-                j++;
+                entitiesToDraw.push(mobs.shift()); // Remove mob from list
             } else if (minY === projectileY) {
-                entitiesToDraw.push(projectiles[k]);
-                k++;
+                entitiesToDraw.push(projectiles.shift()); // Remove projectile from list
             } else if (minY === characterY) {
                 entitiesToDraw.push(this.character);
                 characterInserted = true;
             } else {
-                // Prevent infinite loop by breaking if no condition is met
-                console.error("No matching condition found. Breaking the loop to prevent infinite iteration.");
+                console.error("No matching condition found.");
                 break;
             }
         }
@@ -60,6 +69,77 @@ class Renderer {
         // Draw particle effects last
         this.particleEngine.draw(this.ctx);
     }
+
+    processSkiBoundary(skiBoundary, mobs, projectiles, characterInserted, entitiesToDraw) {
+        // Arrays to hold colliding entities
+        let collidingMobs = [];
+        let collidingProjectiles = [];
+        let collidingCharacter = null;
+    
+        // Use the couldCollide method of skiBoundary
+        // Since sizeX, sizeY, deltaY are zero, we can pass zeros
+    
+        // Separate colliding mobs
+        mobs = mobs.filter(mob => {
+            if (skiBoundary.couldCollide(mob.x, mob.y)) {
+                collidingMobs.push(mob);
+                return false; // Remove from mobs list
+            }
+            return true;
+        });
+    
+        // Separate colliding projectiles
+        projectiles = projectiles.filter(projectile => {
+            if (skiBoundary.couldCollide(projectile.x, projectile.y)) {
+                collidingProjectiles.push(projectile);
+                return false; // Remove from projectiles list
+            }
+            return true;
+        });
+    
+        // Check if character collides with the skiBoundary
+        let characterInsertedDuringBoundary = false;
+        if (!characterInserted && skiBoundary.couldCollide(this.character.x, this.character.y)) {
+            collidingCharacter = this.character;
+            characterInsertedDuringBoundary = true;
+        }
+    
+        // Combine all colliding entities
+        let collidingEntities = [...collidingMobs, ...collidingProjectiles];
+        if (collidingCharacter) {
+            collidingEntities.push(collidingCharacter);
+        }
+    
+        // Split entities into uphill and downhill
+        let uphillEntities = [];
+        let downhillEntities = [];
+    
+        for (let entity of collidingEntities) {
+            if (skiBoundary.isUphillFrom(entity.x, entity.y)) {
+                uphillEntities.push(entity);
+            } else {
+                downhillEntities.push(entity);
+            }
+        }
+    
+        // Sort uphill and downhill entities by y-coordinate
+        uphillEntities.sort((a, b) => a.y - b.y);
+        downhillEntities.sort((a, b) => a.y - b.y);
+    
+        // Add uphill entities to draw list
+        entitiesToDraw.push(...uphillEntities);
+    
+        // Draw the skiBoundary
+        entitiesToDraw.push(skiBoundary);
+    
+        // Add downhill entities to draw list
+        entitiesToDraw.push(...downhillEntities);
+    
+        // Update the characterInserted flag
+        this.characterInsertedDuringBoundary = characterInsertedDuringBoundary;
+    }
+    
+    
     
 }
 export default Renderer;

@@ -200,6 +200,32 @@ class Character {
                     this.health = Math.min(this.health + 30, this.maxHealth);
                     entity.claim();
                 }
+                if (entity.type == "skiBoundary") {
+                    // Compute the signed distance from the player to the boundary
+                    let distance = (this.x - entity.x1) * entity.normalX + (this.y - entity.y1) * entity.normalY;
+                
+                    // Compute the dot product of velocity and normal
+                    let dotProduct = this.skiPhysics.velocity.x * entity.normalX + this.skiPhysics.velocity.y * entity.normalY;
+                
+                    // Define a small threshold (epsilon) for proximity
+                    let epsilon = 10; // Adjust as necessary
+                    
+                    //console.log("Distance: " + distance.toFixed(2), "Dot product: " + dotProduct.toFixed(2));
+                    
+                    if (Math.abs(distance) <= epsilon && dotProduct * distance < 0) {
+                        console.log("Collided with ski boundary");
+                
+                        // Correct the player's position to be just outside the boundary
+                        let penetrationDepth = distance - epsilon;
+                        this.x -= penetrationDepth * entity.normalX;
+                        this.y -= penetrationDepth * entity.normalY;
+                
+                        // Remove the normal component from the velocity
+                        this.skiPhysics.velocity.x -= dotProduct * entity.normalX;
+                        this.skiPhysics.velocity.y -= dotProduct * entity.normalY;
+                    }
+                }
+                
             }
         }
         this.x = this.skiPhysics.x;

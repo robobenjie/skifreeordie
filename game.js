@@ -40,6 +40,12 @@ window.addEventListener('load', function () {
     //mobManager.spawnAxeOrc();
     mobManager.spawnGoblin();
 
+    for (let i = 0; i < 100; i++) {
+        treeManager.addSkierBoundary(-30 + -i*10, i*50, -30 + -(i+1)*10, (i+1)*50);
+    }
+
+
+
 
     function update(time) {
         let dt = (time - lastTime) / 1000.0;
@@ -47,7 +53,6 @@ window.addEventListener('load', function () {
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         requestAnimationFrame(update); // Request the next frame
-        
 
         // Game Not Paused:
         gameTime += dt;
