@@ -5,6 +5,7 @@ import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
+import { GreenCircle, BlueSquareSnowBoarder} from './level.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -36,14 +37,8 @@ window.addEventListener('load', function () {
         lastTime = performance.now();
     }
 
-    let lastGoblinSpawn = 0;
-    //mobManager.spawnAxeOrc();
-    mobManager.spawnGoblin();
-
-    treeManager.addSkierBoundary(-30, -30, 500, 1000);
-    treeManager.addSkierBoundary(80, -30, 580, 1000);
-
-
+    let level = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
+    level.start();
 
 
     function update(time) {
@@ -53,21 +48,15 @@ window.addEventListener('load', function () {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         requestAnimationFrame(update); // Request the next frame
 
+        if (level.isComplete()) {
+            console.log("Level Complete");
+            console.log("time", level.time);
+        }
+
         // Game Not Paused:
         gameTime += dt;
 
-        if (gameTime - lastGoblinSpawn > 0.1) {
-            if (mobManager.numGoblins() < 15) {
-                mobManager.spawnGoblin();
-            }
-            if (mobManager.numAxeOrcs() < 2) {
-                mobManager.spawnAxeOrc();
-            }
-            if (mobManager.numSpearOrcs() < 1) {
-                mobManager.spawnSpearOrc();
-            }
-            lastGoblinSpawn = gameTime;
-        }   
+        level.update(dt);
 
         character.update(dt, ctx);
         camera.update(dt);

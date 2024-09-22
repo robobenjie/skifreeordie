@@ -19,8 +19,6 @@ export class Tree {
         ctx.fill();
         ctx.restore();
     }
-
-    
 }
 
 export class SkiBoundary {
@@ -234,6 +232,15 @@ export class TerrainManager {
         this.accumulatedExposedAreaX = 0;
         this.accumulatedExposedAreaJumpRampY = 0;
         this.accumulatedExposedAreaFirstAidY = 0;
+    }
+
+    setTreePercentage(percentage) {
+        this.treeDensityY = 64000 / percentage;
+        this.treeDensityX = 64000 / percentage;
+    }
+
+    setJumpRampPercentage(percentage) {
+        this.jumpRampDensityY = 120000 / percentage;
     }
 
     /**
