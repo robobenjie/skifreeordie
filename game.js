@@ -5,7 +5,7 @@ import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
-import { GreenCircle, BlueSquareSnowBoarder} from './level.js';
+import { GreenCircle, BlueSquareSnowBoarder, JumpLand} from './level.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -29,7 +29,6 @@ window.addEventListener('load', function () {
         canvas.height = window.innerHeight;
         character.x = canvas.width / 2;
         character.y = canvas.height / 4;
-        treeManager.onCanvasResize(canvas);
     }
 
     // resetOnFocus
@@ -37,7 +36,7 @@ window.addEventListener('load', function () {
         lastTime = performance.now();
     }
 
-    let level = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
+    let level = new JumpLand(treeManager, mobManager, camera, character);
     level.start();
 
 

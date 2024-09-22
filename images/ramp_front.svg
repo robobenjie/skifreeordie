@@ -8,7 +8,7 @@
    version="1.1"
    id="svg1"
    inkscape:version="1.3.2 (091e20e, 2023-11-25)"
-   sodipodi:docname="ramp.svg"
+   sodipodi:docname="ramp_front.svg"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -91,17 +91,17 @@
        x="0"
        y="0" />
     <path
-       style="fill:url(#linearGradient19);fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
+       style="display:none;fill:url(#linearGradient19);fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
        d="M 8.2619696,74.983233 C 106.25087,97.068151 204.23975,93.592153 302.22862,72.079947 l -22.09165,104.578943 -40.95972,9.55689 -169.521376,1.36527 -40.253047,-39.08106 -17.205261,-29.5463 z"
        id="path18"
        sodipodi:nodetypes="cccccccc" />
     <path
-       style="fill:#d8d8e4;fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
+       style="display:none;fill:#d8d8e4;fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
        d="m 237.51971,220.19675 1.65752,-43.53786 c 53.91922,-42.44051 63.14323,-115.721385 63.0514,-104.578942 -2.66961,16.907642 0,61.999302 -22.09165,104.578942 -11.14741,21.48563 -26.49328,44.88153 -42.61727,43.53786 z"
        id="path17"
        sodipodi:nodetypes="ccssc" />
     <path
-       style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
+       style="display:none;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:3.249;stroke-linecap:square;stroke-dasharray:none"
        d="m 72.970892,223.10003 -1.65752,-43.53786 C 17.394152,137.12167 8.1701397,63.840792 8.2619697,74.983235 c 2.6696103,16.907642 0,61.999305 22.0916523,104.578935 11.14741,21.48563 26.49328,44.88153 42.61727,43.53786 z"
        id="path17-9"
        sodipodi:nodetypes="ccssc" />

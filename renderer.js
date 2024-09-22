@@ -9,6 +9,11 @@ class Renderer {
 
     render() {
         // Draw ground effects first
+        for (let entity of this.treeManager.entities) {
+            if (entity.drawSnow) {
+                entity.drawSnow(this.ctx);
+            }
+        }
         this.character.drawTrail(this.ctx);
         this.character.drawShadow(this.ctx);
         this.mobManager.drawUnderMob(this.ctx);

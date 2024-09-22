@@ -63,7 +63,7 @@ export class Level {
         if (y > this.length) {
             console.log("Level Complete");
             console.log("time", this.time);
-            
+
         }
     }
 }
@@ -84,6 +84,17 @@ export class GreenCircle extends Level {
                 this.spearOrcs.push(y);
             }
         }
+    }
+}
+
+export class JumpLand extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(1200, 25, terrainManager, MobManager, camera, character);
+        this.LevelDifficulty = LevelDifficulty.GREEN_CIRCLE;
+        this.terrainManager.setTreePercentage(0.2);
+        this.terrainManager.setJumpRampPercentage(3);
+        this.yPerGoblin = 50;
+
     }
 }
 
