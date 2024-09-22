@@ -3,7 +3,8 @@ import SkiPhysics from "./skiPhysics.js";
 
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick) {
-        this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager);
+        this.mass = 100;
+        this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager, this.mass);
         this.skiPhysics.maxTurnRate = 5.0;
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
@@ -19,7 +20,6 @@ class Character {
         this.joystick = joystick;
         this.maxHealth = 100;
         this.maxUphillAngle = 25 * Math.PI / 180;
-        this.mass = 100;
         this.COR = 0.5;
 
         this.targetSkiAngle = this.skiPhysics.skiAngle;

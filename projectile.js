@@ -26,8 +26,11 @@ export class Projectile {
     }
 
     onCollision(entity) {
-        entity.damage(this.damage);
-        this.active = false;
+        if (!entity.skiPhysics.isJumping()) {
+            entity.damage(this.damage);
+            entity.skiPhysics.bumpX(this.velocity, this.damage * 5);
+            this.active = false;
+        }
     }
 
     collides(entity) {

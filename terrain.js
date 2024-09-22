@@ -157,6 +157,7 @@ export class FirstAid {
         this.type = "firstAid";
         this.image = new Image();
         this.image.src = this.image_uri;
+        this.loaded = false;
         this.image.onload = () => {
             this.loaded = true;
         }
@@ -182,21 +183,25 @@ export class JumpRamp {
         this.x = x;
         this.y = y;
         this.type = "jumpRamp";
+        this.image = new Image();
+        this.image.src = "images/ramp.svg";
         this.width = 50;
         this.height = 7;
-        this.rainbowColors = [
-            "#FF0000", "#FFA500", "#FFFF00", "#008000", "#0000FF", "#4B0082", "#8B008B"
-        ];
+        this.loaded = false;
+        this.image.onload = () => {
+            this.loaded = true;
+        }
     }
 
   
     draw(ctx) {
         // draw a rainbow colored jump ramp
-        const stripeHeight = this.height / this.rainbowColors.length;
-        for (let i = 0; i < this.rainbowColors.length; i++) {
-            ctx.fillStyle = this.rainbowColors[i];
-            ctx.fillRect(this.x - this.width / 2, this.y + i * stripeHeight, this.width, stripeHeight);
-        }
+        const imageRatio = this.image.width / this.image.height;
+        const imageWidth = this.width * 1.25;
+        const imageHeight = this.width / imageRatio;
+        const rampLevel = 27;
+        ctx.drawImage(this.image, this.x - imageWidth / 2, this.y - imageHeight + rampLevel, imageWidth, imageHeight);
+        
     }
 }
 

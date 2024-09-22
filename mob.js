@@ -181,7 +181,7 @@ class AxeBoarderOrc extends Mob {
         super(x, y, vx, vy, 5, 8, 25, 'orange', character);
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass);
         this.skiPhysics.setIsSnowboard(true);
         this.skiPhysics.skiWidth = 6;
         this.skiSpacing = 0;
@@ -319,7 +319,7 @@ class SpearOrc extends Mob {
         super(x, y, vx, vy, 5, 15, 25, 'black', character);
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 2;
         } else {
@@ -410,7 +410,7 @@ class Goblin extends Mob {
 
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 6;
         } else {

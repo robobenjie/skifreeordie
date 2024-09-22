@@ -12,98 +12,8 @@ const CharacterState = {
     JUMPING: 1,
 };
 
-class Trail{
-    constructor(isSnowboard){
-        this.leftFrontTrail = [];
-        this.rightFrontTrail = [];
-        this.leftRearTrail = [];
-        this.rightRearTrail = [];
-        this.color = "#E8E8F0"
-        this.trailResolutionPx = 10;
-        this.trailLen = 500;
-        this.isSnowboard = isSnowboard;
-        this.skiWidth = 1;
-    }
-    update(character){
-        const leftSkiCenter = character.leftSkiCenter();
-        this.skiWidth = character.skiWidth;
-        const rightSkiCenter = character.rightSkiCenter();
-        const newFrontLeft = { x: leftSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y };
-        if (this.leftFrontTrail.length == 0 
-            || Math.abs(newFrontLeft.y - this.leftFrontTrail[this.leftFrontTrail.length - 1].y) > this.trailResolutionPx
-            || Math.abs(newFrontLeft.x - this.leftFrontTrail[this.leftFrontTrail.length - 1].x) > this.trailResolutionPx
-        ) {
-            this.leftFrontTrail.push(newFrontLeft);
-            this.leftRearTrail.push({ x: leftSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
-            if (!this.isSnowboard) {
-                this.rightFrontTrail.push({ x: rightSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y });
-                this.rightRearTrail.push({ x: rightSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
-            }
-
-            // limit to 100 points
-            if (this.leftFrontTrail.length > 500) {
-                this.leftFrontTrail.shift();
-                this.leftRearTrail.shift();
-                if (!this.isSnowboard) {
-                    this.rightFrontTrail.shift();
-                    this.rightRearTrail.shift();
-                }
-            }
-        }
-    }
-
-    draw(ctx){
-        // Draw the left trail:
-        if (this.leftFrontTrail.length < 2) {
-            return;
-        }
-        ctx.beginPath();
-        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
-        for (let i = 1; i < this.leftFrontTrail.length; i++) {
-            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
-        }
-        // backwards on leftBackTrail
-        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = this.skiWidth/2;
-        ctx.stroke();
-        if (this.isSnowboard) {
-            return
-        }
-
-        // Draw the right trail:
-        ctx.beginPath();
-        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
-        for (let i = 1; i < this.rightFrontTrail.length; i++) {
-            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
-        }
-        // backwards on rightBackTrail
-        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
-            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
-        }
-        ctx.closePath();
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = this.skiWidth/2;
-        ctx.stroke();
-    }
-
-    isOffScreen(character){
-        if (this.leftFrontTrail.length == 0) {
-            return false;
-        }
-        return this.leftFrontTrail[this.leftFrontTrail.length - 1].y < character.y - 1000;
-    }
-}
-
 class SkiPhysics {
-    constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager) {
+    constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass) {
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -112,6 +22,7 @@ class SkiPhysics {
         this.skiWidth = 1;
         this.skiSpacing = 10;
         this.isSnowboard = false;
+        this.mass = mass;
 
         this.terrainManager = terrainManager;
 
@@ -122,7 +33,7 @@ class SkiPhysics {
         this.steering = 0.95;
 
         this.maxInAirTurnRate = 7.5
-        this.maxTurnRate = 3.5;
+        this.maxTurnRate = 3.0;
 
         this.stompSprayFactor = 10;
         this.sprayFactor = 1;
@@ -169,6 +80,21 @@ class SkiPhysics {
             this.currFloatDrag = this.floatDrag;
             this.zVelocity = jumpVel;
         }
+    }
+
+    bump(velocity, mass) {
+        this.velocity.x += velocity.x * mass / this.mass;
+        this.velocity.y += velocity.y * mass / this.mass
+        this.skiAngle += 3 * mass / this.mass * velocity.x > 0 ? 1 : -1;
+    }
+
+    bumpX(velocity, mass) {
+        this.velocity.x += velocity.x * mass / this.mass
+        this.skiAngle += 3 * mass / this.mass * velocity.x > 0 ? 1 : -1;
+    }
+
+    setVelocity(velocity) {
+        this.velocity = velocity;
     }
 
     rampJump() {
@@ -332,10 +258,6 @@ class SkiPhysics {
         }
     }
 
-    setVelocity(velocity) {
-        this.velocity = velocity;
-    }
-
     getSnowboardAngle(targetAngle) {
         // Normalize the angles
         let currentAngle = normalize(this.skiAngle);
@@ -446,6 +368,97 @@ function normalize(angle) {
 function angleDifference(a, b) {
     let diff = a - b;
     return Math.atan2(Math.sin(diff), Math.cos(diff));
+}
+
+
+class Trail{
+    constructor(isSnowboard){
+        this.leftFrontTrail = [];
+        this.rightFrontTrail = [];
+        this.leftRearTrail = [];
+        this.rightRearTrail = [];
+        this.color = "#E8E8F0"
+        this.trailResolutionPx = 10;
+        this.trailLen = 500;
+        this.isSnowboard = isSnowboard;
+        this.skiWidth = 1;
+    }
+    update(character){
+        const leftSkiCenter = character.leftSkiCenter();
+        this.skiWidth = character.skiWidth;
+        const rightSkiCenter = character.rightSkiCenter();
+        const newFrontLeft = { x: leftSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y };
+        if (this.leftFrontTrail.length == 0 
+            || Math.abs(newFrontLeft.y - this.leftFrontTrail[this.leftFrontTrail.length - 1].y) > this.trailResolutionPx
+            || Math.abs(newFrontLeft.x - this.leftFrontTrail[this.leftFrontTrail.length - 1].x) > this.trailResolutionPx
+        ) {
+            this.leftFrontTrail.push(newFrontLeft);
+            this.leftRearTrail.push({ x: leftSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: leftSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
+            if (!this.isSnowboard) {
+                this.rightFrontTrail.push({ x: rightSkiCenter.x + character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y + character.skiLength/2 * character.skiUnitVector.y });
+                this.rightRearTrail.push({ x: rightSkiCenter.x - character.skiLength/2 * character.skiUnitVector.x, y: rightSkiCenter.y - character.skiLength/2 * character.skiUnitVector.y });
+            }
+
+            // limit to 100 points
+            if (this.leftFrontTrail.length > 500) {
+                this.leftFrontTrail.shift();
+                this.leftRearTrail.shift();
+                if (!this.isSnowboard) {
+                    this.rightFrontTrail.shift();
+                    this.rightRearTrail.shift();
+                }
+            }
+        }
+    }
+
+    draw(ctx){
+        // Draw the left trail:
+        if (this.leftFrontTrail.length < 2) {
+            return;
+        }
+        ctx.beginPath();
+        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
+        for (let i = 1; i < this.leftFrontTrail.length; i++) {
+            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+        }
+        // backwards on leftBackTrail
+        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.skiWidth/2;
+        ctx.stroke();
+        if (this.isSnowboard) {
+            return
+        }
+
+        // Draw the right trail:
+        ctx.beginPath();
+        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
+        for (let i = 1; i < this.rightFrontTrail.length; i++) {
+            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
+        }
+        // backwards on rightBackTrail
+        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
+            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.skiWidth/2;
+        ctx.stroke();
+    }
+
+    isOffScreen(character){
+        if (this.leftFrontTrail.length == 0) {
+            return false;
+        }
+        return this.leftFrontTrail[this.leftFrontTrail.length - 1].y < character.y - 1000;
+    }
 }
 
 export default SkiPhysics;
