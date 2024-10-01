@@ -3,6 +3,7 @@ import SkiPhysics from "./skiPhysics.js";
 
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick) {
+        this.level = undefined;
         this.mass = 100;
         this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager, this.mass);
         this.skiPhysics.maxTurnRate = 5.0;
@@ -158,6 +159,10 @@ class Character {
 
     update(dt, ctx) {
 
+        if (this.level != undefined) {
+            this.level.update(dt);
+        }
+
         if (this.joystick.isActive) {
             this.targetSkiAngle = Math.atan2(this.joystick.currVals.y, this.joystick.currVals.x) + Math.PI / 2;
         }
@@ -225,7 +230,10 @@ class Character {
                         this.skiPhysics.velocity.y -= dotProduct * entity.normalY;
                     }
                 }
-                
+                if (entity.type == "skiRunSign") {
+                    this.level = entity.level;
+                    this.level.start();
+                }
             }
         }
         this.x = this.skiPhysics.x;

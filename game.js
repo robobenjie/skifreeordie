@@ -5,7 +5,7 @@ import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
-import { GreenCircle, BlueSquareSnowBoarder, JumpLand} from './level.js';
+import { GreenCircle, BlueSquareSnowBoarder, JumpLand, BlackDiamondSnowBoarder} from './level.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -36,8 +36,15 @@ window.addEventListener('load', function () {
         lastTime = performance.now();
     }
 
-    let level = new JumpLand(treeManager, mobManager, camera, character);
-    level.start();
+    let level1 = new GreenCircle(treeManager, mobManager, camera, character);
+    let level2 = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
+    let level3 = new BlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
+    character.update(0.01, ctx);
+    camera.update(0.01);
+    treeManager.addLevelSelect(level1, level2, level3);
+    //level.start();
+
+    let level = undefined;
 
 
     function update(time) {
@@ -47,15 +54,16 @@ window.addEventListener('load', function () {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         requestAnimationFrame(update); // Request the next frame
 
-        if (level.isComplete()) {
-            console.log("Level Complete");
-            console.log("time", level.time);
-        }
-
         // Game Not Paused:
         gameTime += dt;
 
-        level.update(dt);
+        if (level) {
+            level.update(dt);
+            if (level.isComplete()) {
+                console.log("Level Complete");
+                console.log("time", level.time);
+            }
+        }
 
         character.update(dt, ctx);
         camera.update(dt);

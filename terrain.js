@@ -96,6 +96,21 @@ export class TerrainManager {
         this.removeEntitiesByPosition(removalThresholdY);
     }
 
+    addLevelSelect(level1, level2, level3) {
+        const y = this.camera.offBottomOfScreen().y + 400;
+        const centerX = this.camera.character.x;
+        const spacing = 180; // Adjust this value to change the spacing between signs
+
+        this.addSkiRunSign(centerX - spacing, y, level1);
+        this.addSkiRunSign(centerX, y, level2);
+        this.addSkiRunSign(centerX + spacing, y, level3);
+        this.addTreeLine(centerX - spacing * 1.5, y, centerX - spacing * 3.5, y + 400, 90, .04);
+        this.addTreeLine(centerX - spacing * 0.5, y, centerX - spacing * 1.5, y + 600, 120, .02);
+        this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 90, .04);
+        this.addTreeLine(centerX + spacing * 1.5, y, centerX + spacing * 4.5, y + 400, 120, .02);
+
+    }
+
     addSkierBoundary(x1, y1, x2, y2) {
         const len = Math.hypot(x2 - x1, y2 - y1);
         if (len > 50) {
@@ -130,6 +145,34 @@ export class TerrainManager {
             }
         }
         return low;
+    }
+
+    addTreeLine(x1, y1, x2, y2, maxWidth, density) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        
+        const numTrees = Math.floor(length * maxWidth * density / 100); // Adjust this factor as needed
+        
+        for (let i = 0; i < numTrees; i++) {
+            const t = i / (numTrees - 1);
+            const distanceFromMidpoint = Math.abs(t - 0.5) * 2;
+            const currentWidth = maxWidth * (1 - distanceFromMidpoint);
+            
+            const treeX = x1 + t * dx + (Math.random() - 0.5) * currentWidth;
+            const treeY = y1 + t * dy + (Math.random() - 0.5) * currentWidth;
+            
+            // Only add the tree if it's within the diamond shape
+            if (Math.abs(treeX - (x1 + t * dx)) <= currentWidth / 2) {
+                this.addTree(treeX, treeY);
+            }
+        }
+    }
+
+    addSkiRunSign(x, y, level) {
+        var sign = new SkiRunSign(x, y, level);
+        const index = this._findInsertIndex(sign.y);
+        this.entities.splice(index, 0, sign);
     }
 
     // Insert a tree in sorted order by position.y
@@ -225,6 +268,53 @@ export class Tree {
         ctx.lineTo(this.x + this.width/2 + 15, this.y - this.height);
         ctx.lineTo(this.x + this.width/2 - 15, this.y - this.height);
         ctx.fill();
+        ctx.restore();
+    }
+}
+
+export class SkiRunSign {
+    constructor(x, y, level) {
+        this.x = x;
+        this.y = y;
+        this.level = level;
+        this.image = level.signImages[level.LevelDifficulty];
+        this.width = 175;
+        this.height = 20;
+        this.type = "skiRunSign";
+
+        // Fractional text to avoid anti-aliasing issues
+        this.signTextX = 64.01;
+        this.signTextY = 20.01;
+        this.rightBuffer = 8;
+    }
+
+    draw(ctx) {
+        // Calculate the scale factor to maintain aspect ratio
+        const scaleFactor = 175 / this.image.width;
+        const scaledHeight = this.image.height * scaleFactor;
+
+        // Draw the scaled image
+        ctx.drawImage(this.image, this.x - this.width / 2, this.y - scaledHeight, this.width, scaledHeight);
+
+
+        // Draw the level name
+        ctx.save();
+        ctx.translate(this.x + this.signTextX - this.width / 2, (this.y - scaledHeight) + this.signTextY);
+        ctx.font = "16px 'Roboto Condensed'";
+        ctx.fillStyle = "white";
+        
+        // Measure the text width
+        let textWidth = ctx.measureText(this.level.name).width;
+        
+        // Calculate the scale factor to fit the text
+        let maxWidth = this.width - this.signTextX - this.rightBuffer;
+        let textScaleFactor = Math.min(1, maxWidth / textWidth);
+        
+        // Apply the scaling
+        ctx.scale(textScaleFactor, textScaleFactor);
+        
+        // Draw the text
+        ctx.fillText(this.level.name, 0, 0)
         ctx.restore();
     }
 }
@@ -425,19 +515,19 @@ export class JumpRamp {
     }
 }
 
-function _isColliding(tree, box) {
-    const treeBox = {
-        left: tree.x - tree.width / 2,
-        right: tree.x + tree.width / 2,
-        top: tree.y - tree.height / 2,
-        bottom: tree.y + tree.height / 2
+function _isColliding(entity, box) {
+    const entityBox = {
+        left: entity.x - entity.width / 2,
+        right: entity.x + entity.width / 2,
+        top: entity.y - entity.height / 2,
+        bottom: entity.y + entity.height / 2
     };
 
     // Check if the boxes overlap in both X and Y directions
-    return !(treeBox.left > box.right || 
-             treeBox.right < box.left || 
-             treeBox.top > box.bottom || 
-             treeBox.bottom < box.top);
+    return !(entityBox.left > box.right || 
+             entityBox.right < box.left || 
+             entityBox.top > box.bottom || 
+             entityBox.bottom < box.top);
 }
 
 export default TerrainManager;
