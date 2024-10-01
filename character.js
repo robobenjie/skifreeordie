@@ -157,10 +157,18 @@ class Character {
         }
     }
 
+    startedRun() {
+        if (this.level == undefined){
+            return false;
+        }
+        return !this.level.isComplete();
+    }
+
     update(dt, ctx) {
 
         if (this.level != undefined) {
             this.level.update(dt);
+
         }
 
         if (this.joystick.isActive) {

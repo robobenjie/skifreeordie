@@ -5,7 +5,7 @@ import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
-import { GreenCircle, BlueSquareSnowBoarder, JumpLand, BlackDiamondSnowBoarder} from './level.js';
+import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty} from './level.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -38,11 +38,20 @@ window.addEventListener('load', function () {
 
     let level1 = new GreenCircle(treeManager, mobManager, camera, character);
     let level2 = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
-    let level3 = new BlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
+    let level3 = new DoubleBlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
     character.update(0.01, ctx);
     camera.update(0.01);
-    treeManager.addLevelSelect(level1, level2, level3);
+    //treeManager.addLevelSelect(level1, level2, level3);
     //level.start();
+
+    treeManager.setGetLevelsCallback(() => {
+        let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
+        return [
+            new randomLevels[0](treeManager, mobManager, camera, character),
+            new randomLevels[1](treeManager, mobManager, camera, character),
+            new randomLevels[2](treeManager, mobManager, camera, character)
+        ]
+    });
 
     let level = undefined;
 

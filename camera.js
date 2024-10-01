@@ -10,7 +10,6 @@ export class Camera {
         this.y = 0;
         this.scale = 1;
         this.targetScale = 1;
-        this.levelSelected = false;
     }
 
     update(dt) {
@@ -24,20 +23,12 @@ export class Camera {
         this.x += this.velocity.x * dt;
         this.y += this.velocity.y * dt;
 
-        if (this.levelSelected) {
+        if (this.character.startedRun()) {
             this.targetScale = 0.8 + 0.5 * Math.abs(this.character.velocity.y) / 500;
         } else {
             this.targetScale = 1.5;
         }
         this.scale += (this.targetScale - this.scale) * 1.3 * dt;
-    }
-
-    setLevelStarted() {
-        this.levelSelected = true;
-    }
-
-    setLevelComplete() {
-        this.levelSelected = false;
     }
 
     applyTransform(ctx) {

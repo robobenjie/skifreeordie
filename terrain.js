@@ -1,3 +1,4 @@
+import { getThreeLevels, LevelDifficulty } from "./level.js";
 export class TerrainManager {
     constructor(canvas) {
         this.entities = [];
@@ -15,6 +16,8 @@ export class TerrainManager {
         this.accumulatedExposedAreaX = 0;
         this.accumulatedExposedAreaJumpRampY = 0;
         this.accumulatedExposedAreaFirstAidY = 0;
+
+        this.lastPlacedLevelSelect = 0;
     }
 
     setTreePercentage(percentage) {
@@ -43,6 +46,28 @@ export class TerrainManager {
             console.warn("Camera not set for TerrainManager.");
             return;
         }
+
+        if (this.camera.character.startedRun()) {
+            this.lastPlacedLevelSelect = this.camera.y;
+        } else {
+            if (this.camera.y - this.lastPlacedLevelSelect > 1000) {
+                // Check if there are any skirun start signs below the top of the screen
+                const topOfScreen = this.camera.topOfScreen();
+                for (let i = 0; i < this.entities.length; i++) {
+                    if (this.entities[i].type === 'skiRunSign' && this.entities[i].y > topOfScreen) {
+                        return;
+                    }
+                }
+                let nextLevels = this.getLevelsCallback();   
+                this.addLevelSelect(
+                    nextLevels[0],
+                    nextLevels[1],
+                    nextLevels[2]
+                );
+                this.lastPlacedLevelSelect = this.camera.y;
+            }
+        }
+
 
         // Calculate exposed areas (pixels²) based on camera movement and scale
         const exposedAreaY = this.camera.getExposedAreaY() * dt; // Vertical exposed area per second
@@ -94,6 +119,10 @@ export class TerrainManager {
         // Remove entities that are no longer relevant
         const removalThresholdY = this.camera.topOfScreen() - 50;;
         this.removeEntitiesByPosition(removalThresholdY);
+    }
+
+    setGetLevelsCallback(callback) {
+        this.getLevelsCallback = callback;
     }
 
     addLevelSelect(level1, level2, level3) {

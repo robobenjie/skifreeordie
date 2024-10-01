@@ -1,4 +1,4 @@
-const LevelDifficulty  = {
+export const LevelDifficulty  = {
     GREEN_CIRCLE: 0,
     BLUE_SQUARE: 1,
     BLACK_DIAMOND: 2,
@@ -91,7 +91,6 @@ export class Level {
         this.time = 0;
         this.terrainManager.setTreePercentage(this.treePercentage);
         this.terrainManager.setJumpRampPercentage(this.jumpRampPercentage);
-        this.camera.setLevelStarted();
     }
 
     isComplete() {
@@ -125,7 +124,6 @@ export class Level {
         if (y > this.length) {
             console.log("Level Complete");
             console.log("time", this.time);
-            this.camera.setLevelComplete();
         }
     }
 }
@@ -152,9 +150,37 @@ export class JumpLand extends Level {
     constructor(terrainManager, MobManager, camera, character) {
         super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.2;
-        this.jumpRampPercentage = 0.3;
+        this.jumpRampPercentage = 1.2;
         this.yPerGoblin = 50;
 
+    }
+}
+
+export class BabyGoblins extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        this.treePercentage = 0.2;
+        this.jumpRampPercentage = 0.3;
+        this.yPerGoblin = 150;
+    }
+}
+
+
+export class BlueSquare extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        this.treePercentage = 0.5;
+        this.jumpRampPercentage = 0.5;
+        this.yPerGoblin = 50;
+
+        const spawnYs = [100,120, 300, 400,440,445, 600];
+        for (let y of spawnYs) {
+            if (Math.random() < 0.5) {
+                this.axeOrcs.push(y);
+            } else {
+                this.spearOrcs.push(y);
+            }
+        }
     }
 }
 
@@ -173,9 +199,44 @@ export class BlueSquareSnowBoarder extends Level {
     }
 }
 
-export class BlackDiamondSnowBoarder extends Level {
+
+export class BlueSquareSpearOrks extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.TRIPLE_BLACK_DIAMOND);
+        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+
+        this.treePercentage = 1.0;
+        this.jumpRampPercentage = 1.0;
+        this.yPerGoblin = 20;
+
+        const spawnYs = [100, 110, 500, 520];
+        for (let y of spawnYs) {
+            this.spearOrcs.push(y);
+        }
+    }
+}
+
+
+export class BlackDiamond extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
+        this.treePercentage = 1;
+        this.jumpRampPercentage = 0.5;
+        this.yPerGoblin = 20;
+
+        const spawnYs = [100,110,111, 300,320,330, 400, 450, 600];
+        for (let y of spawnYs) {
+            if (Math.random() < 0.5) {
+                this.axeOrcs.push(y);
+            } else {
+                this.spearOrcs.push(y);
+            }
+        }
+    }
+}
+
+export class DoubleBlackDiamondSnowBoarder extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
 
         this.treePercentage = 2.0;
         this.jumpRampPercentage = 0.4;
@@ -186,6 +247,46 @@ export class BlackDiamondSnowBoarder extends Level {
             this.axeOrcs.push(y);
         }
     }
+}
+
+const LevelsByDifficulty = new Map([
+    [LevelDifficulty.GREEN_CIRCLE, [GreenCircle, BabyGoblins, JumpLand]],
+    [LevelDifficulty.BLUE_SQUARE, [BlueSquare, BlueSquareSnowBoarder, BlueSquareSpearOrks]],
+    [LevelDifficulty.BLACK_DIAMOND, [BlackDiamond]],
+    [LevelDifficulty.DOUBLE_BLACK_DIAMOND, [DoubleBlackDiamondSnowBoarder]],
+    [LevelDifficulty.TRIPLE_BLACK_DIAMOND, [DoubleBlackDiamondSnowBoarder]]
+]);
+
+export function getRandomLevel(difficulty) {
+    const levels = LevelsByDifficulty.get(difficulty);
+    return new levels[Math.floor(Math.random() * levels.length)](terrainManager, MobManager, camera, character);
+}
+
+export function getThreeLevels(difficulty) {
+    const levels = [];
+    const difficulties = Array.from(LevelsByDifficulty.keys());
+    const currentIndex = difficulties.indexOf(difficulty);
+
+    for (let i = 0; i < 3; i++) {
+        let selectedDifficulty;
+        const rand = Math.random();
+
+        if (rand < 0.7) {
+            selectedDifficulty = difficulty;
+        } else if (rand < 0.85 && currentIndex > 0) {
+            selectedDifficulty = difficulties[currentIndex - 1];
+        } else if (currentIndex < difficulties.length - 1) {
+            selectedDifficulty = difficulties[currentIndex + 1];
+        } else {
+            selectedDifficulty = difficulty;
+        }
+
+        const availableLevels = LevelsByDifficulty.get(selectedDifficulty);
+        const RandomLevel = availableLevels[Math.floor(Math.random() * availableLevels.length)];
+        levels.push(RandomLevel);
+    }
+
+    return levels;
 }
 
 export default Level;
