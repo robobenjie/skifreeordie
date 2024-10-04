@@ -26,7 +26,11 @@ export class Camera {
         if (this.character.startedRun()) {
             this.targetScale = 0.8 + 0.5 * Math.abs(this.character.velocity.y) / 500;
         } else {
-            this.targetScale = 1.5;
+            if (this.character.velocity.y > 1) {
+                this.targetScale = 1.5;
+            } else {
+                this.targetScale = 0.8;
+            }
         }
         this.scale += (this.targetScale - this.scale) * 1.3 * dt;
     }

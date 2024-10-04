@@ -1,3 +1,4 @@
+import { fetchSVG, interpolateSVG, svgToImage } from './svg_interpolation.js';
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import { Camera } from './camera.js';
@@ -22,7 +23,18 @@ window.addEventListener('load', function () {
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
 
+    let svgText;
+    let characterImg;
 
+    // Fetch the SVG outside the update loop
+    (async () => {
+        try {
+            //svgText = await fetchSVG('images/character.svg');
+            //console.log('SVG loaded successfully');
+        } catch (error) {
+            console.error('Error loading SVG:', error.message);
+        }
+    })();
 
     function resizeCanvas() {
         canvas.width = window.innerWidth;
@@ -55,16 +67,30 @@ window.addEventListener('load', function () {
 
     let level = undefined;
 
-
     function update(time) {
         let dt = (time - lastTime) / 1000.0;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-        requestAnimationFrame(update); // Request the next frame
 
         // Game Not Paused:
         gameTime += dt;
+
+        // Interpolate and draw the SVG
+        if (svgText) {
+            const interpolationFactor = gameTime % 1; // This will cycle between 0 and 1
+            const interpolatedSVG = interpolateSVG(svgText, "angle_2", "angle_1", interpolationFactor);
+            
+            svgToImage(interpolatedSVG).then(img => {
+                characterImg = img;
+            }).catch(error => {
+                console.error('Error converting SVG to image:', error.message);
+            });
+
+            if (characterImg) {
+                ctx.drawImage(characterImg, 100, 100, 30, 50);
+            }
+        }
 
         if (level) {
             level.update(dt);
@@ -89,12 +115,13 @@ window.addEventListener('load', function () {
         character.drawHealthBar(ctx);
         lastTime = time;
 
-
+        requestAnimationFrame(update);
     }
-     // Resize the canvas to fill browser window dynamically
-     window.addEventListener('resize', resizeCanvas, false);
 
-     // Initial call to set the canvas size correctly and start the update loop
-     resizeCanvas();
-     requestAnimationFrame(update);
+    // Resize the canvas to fill browser window dynamically
+    window.addEventListener('resize', resizeCanvas, false);
+
+    // Initial call to set the canvas size correctly and start the update loop
+    resizeCanvas();
+    requestAnimationFrame(update);
 });
