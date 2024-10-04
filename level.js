@@ -124,6 +124,7 @@ export class Level {
         if (y > this.length) {
             console.log("Level Complete");
             console.log("time", this.time);
+            this.mobManager.notifyLevelComplete();
         }
     }
 }

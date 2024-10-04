@@ -64,6 +64,9 @@ class MobManager {
         this.projectiles = this.projectiles.filter(projectile => projectile.active);
 
         for (let mob of this.mobs) {
+            if (mob.shouldBackOff && this.camera.distanceOffScreenY(mob.y) < - 100) {
+                mob.health = 0;
+            }
             mob.update(dt);
         }
         for (let projectile of this.projectiles) {
@@ -78,6 +81,12 @@ class MobManager {
         // Sort by mob.y
         this.mobs.sort((a, b) => a.y - b.y);
         this.projectiles.sort((a, b) => a.y - b.y);
+    }
+
+    notifyLevelComplete() {
+        for (let mob of this.mobs) {
+            mob.backOff();
+        }
     }
 
     mobsInRegion(x, y, neg_x, pos_x, neg_y, pos_y) {
@@ -124,10 +133,16 @@ class Mob {
         this.timeSinceDamagedCharacter = 0;
         this.mass = 80;
         this.COR = 0.5;
+
+        this.shouldBackOff = false;
     }
 
     setManager(manager) {
         this.manager = manager;
+    }
+
+    backOff() {
+        this.shouldBackOff = true;
     }
 
     setCamera(camera) {
@@ -294,7 +309,7 @@ class AxeBoarderOrc extends Mob {
         let startSlowing = -100;
         let stopping = 400;
         //Below character
-        if (dy > stopping) {
+        if (dy > stopping || this.shouldBackOff) {
             this.slowing = false;
             if (Math.abs(this.skiPhysics.velocity.y) > 50 || Math.abs(this.skiPhysics.velocity.x) > 50) {
                 let motionAngle = -Math.atan2(this.skiPhysics.velocity.x, this.skiPhysics.velocity.y);
@@ -377,7 +392,7 @@ class SpearOrc extends Mob {
         this.skiPhysics.maxInAirTurnRate = 12;
 
        
-        if (dy > 0) {
+        if (dy > 0 || this.shouldBackOff) {
              // Below character
 
             if (this.targetAngle > 0) {
@@ -472,7 +487,6 @@ class Goblin extends Mob {
         let aboveScreen = this.camera.distanceOffScreenY(this.y);
         if (aboveScreen < -700) {
             this.health = 0;
-            console.log("Goblin off screen");
         }
 
     }
@@ -491,7 +505,7 @@ class Goblin extends Mob {
         ctx.fillStyle = "brown";
         ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
         //Draw green head
-        ctx.fillStyle = 'green';
+        ctx.fillStyle = 'purple';
         ctx.beginPath();
         ctx.arc(this.x, this.y - 2 - this.height, 8, 0, Math.PI * 2);
         ctx.fill();
