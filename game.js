@@ -7,6 +7,7 @@ import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty} from './level.js';
+import { Sword } from './weapons.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -22,6 +23,9 @@ window.addEventListener('load', function () {
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
+
+    let sword = new Sword(character, mobManager);
+    character.equipRightHand(sword);
 
     let svgText;
     let characterImg;

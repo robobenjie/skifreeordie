@@ -80,6 +80,14 @@ class MobManager {
         this.projectiles.sort((a, b) => a.y - b.y);
     }
 
+    mobsInRegion(x, y, neg_x, pos_x, neg_y, pos_y) {
+    // Filter mobs that are within the specified region
+        return this.mobs.filter(mob => {
+            return mob.x >= x + neg_x && mob.x <= x + pos_x &&
+                   mob.y >= y + neg_y && mob.y <= y + pos_y;
+        });
+    }
+
     drawUnderMob(ctx) {
         for (let mob of this.mobs) {
             mob.drawTrail(ctx);
@@ -142,6 +150,31 @@ class Mob {
         if (this.collideWith(this.character)) {
             this.onCollideWithCharacter(this.character);
         }
+        let terrainCollisions = this.terrain.collidesWith(this.x, this.y, this.width, this.width, this.velocity.y * dt);
+        for (let entity of terrainCollisions) {
+            if (entity.type == "tree") {
+                const damage = Math.max((Math.abs(this.velocity.y) - 50) * 0.01, 0);
+                if (damage > 0) {
+                    console.log("tree damage to mob: " + damage);
+                }
+                this.damage(damage);
+                if (this.x > entity.x) {
+                    this.skiPhysics.setVelocity({
+                        x: 10.0,
+                        y: 0
+                    });
+                } else {
+                    this.skiPhysics.setVelocity({
+                        x: 10.0,
+                        y: 0
+                    });
+                }
+            }
+            if (entity.type == "jumpRamp") {
+                this.skiPhysics.rampJump()
+            }
+        }
+
     }
 
     collideWith(other) {

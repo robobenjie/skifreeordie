@@ -1,5 +1,6 @@
 import CharacterState from "./skiPhysics.js";
 import SkiPhysics from "./skiPhysics.js";
+import Sword from "./weapons.js";
 
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick) {
@@ -9,6 +10,10 @@ class Character {
         this.skiPhysics.maxTurnRate = 5.0;
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
+
+        this.rightHand = undefined;
+        this.leftHand = undefined;
+
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -51,6 +56,13 @@ class Character {
 
     }
 
+    equipRightHand(weapon) {
+        this.rightHand = weapon;
+    }
+
+    equipLeftHand(weapon) {
+        this.leftHand = weapon;
+    }
 
     collideWithMob(mob) {
         console.log("Collided with mob");
@@ -181,6 +193,13 @@ class Character {
         );
         this.skiPhysics.update(dt, targetSkiAngle);
 
+        if (this.rightHand) {
+            this.rightHand.update(dt, this, this.mobManager);
+        }
+        if (this.leftHand) {
+            this.leftHand.update(dt);
+        }
+
         if (this.skiPhysics.isJumping()) {
             var glideForce = {
                 x: 0,
@@ -289,7 +308,12 @@ class Character {
         this.skiPhysics.drawSkis(ctx, "blue", skiSplay);
         ctx.fillStyle = this.color;
         ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
-        ctx.fillStyle = "black";
+        if (this.leftHand) {
+            this.leftHand.draw(ctx);
+        }
+        if (this.rightHand) {
+            this.rightHand.draw(ctx);
+        }
         ctx.restore();
 
     }
