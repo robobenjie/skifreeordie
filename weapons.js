@@ -29,7 +29,8 @@ export class Sword extends Weapon {
         this.coolDown = 0.3;
         this.hitAreaHeight = 5;
         this.hitAreaWidth = 45;
-        this.damage = 3;
+        this.damage = 3.5;
+        this.knockback = 50000;
 
         this.lastAttackTime = 0;
     }
@@ -50,6 +51,7 @@ export class Sword extends Weapon {
             this.lastAttackTime = performance.now();
             this.state = SwordState.SWING_LEFT;
             for (let mob of mobsOnLeft) {
+                mob.applyImpulse(-this.knockback, 0);
                 mob.damage(this.damage);
             }
             return;
@@ -61,6 +63,7 @@ export class Sword extends Weapon {
             this.lastAttackTime = performance.now();
             this.state = SwordState.SWING_RIGHT;
             for (let mob of mobsOnRight) {
+                mob.applyImpulse(this.knockback, 0)
                 mob.damage(this.damage);
             }
             return;

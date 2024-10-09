@@ -60,6 +60,9 @@ window.addEventListener('load', function () {
     //treeManager.addLevelSelect(level1, level2, level3);
     //level.start();
 
+    character.level = level1;
+    character.level.start();
+
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
         return [
@@ -99,8 +102,7 @@ window.addEventListener('load', function () {
         if (level) {
             level.update(dt);
             if (level.isComplete()) {
-                console.log("Level Complete");
-                console.log("time", level.time);
+                // do stuff?
             }
         }
 

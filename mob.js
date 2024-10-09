@@ -1,6 +1,7 @@
 import SkiPhysics from "./skiPhysics.js";
 import {randomCentered} from "./utils.js";
 import Projectile from "./projectile.js";
+import { MobDeathParticleEffect } from "./particle_engine.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles, camera
@@ -11,6 +12,7 @@ class MobManager {
         this.mobs = [];
         this.projectiles = [];
         this.camera = camera;
+        this.deathEffect = new MobDeathParticleEffect(300);
     }
 
     addMob(mob) {
@@ -41,25 +43,26 @@ class MobManager {
         let angle = randomCentered(Math.PI / 4);
         let vx = Math.sin(angle) * 100;
         let vy = Math.cos(angle) * 100;
-        this.addMob(new Goblin(loc.x, loc.y, vx, vy, this.character, this.terrain, this.snowParticles, this.camera));
+        this.addMob(new Goblin(loc.x, loc.y, vx, vy, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
     }
 
     spawnAxeOrc() {
         //const onLeft = Math.random() < 0.5;
         //var loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
         let loc = this.camera.offBottomOfScreen(this.character);
-        this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
+        this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect));
     }
 
     spawnSpearOrc() {
         const onLeft = Math.random() < 0.5;
         let loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
-        this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles));
+        this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect));
     }
 
     update(dt) {
 
-        this.mobs = this.mobs.filter(mob => mob.health > 0);
+        this.deathEffect.update(dt);
+
         // filter out inactive projectiles
         this.projectiles = this.projectiles.filter(projectile => projectile.active);
 
@@ -69,6 +72,8 @@ class MobManager {
             }
             mob.update(dt);
         }
+
+        this.mobs = this.mobs.filter(mob => mob.health > 0);
         for (let projectile of this.projectiles) {
             projectile.update(dt);
             if (projectile.collides(this.character)) {
@@ -110,15 +115,13 @@ class MobManager {
         }
     }
 
-    draw(ctx) {
-        for (let mob of this.mobs) {
-            mob.draw(ctx);
-        }
+    drawEffects(ctx){
+        this.deathEffect.draw(ctx);
     }
 }
 
 class Mob {
-    constructor(x, y, vx, vy, health, width, height, color, character) {
+    constructor(x, y, vx, vy, health, width, height, color, character, deathEffect) {
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -126,6 +129,7 @@ class Mob {
         this.health = health;
         this.velocity = { x: vx, y: vy };
         this.character = character;
+        this.deathEffect = deathEffect;
         this.width = width;
         this.height = height;
         this.color = color;
@@ -135,6 +139,8 @@ class Mob {
         this.COR = 0.5;
 
         this.shouldBackOff = false;
+
+        this.colors = ["green"]
     }
 
     setManager(manager) {
@@ -147,6 +153,16 @@ class Mob {
 
     setCamera(camera) {
         this.camera = camera;
+    }
+
+    applyImpulse(impulseX, impulseY) {
+        if (this.skiPhysics) {
+            this.skiPhysics.velocity.x += impulseX / this.mass;
+            this.skiPhysics.velocity.y += impulseY / this.mass;
+        } else {
+            this.velocity.x += impulseX / this.mass;
+            this.velocity.y += impulseY / this.mass;
+        }
     }
 
     damage(amount) {
@@ -190,6 +206,28 @@ class Mob {
             }
         }
 
+        if (this.health <= 0 && this.camera.isOnScreen(this.x, this.y)) {
+            let num_particles = 5 * this.maxHealth;
+            console.log("Creating particles", num_particles)
+            for (let i = 0; i < num_particles; i++) {
+                let angle = Math.random() * Math.PI * 2;
+                let vel = 100 + randomCentered(50);
+                let lifetime = 1.0 + randomCentered(0.5);
+                let randomColor = this.colors[Math.floor(Math.random() * this.colors.length)];
+
+                this.deathEffect.emit(
+                    this.x,
+                    this.y,
+                    { 
+                        x: Math.cos(angle) * vel + this.velocity.x,
+                        y: Math.sin(angle) * vel * 0.4 + this.velocity.y * 1.3
+                    },
+                    lifetime,
+                    randomColor
+                );
+            }
+        }
+
     }
 
     collideWith(other) {
@@ -225,8 +263,9 @@ class Mob {
 }
 
 class AxeBoarderOrc extends Mob {
-    constructor(x, y, vx, vy, character, terrain, snowParticles) {
-        super(x, y, vx, vy, 5, 8, 25, 'orange', character);
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect) {
+        super(x, y, vx, vy, 5, 8, 25, 'orange', character, deathEffect);
+        this.colors = ["orange", "yellow", "green"]
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass);
@@ -363,10 +402,11 @@ class AxeBoarderOrc extends Mob {
 }
 
 class SpearOrc extends Mob {
-    constructor(x, y, vx, vy, character, terrain, snowParticles) {
-        super(x, y, vx, vy, 5, 15, 25, 'black', character);
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect) {
+        super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
         this.terrain = terrain;
         this.snowParticles = snowParticles;
+        this.colors = ["black", "green"];
         this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 2;
@@ -450,11 +490,12 @@ class SpearOrc extends Mob {
 }
 
 class Goblin extends Mob {
-    constructor(x, y, vx, vy, character, terrain, snowParticles, camera) {
-        super(x, y, vx, vy, 3, 8, 15, 'green', character);
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
+        super(x, y, vx, vy, 3, 8, 15, 'green', character, deathEffect);
         this.maxHealth = 3;
         this.health = 3;
         this.camera = camera;
+        this.colors = ["purple", "brown"]
 
         this.terrain = terrain;
         this.snowParticles = snowParticles;

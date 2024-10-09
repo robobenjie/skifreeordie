@@ -38,9 +38,18 @@ class Renderer {
             let projectileY = nextProjectile ? nextProjectile.y : Infinity;
     
             // Find the smallest y-value
-            let minY = Math.min(treeY, mobY, projectileY, characterY);
-    
-            if (minY === treeY) {
+            let nextEntity = [
+                { type: 'terrain', entity: nextTree, y: treeY },
+                { type: 'mob', entity: nextMob, y: mobY },
+                { type: 'projectile', entity: nextProjectile, y: projectileY },
+                { type: 'character', entity: this.character, y: characterY }
+            ].reduce((min, current) => current.y < min.y ? current : min);
+
+            if (!nextEntity.y || nextEntity.y == Infinity) {
+                break;
+            }
+
+            if (nextEntity.type === 'terrain') {
                 let tree = trees.shift(); // Remove the tree from the list
                 if (tree.type === "skiBoundary") {
                     // Handle the skiBoundary
@@ -53,15 +62,15 @@ class Renderer {
                     // Regular tree
                     entitiesToDraw.push(tree);
                 }
-            } else if (minY === mobY) {
+            } else if (nextEntity.type === 'mob') {
                 entitiesToDraw.push(mobs.shift()); // Remove mob from list
-            } else if (minY === projectileY) {
+            } else if (nextEntity.type === 'projectile') {
                 entitiesToDraw.push(projectiles.shift()); // Remove projectile from list
-            } else if (minY === characterY) {
+            } else if (nextEntity.type === 'character') {
                 entitiesToDraw.push(this.character);
                 characterInserted = true;
             } else {
-                console.error("No matching condition found.");
+                console.error("No matching condition found for", nextEntity);
                 break;
             }
         }
@@ -73,6 +82,7 @@ class Renderer {
     
         // Draw particle effects last
         this.particleEngine.draw(this.ctx);
+        this.mobManager.drawEffects(this.ctx);
     }
 
     processSkiBoundary(skiBoundary, mobs, projectiles, characterInserted, entitiesToDraw) {

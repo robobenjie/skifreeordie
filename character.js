@@ -156,8 +156,8 @@ class Character {
 
         this.velocity.x -= velReductionX;
         this.velocity.y -= velReductionY;
-        mob.velocity.x += (impulseX / mob.mass);
-        mob.velocity.y += (impulseY / mob.mass);
+        mob.applyImpulse(impulseX, impulseY);
+
     }
 
     damage(damage) {

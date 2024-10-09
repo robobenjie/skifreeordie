@@ -41,14 +41,14 @@ class Particle {
     }
 }
 
-class ParticleEngine {
-    constructor(maxParticles) {
+class ParticleEngineBase {
+    constructor(maxParticles, particleClass) {
         this.maxParticles = maxParticles;      // Fixed pool of particles
         this.particles = [];                   // Array to hold the particles
 
         // Initialize the pool of particles with inactive particles
         for (let i = 0; i < maxParticles; i++) {
-            this.particles.push(new Particle(0, 0, { x: 0, y: 0 }, 0));
+            this.particles.push(new particleClass(0, 0, { x: 0, y: 0 }, 0));
             this.particles[i].active = false;  // Set all particles to inactive initially
         }
     }
@@ -64,6 +64,7 @@ class ParticleEngine {
             particle.lifetime = lifetime;
             particle.age = 0;
             particle.active = true;
+            return particle;
         }
     }
 
@@ -84,6 +85,42 @@ class ParticleEngine {
             }
         }
     }
+}
+
+class ParticleEngine extends ParticleEngineBase {
+    constructor(maxParticles) {
+        super(maxParticles, Particle);
+    }
+}
+
+class ColoredParticle extends Particle {
+    constructor(x, y, velocity, lifetime) {
+        super(x, y, velocity, lifetime)
+        this.color = 'rgba(255, 255, 255, 0.7)';
+    }
+
+    draw(ctx) {
+        if (!this.active) return;
+        // Example of drawing a simple circle for the particle
+        let size = 3 * (1 - this.age / this.lifetime);
+        ctx.beginPath();
+        ctx.arc(this.position.x, this.position.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.closePath();
+    }
+}
+
+export class MobDeathParticleEffect extends ParticleEngineBase {
+    constructor(maxParticles) {
+        super(maxParticles, ColoredParticle);
+    }
+
+    emit(x, y, velocity, lifetime, color) {
+        let particle = super.emit(x, y, velocity, lifetime);
+        particle.color = color;
+    }
+
 }
 
 export default ParticleEngine;
