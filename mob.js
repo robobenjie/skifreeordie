@@ -416,9 +416,27 @@ class SpearOrc extends Mob {
     }
 
     onCollideWithCharacter(character) {
+
+        character.collideWithMob(this);        
         if (this.timeSinceDamagedCharacter < this.damageCooldown) return;
         this.timeSinceDamagedCharacter = 0;
-        character.collideWithMob(this);
+        let vecToPlayer = {
+            x: character.x - this.x,
+            y: character.y - this.y
+        }
+        let magVecToPlayer = Math.sqrt(vecToPlayer.x ** 2 + vecToPlayer.y ** 2);
+        let unitVecToPlayer = {
+            x: vecToPlayer.x / magVecToPlayer,
+            y: vecToPlayer.y / magVecToPlayer
+        }
+        let relativeVelocity = {
+            x: this.skiPhysics.velocity.x - character.skiPhysics.velocity.x,
+            y: this.skiPhysics.velocity.y - character.skiPhysics.velocity.y
+        }   
+        let dot = unitVecToPlayer.x * relativeVelocity.x + unitVecToPlayer.y * relativeVelocity.y;
+        if (dot > 10) {
+            character.damage(10 + dot / 30);
+        }
     }
 
     update(dt) {

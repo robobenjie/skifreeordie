@@ -10,6 +10,7 @@ export class Camera {
         this.y = 0;
         this.scale = 1;
         this.targetScale = 1;
+        this.startOfGame = true;
     }
 
     update(dt) {
@@ -26,7 +27,8 @@ export class Camera {
         if (this.character.startedRun()) {
             this.targetScale = 0.8 + 0.5 * Math.abs(this.character.velocity.y) / 500;
         } else {
-            if (this.character.velocity.y > 1) {
+            if (!this.startOfGame || this.character.velocity.y > 1) {
+                this.startOfGame = false;
                 this.targetScale = 1.5;
             } else {
                 this.targetScale = 0.8;

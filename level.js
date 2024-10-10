@@ -122,9 +122,9 @@ export class Level {
             this.endingPlaced = true;
         }
         if (y > this.length) {
-            console.log("Level Complete");
-            console.log("time", this.time);
             this.mobManager.notifyLevelComplete();
+            this.terrainManager.setJumpRampPercentage(0);
+            this.terrainManager.setTreePercentage(0.2)
         }
     }
 }
