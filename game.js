@@ -61,8 +61,8 @@ window.addEventListener('load', function () {
     //level1.start();
     level1.length = 40;
 
-    character.level = level1;
-    character.level.start();
+    // character.level = level1;
+    // character.level.start();
 
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
