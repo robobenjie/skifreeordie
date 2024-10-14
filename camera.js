@@ -11,12 +11,15 @@ export class Camera {
         this.scale = 1;
         this.targetScale = 1;
         this.startOfGame = true;
+
     }
 
     update(dt) {
+        let displayingScore = this.character.level && this.character.level.isComplete();
+        let y_offset = displayingScore ? 200 : 0;
         let cameraForce = {
             x: (this.character.x + 0.15 * this.character.velocity.x - this.x) * this.cameraStiffness - this.velocity.x * this.CameraDamping,
-            y: (this.character.y - this.y) * this.cameraStiffness - this.velocity.y * this.CameraDamping
+            y: (this.character.y - this.y - y_offset) * this.cameraStiffness - this.velocity.y * this.CameraDamping
         };
         this.velocity.x += cameraForce.x * dt;
         this.velocity.y += cameraForce.y * dt;
@@ -36,6 +39,7 @@ export class Camera {
         }
         this.scale += (this.targetScale - this.scale) * 1.3 * dt;
     }
+
 
     applyTransform(ctx) {
         ctx.translate(this.canvas.width / 2, this.canvas.height * this.characterFraction);

@@ -59,8 +59,10 @@ class SkiPhysics {
         this.zVelocity = 0;
         this.forces = [];
         this.skiSplay = 0;
+        this.jumpStartTime = 0;
 
         this.onTreeCollision = (entity) => {};
+        this.onLand = (airTime) => {};
     }
 
     setIsSnowboard(isSnowboard) {
@@ -74,8 +76,13 @@ class SkiPhysics {
         this.onTreeCollision = onTreeCollision;
     }
 
+    setOnLand(onLand) {
+        this.onLand = onLand;
+    }
+
     jump(jumpVel) {
         if (this.state == CharacterState.NORMAL) {
+            this.jumpStartTime = performance.now();
             this.state = CharacterState.JUMPING;
             this.currFloatDrag = this.floatDrag;
             this.zVelocity = jumpVel;
@@ -157,6 +164,7 @@ class SkiPhysics {
             this.z += this.zVelocity * dt;
             
             if (this.z < 0) {
+                this.onLand((performance.now() - this.jumpStartTime) / 1000);
 
                 this.state = CharacterState.NORMAL;
                 let num_particles = Math.floor(Math.abs(this.zVelocity) * this.stompSprayFactor);

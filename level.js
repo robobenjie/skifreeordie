@@ -7,6 +7,11 @@ export const LevelDifficulty  = {
     SKULL: 5,
 }
 
+export const GREEN = "#008c55";
+export const BLUE = "#0069ac";
+export const BLACK = "#000000";
+
+
 
 
 // Arrays for first and second halves based on difficulty
@@ -60,6 +65,15 @@ export class Level {
         this.spearOrcs = [];
         this.name = generateSkiRunName(difficulty);
 
+        this.goblinsKilled = 0;
+        this.enemiesKilled = 0;
+        this.airTime = 0;
+
+        this.cashPerGoblin = 1;
+        this.cashPerEnemy = 15;
+        this.timeMultiplier = 3;
+
+
         this.treePercentage = 1;
         this.jumpRampPercentage = 1;
 
@@ -97,8 +111,22 @@ export class Level {
         return (this.character.y - this.startY) / 10 > this.length;
     }
 
+    goblinKilled() {
+        if (!this.isComplete()) {
+            this.goblinsKilled++;
+        }
+    }
+
+    enemyKilled() {
+        if (!this.isComplete()) {
+            this.enemiesKilled++;
+        }
+    }
+
     update(dt) {
-        this.time += dt;
+        if (!this.isComplete()) {
+            this.time += dt;
+        }
         let y = (this.character.y - this.startY) / 10;
         if (y - this.lastGoblinSpawn > this.yPerGoblin) {
             this.lastGoblinSpawn = y;
@@ -121,17 +149,129 @@ export class Level {
             this.terrainManager.addSkierBoundary(right + 50, bottom, center + 100, this.startY + this.length * 10);
             this.endingPlaced = true;
         }
+
         if (y > this.length) {
             this.mobManager.notifyLevelComplete();
             this.terrainManager.setJumpRampPercentage(0);
             this.terrainManager.setTreePercentage(0.2)
         }
     }
+
+    getCashForTime() {
+        let timeUnderGoal = Math.max(0, this.goalTime - this.time);
+        return Math.max(0, Math.round(timeUnderGoal * timeUnderGoal) * this.timeMultiplier);
+    }
+
+    getCashForAirTime() {
+        return Math.max(0, Math.round(this.airTime));
+    }
+    getCashForLevelDifficulty() {
+        switch (this.LevelDifficulty) {
+            case LevelDifficulty.GREEN_CIRCLE:
+                return 5;
+            case LevelDifficulty.BLUE_SQUARE:
+                return 20;
+            case LevelDifficulty.BLACK_DIAMOND:
+                return 50;
+            case LevelDifficulty.DOUBLE_BLACK_DIAMOND:
+                return 100;
+            case LevelDifficulty.TRIPLE_BLACK_DIAMOND:
+                return 200;
+            case LevelDifficulty.SKULL:
+                return 500;
+        }
+    }
+
+    renderScoreCard(ctx) {
+        const cardWidth = 400;
+        const cardHeight = 300;
+        const rowHeight = 22;
+        this.ScorePadding = 4;
+
+        // Center the score card on the screen
+        const startX = (ctx.canvas.width - cardWidth) / 2;
+        const startY = 70;
+
+        // Draw background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(startX, startY, cardWidth, cardHeight);
+
+        // Draw title rectangle
+        const titleHeight = 40;
+        
+        ctx.fillStyle = this.getDifficultyColor();
+        ctx.fillRect(startX, startY, cardWidth, titleHeight);
+
+        // Draw title text
+        ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
+        ctx.font = "26px 'Roboto'";
+        ctx.textAlign = 'center';
+        ctx.fillText(this.name, startX + cardWidth / 2, startY + titleHeight / 2 + 8);
+
+        // Draw rows
+        let currentY = startY + 60;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'TIME', this.time.toFixed(2) + 's', '$' + this.getCashForTime(), false);
+        currentY += rowHeight + this.ScorePadding;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, "DIFFICULTY", this.LevelDifficulty, "$" + this.getCashForLevelDifficulty(), false);
+        currentY += rowHeight + this.ScorePadding;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'GOBLIN KILLS', this.goblinsKilled, '$' + this.cashPerGoblin * this.goblinsKilled, false);
+        currentY += rowHeight + this.ScorePadding;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'ENEMY KILLS', this.enemiesKilled, '$' + this.cashPerEnemy * this.enemiesKilled, false);
+        currentY += rowHeight + this.ScorePadding;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'AIRTIME', this.airTime.toFixed(2) + 's', '$' + this.getCashForAirTime(), false);
+        currentY += rowHeight * 1.5 + this.ScorePadding;
+        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'TOTAL', this.getCashForTime() + this.getCashForAirTime() + this.cashPerGoblin * this.goblinsKilled + this.cashPerEnemy * this.enemiesKilled, '$' + (this.getCashForTime() + this.getCashForAirTime() + this.cashPerGoblin * this.goblinsKilled + this.cashPerEnemy * this.enemiesKilled + this.getCashForLevelDifficulty()), true);
+    }
+
+    renderRow(ctx, x, y, width, height, topic, value, reward, bold) {
+        // Draw row background
+        ctx.fillStyle = 'rgba(240, 240, 240, 0.8)';
+        ctx.fillRect(x + this.ScorePadding, y, width - 2 * this.ScorePadding, height);
+
+        // Draw orange square for icon
+        if (bold) {
+            ctx.fillStyle = 'green';
+        } else {
+            ctx.fillStyle = 'orange';
+        }
+        ctx.fillRect(x + this.ScorePadding, y, height, height);
+
+        // Draw topic and value
+        ctx.fillStyle = 'black';
+        if (bold) {
+            ctx.font = "22px Roboto, sans-serif";
+        } else {
+            ctx.font = "normal 100 22px Roboto, sans-serif";
+        }
+        ctx.textAlign = 'left';
+        let height_fudge = 8;
+        ctx.fillText(topic + ': ' + value, x + height + this.ScorePadding * 2, y + height / 2 + height_fudge);
+
+        // Draw reward
+        ctx.textAlign = 'right';
+        ctx.fillText(reward, x + width - this.ScorePadding * 2, y + height / 2 + height_fudge);
+    }
+
+    getDifficultyColor() {
+        switch (this.LevelDifficulty) {
+            case LevelDifficulty.GREEN_CIRCLE:
+                return GREEN;
+            case LevelDifficulty.BLUE_SQUARE:
+                return BLUE;
+            case LevelDifficulty.BLACK_DIAMOND:
+            case LevelDifficulty.DOUBLE_BLACK_DIAMOND:
+            case LevelDifficulty.TRIPLE_BLACK_DIAMOND:
+            case LevelDifficulty.SKULL:
+                return BLACK;
+            default:
+                return BLACK;
+        }
+    }
 }
 
 export class GreenCircle extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(1200, 30, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.5;
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 50;
@@ -149,7 +289,7 @@ export class GreenCircle extends Level {
 
 export class JumpLand extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(1200, 30, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.2;
         this.jumpRampPercentage = 1.2;
         this.yPerGoblin = 50;
@@ -159,7 +299,7 @@ export class JumpLand extends Level {
 
 export class BabyGoblins extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(1200, 35, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.2;
         this.jumpRampPercentage = 0.3;
         this.yPerGoblin = 150;
@@ -187,7 +327,7 @@ export class BlueSquare extends Level {
 
 export class BlueSquareSnowBoarder extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
 
         this.treePercentage = 1.0;
         this.jumpRampPercentage = 1.0;
@@ -203,7 +343,7 @@ export class BlueSquareSnowBoarder extends Level {
 
 export class BlueSquareSpearOrks extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
 
         this.treePercentage = 1.0;
         this.jumpRampPercentage = 1.0;
@@ -219,7 +359,7 @@ export class BlueSquareSpearOrks extends Level {
 
 export class BlackDiamond extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
+        super(1200, 20, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
         this.treePercentage = 1;
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 20;
@@ -237,7 +377,7 @@ export class BlackDiamond extends Level {
 
 export class DoubleBlackDiamondSnowBoarder extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(2000, 30, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
+        super(1200, 20, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
 
         this.treePercentage = 2.0;
         this.jumpRampPercentage = 0.4;

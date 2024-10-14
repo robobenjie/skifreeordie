@@ -22,7 +22,7 @@ window.addEventListener('load', function () {
     let camera = new Camera(canvas, character);
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
-    let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager);
+    let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager, camera);
 
     let sword = new Sword(character, mobManager);
     character.equipRightHand(sword);
@@ -58,10 +58,10 @@ window.addEventListener('load', function () {
     character.update(0.01, ctx);
     camera.update(0.01);
     //treeManager.addLevelSelect(level1, level2, level3);
-    //level.start();
+    //level1.start();
 
-    character.level = level1;
-    character.level.start();
+    //character.level = level1;
+    //character.level.start();
 
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
@@ -79,6 +79,8 @@ window.addEventListener('load', function () {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        //level1.renderScoreCard(ctx);
 
         // Game Not Paused:
         gameTime += dt;
@@ -112,11 +114,8 @@ window.addEventListener('load', function () {
         treeManager.update(dt, character, ctx);
         mobManager.update(dt);
 
-        ctx.save();
-        camera.applyTransform(ctx);
-        character.drawTrail(ctx);
         renderer.render();
-        ctx.restore();
+    
         joystick.draw(ctx);
         character.drawHealthBar(ctx);
         lastTime = time;

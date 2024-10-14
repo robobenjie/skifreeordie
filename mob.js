@@ -122,6 +122,7 @@ class MobManager {
 
 class Mob {
     constructor(x, y, vx, vy, health, width, height, color, character, deathEffect) {
+        this.type = "mob";
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -166,7 +167,13 @@ class Mob {
     }
 
     damage(amount) {
+        // Returns if the damage killed the mob
+        let prevHealth = this.health;
         this.health -= amount;
+        if (this.health <= 0 && prevHealth > 0) {
+            return true;
+        }
+        return false;
     }
 
     fireProjectile(projectile) {
@@ -510,6 +517,7 @@ class SpearOrc extends Mob {
 class Goblin extends Mob {
     constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 3, 8, 15, 'green', character, deathEffect);
+        this.type = "goblin";
         this.maxHealth = 3;
         this.health = 3;
         this.camera = camera;

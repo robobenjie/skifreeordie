@@ -50,7 +50,7 @@ export class TerrainManager {
         if (this.camera.character.startedRun()) {
             this.lastPlacedLevelSelect = this.camera.y;
         } else {
-            if (this.camera.y - this.lastPlacedLevelSelect > 1000) {
+            if (this.camera.y - this.lastPlacedLevelSelect > 3000) {
                 // Check if there are any skirun start signs below the top of the screen
                 const topOfScreen = this.camera.topOfScreen();
                 for (let i = 0; i < this.entities.length; i++) {
@@ -331,6 +331,7 @@ export class SkiRunSign {
         ctx.translate(this.x + this.signTextX - this.width / 2, (this.y - scaledHeight) + this.signTextY);
         ctx.font = "16px 'Roboto Condensed'";
         ctx.fillStyle = "white";
+        ctx.textAlign = "left";
         
         // Measure the text width
         let textWidth = ctx.measureText(this.level.name).width;

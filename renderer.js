@@ -1,14 +1,17 @@
 class Renderer {
-    constructor(ctx, character, treeManager, particleEngine, mobManager) {
+    constructor(ctx, character, treeManager, particleEngine, mobManager, camera) {
         this.ctx = ctx;
         this.character = character;
         this.treeManager = treeManager;
         this.particleEngine = particleEngine;
         this.mobManager = mobManager;
+        this.camera = camera;
     }
 
     render() {
         // Draw ground effects first
+        this.ctx.save();
+        this.camera.applyTransform(this.ctx);
         for (let entity of this.treeManager.entities) {
             if (entity.drawSnow) {
                 entity.drawSnow(this.ctx);
@@ -83,6 +86,12 @@ class Renderer {
         // Draw particle effects last
         this.particleEngine.draw(this.ctx);
         this.mobManager.drawEffects(this.ctx);
+
+        this.ctx.restore();
+
+        if (this.character.level && this.character.level.isComplete()) {
+            this.character.level.renderScoreCard(this.ctx);
+        }
     }
 
     processSkiBoundary(skiBoundary, mobs, projectiles, characterInserted, entitiesToDraw) {

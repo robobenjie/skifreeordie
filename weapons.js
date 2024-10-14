@@ -52,7 +52,10 @@ export class Sword extends Weapon {
             this.state = SwordState.SWING_LEFT;
             for (let mob of mobsOnLeft) {
                 mob.applyImpulse(-this.knockback, 0);
-                mob.damage(this.damage);
+                let killed = mob.damage(this.damage);
+                if (killed) {
+                    this.character.scoreKill(mob);
+                }
             }
             return;
         }
@@ -64,7 +67,10 @@ export class Sword extends Weapon {
             this.state = SwordState.SWING_RIGHT;
             for (let mob of mobsOnRight) {
                 mob.applyImpulse(this.knockback, 0)
-                mob.damage(this.damage);
+                let killed = mob.damage(this.damage);
+                if (killed) {
+                    this.character.scoreKill(mob);
+                }
             }
             return;
         }

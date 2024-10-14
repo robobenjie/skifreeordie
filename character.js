@@ -13,7 +13,7 @@ class Character {
 
         this.rightHand = undefined;
         this.leftHand = undefined;
-
+        
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -54,6 +54,12 @@ class Character {
 
         });
 
+        this.skiPhysics.setOnLand((time) => {
+            if (this.level) {
+                this.level.airTime += time;
+            }
+        });
+
     }
 
     equipRightHand(weapon) {
@@ -62,6 +68,14 @@ class Character {
 
     equipLeftHand(weapon) {
         this.leftHand = weapon;
+    }
+
+    scoreKill(mob) {
+        if (mob.type == "goblin") {
+            this.level.goblinKilled();
+        } else {
+            this.level.enemyKilled();
+        }
     }
 
     collideWithMob(mob) {
@@ -137,7 +151,10 @@ class Character {
         // Apply damage to mob
         if (damageToMob > 0) {
             const mobOriginalHealth = mob.health;
-            mob.damage(damageToMob);
+            let killed = mob.damage(damageToMob);
+            if (killed) {
+                this.scoreKill(mob);
+            }
 
             // Check if mob is killed
             if (mob.health <= 0) {
@@ -180,7 +197,6 @@ class Character {
 
         if (this.level != undefined) {
             this.level.update(dt);
-
         }
 
         if (this.joystick.isActive) {
@@ -293,7 +309,8 @@ class Character {
 
         // Below the health bar print speed and y distance
         ctx.fillStyle = "black";
-        ctx.font = "12px Arial";
+        ctx.font = "12px Arial";        
+        ctx.textAlign = "left";
         ctx.fillText("Speed: " + (Math.max(0, this.skiPhysics.velocity.y) / 8).toFixed(0) + " mph", padding_x, padding_y + height + 20);
         ctx.fillText("Distance: " + ((this.y - 100)/10).toFixed(0) + " feet", padding_x, padding_y + height + 40);
 
