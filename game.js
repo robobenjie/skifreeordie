@@ -59,9 +59,10 @@ window.addEventListener('load', function () {
     camera.update(0.01);
     //treeManager.addLevelSelect(level1, level2, level3);
     //level1.start();
+    level1.length = 40;
 
-    //character.level = level1;
-    //character.level.start();
+    character.level = level1;
+    character.level.start();
 
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);

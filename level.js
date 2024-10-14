@@ -97,6 +97,10 @@ export class Level {
         this.signImages[LevelDifficulty.DOUBLE_BLACK_DIAMOND].src = "images/sign_double_black_diamond.svg";
         this.signImages[LevelDifficulty.TRIPLE_BLACK_DIAMOND].src = "images/sign_triple_black_diamond.svg";
         this.signImages[LevelDifficulty.SKULL].src = "images/sign_skull.svg";
+
+        // Calculate animation progress
+        this.animationDuration = 1; // ms
+        this.timeSinceComplete = 0;
     }
 
     start() {
@@ -126,6 +130,8 @@ export class Level {
     update(dt) {
         if (!this.isComplete()) {
             this.time += dt;
+        } else {
+            this.timeSinceComplete += dt;
         }
         let y = (this.character.y - this.startY) / 10;
         if (y - this.lastGoblinSpawn > this.yPerGoblin) {
@@ -154,6 +160,7 @@ export class Level {
             this.mobManager.notifyLevelComplete();
             this.terrainManager.setJumpRampPercentage(0);
             this.terrainManager.setTreePercentage(0.2)
+            this.timeComplete = this.time;
         }
     }
 
@@ -182,6 +189,16 @@ export class Level {
         }
     }
 
+    getScoreCardData() {
+        return [
+            { title: 'TIME', value: this.time.toFixed(2) + 's', cash: this.getCashForTime() },
+            { title: 'DIFFICULTY', value: this.LevelDifficulty, cash: this.getCashForLevelDifficulty() },
+            { title: 'GOBLIN KILLS', value: this.goblinsKilled, cash: this.cashPerGoblin * this.goblinsKilled },
+            { title: 'ENEMY KILLS', value: this.enemiesKilled, cash: this.cashPerEnemy * this.enemiesKilled },
+            { title: 'AIRTIME', value: this.airTime.toFixed(2) + 's', cash: this.getCashForAirTime() },
+        ];
+    }
+
     renderScoreCard(ctx) {
         const cardWidth = 400;
         const cardHeight = 300;
@@ -208,19 +225,27 @@ export class Level {
         ctx.textAlign = 'center';
         ctx.fillText(this.name, startX + cardWidth / 2, startY + titleHeight / 2 + 8);
 
-        // Draw rows
+        // Draw rows with animation
         let currentY = startY + 60;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'TIME', this.time.toFixed(2) + 's', '$' + this.getCashForTime(), false);
-        currentY += rowHeight + this.ScorePadding;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, "DIFFICULTY", this.LevelDifficulty, "$" + this.getCashForLevelDifficulty(), false);
-        currentY += rowHeight + this.ScorePadding;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'GOBLIN KILLS', this.goblinsKilled, '$' + this.cashPerGoblin * this.goblinsKilled, false);
-        currentY += rowHeight + this.ScorePadding;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'ENEMY KILLS', this.enemiesKilled, '$' + this.cashPerEnemy * this.enemiesKilled, false);
-        currentY += rowHeight + this.ScorePadding;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'AIRTIME', this.airTime.toFixed(2) + 's', '$' + this.getCashForAirTime(), false);
-        currentY += rowHeight * 1.5 + this.ScorePadding;
-        this.renderRow(ctx, startX, currentY, cardWidth, rowHeight, 'TOTAL', this.getCashForTime() + this.getCashForAirTime() + this.cashPerGoblin * this.goblinsKilled + this.cashPerEnemy * this.enemiesKilled, '$' + (this.getCashForTime() + this.getCashForAirTime() + this.cashPerGoblin * this.goblinsKilled + this.cashPerEnemy * this.enemiesKilled + this.getCashForLevelDifficulty()), true);
+        const scoreData = this.getScoreCardData();
+        let totalCash = 0;
+
+        const elapsedTime = this.timeSinceComplete;
+        const progress = Math.min(elapsedTime / this.animationDuration, 1);
+
+        scoreData.forEach((item, index) => {
+            const rowProgress = Math.min((progress * (scoreData.length + 1) - index * 0.75), 1);
+            const rowX = startX + cardWidth * (1 - rowProgress);
+            this.renderRow(ctx, rowX, currentY, cardWidth, rowHeight, item.title, item.value, '$' + item.cash, false);
+            currentY += rowHeight + this.ScorePadding;
+            totalCash += item.cash;
+        });
+
+        // Render total row with animation
+        currentY += rowHeight * 0.5;
+        const totalRowProgress = Math.min((progress * (scoreData.length + 1) - scoreData.length), 1);
+        const totalRowX = startX + cardWidth * (1 - totalRowProgress);
+        this.renderRow(ctx, totalRowX, currentY, cardWidth, rowHeight, 'TOTAL', '', '$' + totalCash, true);
     }
 
     renderRow(ctx, x, y, width, height, topic, value, reward, bold) {
