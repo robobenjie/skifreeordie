@@ -52,13 +52,13 @@ function generateSkiRunName(difficulty) {
 }
 
 export class Level {
-    constructor(length, goalTime, terrainManager, MobManager, camera, character, difficulty) {
+    constructor(length, targetSpeed, terrainManager, MobManager, camera, character, difficulty) {
         this.terrainManager = terrainManager;
         this.mobManager = MobManager;
         this.camera = camera;
         this.character = character;
         this.length = length;
-        this.goalTime = goalTime;
+        this.goalTime = length / targetSpeed;
         this.LevelDifficulty = difficulty;
         this.yPerGoblin = 300;
         this.axeOrcs = [];
@@ -71,8 +71,8 @@ export class Level {
 
         this.cashPerGoblin = 1;
         this.cashPerEnemy = 15;
-        this.timeMultiplier = 3;
-
+        this.timeMultiplier = 1;
+        this.timeBonusMultiplier = 3;
 
         this.treePercentage = 1;
         this.jumpRampPercentage = 1;
@@ -166,7 +166,10 @@ export class Level {
 
     getCashForTime() {
         let timeUnderGoal = Math.max(0, this.goalTime - this.time);
-        return Math.max(0, Math.round(timeUnderGoal * timeUnderGoal) * this.timeMultiplier);
+        let timeOverGoal = Math.max(0, this.time - this.goalTime);
+        let bonus = Math.max(0, Math.round(timeUnderGoal * timeUnderGoal) * this.timeBonusMultiplier);
+        let value = Math.max(0, 20 - timeOverGoal) + this.timeMultiplier;
+        return Math.max(0, Math.round(bonus + value));
     }
 
     getCashForAirTime() {
@@ -192,6 +195,7 @@ export class Level {
     getScoreCardData() {
         return [
             { title: 'TIME', value: this.time.toFixed(2) + 's', cash: this.getCashForTime() },
+            { title: 'SPEED', value: this.length / this.time + 'm/s', cash: 0},
             { title: 'DIFFICULTY', value: this.LevelDifficulty, cash: this.getCashForLevelDifficulty() },
             { title: 'GOBLIN KILLS', value: this.goblinsKilled, cash: this.cashPerGoblin * this.goblinsKilled },
             { title: 'ENEMY KILLS', value: this.enemiesKilled, cash: this.cashPerEnemy * this.enemiesKilled },
@@ -296,7 +300,7 @@ export class Level {
 
 export class GreenCircle extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 30, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.5;
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 50;
@@ -314,7 +318,7 @@ export class GreenCircle extends Level {
 
 export class JumpLand extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 30, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.2;
         this.jumpRampPercentage = 1.2;
         this.yPerGoblin = 50;
@@ -324,7 +328,7 @@ export class JumpLand extends Level {
 
 export class BabyGoblins extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 35, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
+        super(1200, 60, terrainManager, MobManager, camera, character, LevelDifficulty.GREEN_CIRCLE);
         this.treePercentage = 0.2;
         this.jumpRampPercentage = 0.3;
         this.yPerGoblin = 150;
@@ -334,7 +338,7 @@ export class BabyGoblins extends Level {
 
 export class BlueSquare extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
         this.treePercentage = 0.5;
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 50;
@@ -352,7 +356,7 @@ export class BlueSquare extends Level {
 
 export class BlueSquareSnowBoarder extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
 
         this.treePercentage = 1.0;
         this.jumpRampPercentage = 1.0;
@@ -368,7 +372,7 @@ export class BlueSquareSnowBoarder extends Level {
 
 export class BlueSquareSpearOrks extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 25, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.BLUE_SQUARE);
 
         this.treePercentage = 1.0;
         this.jumpRampPercentage = 1.0;
@@ -384,7 +388,7 @@ export class BlueSquareSpearOrks extends Level {
 
 export class BlackDiamond extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 20, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
         this.treePercentage = 1;
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 20;
@@ -402,7 +406,7 @@ export class BlackDiamond extends Level {
 
 export class DoubleBlackDiamondSnowBoarder extends Level {
     constructor(terrainManager, MobManager, camera, character) {
-        super(1200, 20, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
 
         this.treePercentage = 2.0;
         this.jumpRampPercentage = 0.4;
