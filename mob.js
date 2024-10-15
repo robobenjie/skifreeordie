@@ -112,6 +112,27 @@ class MobManager {
         });
     }
 
+    mobsInArc(unit_vec_x, unit_vec_y, width_degrees) {
+        const cosHalfAngle = Math.cos((width_degrees / 2) * (Math.PI / 180));
+        
+        return this.mobs
+            .map(mob => {
+                const dx = mob.x - this.character.x;
+                const dy = mob.y - this.character.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                const mob_unit_x = dx / distance;
+                const mob_unit_y = dy / distance;
+                
+                const dotProduct = unit_vec_x * mob_unit_x + -unit_vec_y * mob_unit_y;
+                
+                return { mob, distance, inArc: dotProduct > cosHalfAngle };
+            })
+            .filter(item => item.inArc)
+            .sort((a, b) => a.distance - b.distance)
+            .map(item => item.mob);
+    }
+
     drawUnderMob(ctx) {
         for (let mob of this.mobs) {
             mob.drawTrail(ctx);
@@ -626,4 +647,3 @@ class Goblin extends Mob {
 }
 
 export default MobManager;
-

@@ -22,6 +22,45 @@ const SwordState = {
     SWING_LEFT: "swing_left",
     SWING_RIGHT: "swing_right"
 }
+
+export class Gun extends Weapon {
+    constructor(character, mobManager) {
+        super(WeaponType.HAND, character, mobManager);
+        this.coolDown = 0.1;
+        this.damage = 0.5;
+        this.knockback = 10000;
+        this.firingArc = 90;
+
+        this.lastAttackTime = 0;
+    }
+
+    update(dt) {
+        super.update(dt);
+        if (this.character.skiPhysics.isJumping()){
+            return;
+        }
+        if (performance.now() - this.lastAttackTime < this.coolDown * 1000) {
+            return;
+        }
+
+        let targets = this.mobManager.mobsInArc(
+            this.character.skiPhysics.skiUnitVector.x,
+            this.character.skiPhysics.skiUnitVector.y, this.firingArc);
+        if (targets.length > 0) {
+            console.log("bang!");
+            let target = targets[0];
+            target.damage(this.damage);
+            let unit_vec_x = target.x - this.character.x;
+            let unit_vec_y = target.y - this.character.y;
+            let distance = Math.sqrt(unit_vec_x * unit_vec_x + unit_vec_y * unit_vec_y);
+            unit_vec_x /= distance;
+            unit_vec_y /= distance;
+            target.applyImpulse(unit_vec_x * this.knockback, unit_vec_y * this.knockback);
+            this.lastAttackTime = performance.now();
+        }
+        
+    }
+}
 export class Sword extends Weapon {
     constructor(character, mobManager) {
         super(WeaponType.HAND, character, mobManager);

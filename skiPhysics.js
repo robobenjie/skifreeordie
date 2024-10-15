@@ -463,7 +463,7 @@ class Trail{
 
     isOffScreen(character){
         if (this.leftFrontTrail.length == 0) {
-            return false;
+            return true;
         }
         return this.leftFrontTrail[this.leftFrontTrail.length - 1].y < character.y - 1000;
     }

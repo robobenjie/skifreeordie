@@ -7,7 +7,7 @@ import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
-import { Sword } from './weapons.js';
+import { Sword, Gun } from './weapons.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -25,7 +25,8 @@ window.addEventListener('load', function () {
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager, camera);
 
     let sword = new Sword(character, mobManager);
-    character.equipRightHand(sword);
+    let gun = new Gun(character, mobManager);
+    character.equipRightHand(gun);
 
     let svgText;
     let characterImg;
@@ -61,8 +62,8 @@ window.addEventListener('load', function () {
     //level1.start();
     level1.length = 40;
 
-    // character.level = level1;
-    // character.level.start();
+    character.level = level1;
+    character.level.start();
 
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
