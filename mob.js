@@ -180,6 +180,9 @@ class Mob {
         this.manager.addProjectile(projectile);
     }
 
+    isOnScreen() {
+        return this.camera.isOnScreen(this.x, this.y);
+    }
 
     update(dt) {
         this.timeSinceDamagedCharacter += dt;
@@ -188,32 +191,29 @@ class Mob {
         if (this.collideWith(this.character)) {
             this.onCollideWithCharacter(this.character);
         }
-        let terrainCollisions = this.terrain.collidesWith(this.x, this.y, this.width, this.width, this.velocity.y * dt);
-        for (let entity of terrainCollisions) {
-            if (entity.type == "tree") {
-                const damage = Math.max((Math.abs(this.velocity.y) - 50) * 0.01, 0);
-                if (damage > 0) {
-                    console.log("tree damage to mob: " + damage);
+        if (this.isOnScreen()) {    
+            let terrainCollisions = this.terrain.collidesWith(this.x, this.y, this.width, this.width, this.velocity.y * dt);
+            for (let entity of terrainCollisions) {
+                if (entity.type == "tree") {
+                    if (this.x > entity.x) {
+                        this.skiPhysics.setVelocity({
+                            x: 10.0,
+                            y: 0
+                        });
+                    } else {
+                        this.skiPhysics.setVelocity({
+                            x: 10.0,
+                            y: 0
+                        });
+                    }
                 }
-                this.damage(damage);
-                if (this.x > entity.x) {
-                    this.skiPhysics.setVelocity({
-                        x: 10.0,
-                        y: 0
-                    });
-                } else {
-                    this.skiPhysics.setVelocity({
-                        x: 10.0,
-                        y: 0
-                    });
+                if (entity.type == "jumpRamp") {
+                    this.skiPhysics.rampJump()
                 }
-            }
-            if (entity.type == "jumpRamp") {
-                this.skiPhysics.rampJump()
             }
         }
 
-        if (this.health <= 0 && this.camera.isOnScreen(this.x, this.y)) {
+        if (this.health <= 0 && this.isOnScreen()) {
             let num_particles = 5 * this.maxHealth;
             console.log("Creating particles", num_particles)
             for (let i = 0; i < num_particles; i++) {
@@ -234,7 +234,35 @@ class Mob {
                 );
             }
         }
+    }
 
+    cheatBackCloseToCharacter() {
+        if (this.camera.distanceOffScreenX(this.x) < -100) {
+            if (this.skiPhysics) {
+                this.skiPhysics.x = this.camera.leftOfScreen() - 30;
+                this.skiPhysics.velocity.x = this.camera.velocity.x;
+            } else {
+                this.x = this.camera.leftOfScreen() - 30;
+            }
+        }
+        if (this.camera.distanceOffScreenX(this.x) > 100) {
+            if (this.skiPhysics) {
+                this.skiPhysics.x = this.camera.rightOfScreen() + 30;
+                this.skiPhysics.velocity.x = this.camera.velocity.x;
+            } else {
+                this.x = this.camera.rightOfScreen() + 30;
+            }
+        }
+        if (this.camera.distanceOffScreenY(this.y) < -100) {
+            if (this.skiPhysics) {
+                this.skiPhysics.y = this.camera.topOfScreen() - 30;
+                if (this.skiPhysics.velocity.y < this.camera.velocity.y) {
+                    this.skiPhysics.velocity.y = this.camera.velocity.y;
+                }
+            } else {
+                this.y = this.camera.topOfScreen() - 30;
+            }
+        }
     }
 
     collideWith(other) {
@@ -318,6 +346,7 @@ class AxeBoarderOrc extends Mob {
 
     update(dt) {
         // Axe throwing
+        this.cheatBackCloseToCharacter();
         if (this.camera.isOnScreen(this.x, this.y)) {
             this.timeSinceAxeThrown += dt;
         } else {
@@ -447,6 +476,7 @@ class SpearOrc extends Mob {
     }
 
     update(dt) {
+        this.cheatBackCloseToCharacter();
         let lookaheadTime = 0.5; // seconds (when the y should match the character's y, at current vel)
         const dx = this.x - this.character.x;
         let dy = this.y - this.character.y;
