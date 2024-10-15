@@ -21,11 +21,14 @@ export class TerrainManager {
     }
 
     setTreePercentage(percentage) {
+        this.accumulatedExposedAreaX = 0;
+        this.accumulatedExposedAreaY = 0;
         this.treeDensityY = 64000 / percentage;
         this.treeDensityX = 64000 / percentage;
     }
 
     setJumpRampPercentage(percentage) {
+        this.accumulatedExposedAreaJumpRampY = 0;
         this.jumpRampDensityY = 600000 / percentage;
     }
 

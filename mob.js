@@ -13,6 +13,7 @@ class MobManager {
         this.projectiles = [];
         this.camera = camera;
         this.deathEffect = new MobDeathParticleEffect(300);
+        this.deadMobTrails = [];
     }
 
     addMob(mob) {
@@ -71,6 +72,14 @@ class MobManager {
                 mob.health = 0;
             }
             mob.update(dt);
+
+            if (mob.health <= 0) {
+                if (mob.skiPhysics) {
+                    for (let trail of mob.skiPhysics.trails ) {
+                        this.deadMobTrails.push(trail);
+                    }
+                }
+            }
         }
 
         this.mobs = this.mobs.filter(mob => mob.health > 0);
@@ -81,7 +90,8 @@ class MobManager {
             }
         }
 
-                
+        // Filter out dead mob trails that are off screen
+        this.deadMobTrails = this.deadMobTrails.filter(trail => !trail.isOffScreen(this.character));
 
         // Sort by mob.y
         this.mobs.sort((a, b) => a.y - b.y);
@@ -106,6 +116,9 @@ class MobManager {
         for (let mob of this.mobs) {
             mob.drawTrail(ctx);
             mob.drawShadow(ctx);
+        }
+        for (let trail of this.deadMobTrails) {
+            trail.draw(ctx);
         }
     }
 

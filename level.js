@@ -7,6 +7,15 @@ export const LevelDifficulty  = {
     SKULL: 5,
 }
 
+export const LevelDifficultyNames = [
+    "GREEN CIRCLE",
+    "BLUE SQUARE",
+    "BLACK DIAMOND",
+    "DOUBLE BLACK DIAMOND",
+    "TRIPLE BLACK DIAMOND",
+    "SKULL",
+]
+
 export const GREEN = "#008c55";
 export const BLUE = "#0069ac";
 export const BLACK = "#000000";
@@ -73,6 +82,8 @@ export class Level {
         this.cashPerEnemy = 15;
         this.timeMultiplier = 1;
         this.timeBonusMultiplier = 3;
+
+        this.airMultiplier = 4;
 
         this.treePercentage = 1;
         this.jumpRampPercentage = 1;
@@ -173,7 +184,7 @@ export class Level {
     }
 
     getCashForAirTime() {
-        return Math.max(0, Math.round(this.airTime));
+        return Math.max(0, Math.round(this.airTime) * this.airMultiplier);
     }
     getCashForLevelDifficulty() {
         switch (this.LevelDifficulty) {
@@ -195,8 +206,7 @@ export class Level {
     getScoreCardData() {
         return [
             { title: 'TIME', value: this.time.toFixed(2) + 's', cash: this.getCashForTime() },
-            { title: 'SPEED', value: this.length / this.time + 'm/s', cash: 0},
-            { title: 'DIFFICULTY', value: this.LevelDifficulty, cash: this.getCashForLevelDifficulty() },
+            { title: LevelDifficultyNames[this.LevelDifficulty], value:  "", cash: this.getCashForLevelDifficulty() },
             { title: 'GOBLIN KILLS', value: this.goblinsKilled, cash: this.cashPerGoblin * this.goblinsKilled },
             { title: 'ENEMY KILLS', value: this.enemiesKilled, cash: this.cashPerEnemy * this.enemiesKilled },
             { title: 'AIRTIME', value: this.airTime.toFixed(2) + 's', cash: this.getCashForAirTime() },
