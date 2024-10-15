@@ -7,7 +7,7 @@ import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
-import { Sword, Gun } from './weapons.js';
+import { Sword, Gun, LaserGun, miniGun, Pistol } from './weapons.js';
 
 window.addEventListener('load', function () {
     let canvas = document.getElementById('gameCanvas');
@@ -26,7 +26,9 @@ window.addEventListener('load', function () {
 
     let sword = new Sword(character, mobManager);
     let gun = new Gun(character, mobManager);
-    character.equipRightHand(gun);
+    let laserGun = new LaserGun(character, mobManager);
+    let pistol = new Pistol(character, mobManager);
+    character.equipRightHand(pistol);
 
     let svgText;
     let characterImg;

@@ -1,0 +1,17 @@
+TODO:
+
+- Implement gun
+- Implement jump themed weapon
+- Add tree avoidance to mobs
+- Add bomb goblins
+- Add slolom mob turrets
+- More tree models + shadows
+- Less punishing tree collision
+- Fix ski boundary clipping
+- Add upgrade system to weapons / armor / skis
+- Art for character
+- Art for mobs
+- Art and animations for weapons
+- Shop screen
+- Bosses
+- Item selection 

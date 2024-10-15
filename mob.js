@@ -112,7 +112,7 @@ class MobManager {
         });
     }
 
-    mobsInArc(unit_vec_x, unit_vec_y, width_degrees) {
+    mobsInArc(unit_vec_x, unit_vec_y, width_degrees, max_distance) {
         const cosHalfAngle = Math.cos((width_degrees / 2) * (Math.PI / 180));
         
         return this.mobs
@@ -124,9 +124,9 @@ class MobManager {
                 const mob_unit_x = dx / distance;
                 const mob_unit_y = dy / distance;
                 
-                const dotProduct = unit_vec_x * mob_unit_x + -unit_vec_y * mob_unit_y;
+                const dotProduct = -unit_vec_x * mob_unit_x + -unit_vec_y * mob_unit_y;
                 
-                return { mob, distance, inArc: dotProduct > cosHalfAngle };
+                return { mob, distance, inArc: dotProduct > cosHalfAngle && distance < max_distance };
             })
             .filter(item => item.inArc)
             .sort((a, b) => a.distance - b.distance)
