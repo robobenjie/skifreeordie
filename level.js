@@ -114,12 +114,15 @@ export class Level {
         this.signImages[LevelDifficulty.SKULL].src = "images/sign_skull.svg";
 
         // Calculate animation progress
-        this.animationDuration = 1; // ms
+        this.animationDuration = 0.5;
         this.timeSinceComplete = 0;
 
         this.scores = null;
         this._isComplete = false;
-        this.cashMoveRate = 500;
+        this._cashTransferComplete = false;
+        this.cashTransferEndTime = 0;
+        this.totalTransferEndTime = -1;
+        this.cashMoveRate = 200;
     }
 
     start() {
@@ -128,6 +131,8 @@ export class Level {
         this.time = 0;
         this.terrainManager.setTreePercentage(this.treePercentage);
         this.terrainManager.setJumpRampPercentage(this.jumpRampPercentage);
+        this.numAxeOrcs = this.axeOrcs.length;
+        this.numSpearOrcs = this.spearOrcs.length;
     }
 
     isComplete() {
@@ -151,7 +156,7 @@ export class Level {
             this.time += dt;
         } else {
             this.timeSinceComplete += dt;
-            if (this.scores && this.timeSinceComplete > 1.0) {
+            if (this.scores && this.timeSinceComplete > 2.5) {
                 // Find the top-most non-empty row
                 let topRowIndex = this.scores.findIndex(row => row.cash > 0);
                 
@@ -164,9 +169,19 @@ export class Level {
                     this.scores[this.scores.length - 1].cash += amountToMove;
                 }
                 if (topRowIndex == this.scores.length - 1) {
-                    let amountToMove = Math.min(this.cashMoveRate * dt, this.scores[topRowIndex].cash);
-                    this.scores[topRowIndex].cash -= amountToMove;
-                    this.character.medals += amountToMove;
+                    if (this.totalTransferEndTime == -1) {
+                        this.totalTransferEndTime = this.timeSinceComplete;
+                    }
+                    let timeSinceEnd = this.timeSinceComplete - this.totalTransferEndTime;
+                    if (timeSinceEnd > 1.5) {
+                        let amountToMove = Math.min(this.cashMoveRate * dt, this.scores[topRowIndex].cash);
+                        this.scores[topRowIndex].cash -= amountToMove;
+                        this.character.medals += amountToMove;
+                        if (this.scores[topRowIndex].cash <= 0) {
+                            this._cashTransferComplete = true;
+                            this.cashTransferEndTime = this.timeSinceComplete;
+                        }
+                    }
                 }
             }
         }
@@ -244,7 +259,9 @@ export class Level {
 
     render(ctx) {
         if (this.isComplete()) {
-            this.renderScoreCard(ctx);
+            if (!this._cashTransferComplete || this.timeSinceComplete - this.cashTransferEndTime < 1.2) {
+                this.renderScoreCard(ctx);
+            }
         } else {
             this.renderStatChips(ctx);
         }
@@ -280,11 +297,13 @@ export class Level {
         let currentY = startY + 60;
         const scoreData = this.scores;
 
-        const elapsedTime = this.timeSinceComplete;
-        const progress = Math.min(elapsedTime / this.animationDuration, 1);
         scoreData.forEach((item, index) => {
-            const rowProgress = Math.min((progress * (scoreData.length + 1) - index * 0.75), 1);
-            const rowX = startX + cardWidth * (1 - rowProgress);
+            let rowX = 0;
+            if (!this._cashTransferComplete) {
+                rowX = this.getFlyinX(ctx, startX, this.animationDuration, 100, 10, this.timeSinceComplete - 0.1 * index);
+            } else {
+                rowX = this.getFlyinX(ctx, startX, 0, 0.1 * index, this.animationDuration, this.timeSinceComplete - this.cashTransferEndTime);
+            }
             let bold = false;
             if (item.title == "TOTAL") {
                 currentY += rowHeight * 0.5;
@@ -329,22 +348,14 @@ export class Level {
         }
         ctx.fillText(reward, x + width - this.ScorePadding * 2, y + height / 2 + height_fudge);
     }
-
-    renderTitleFlyIn(ctx) {
-        if (this.time > titleFlyInTime + titleDwellTime + titleFlyOutTime) {
-            return;
-        }
-        const height = 100;
-        const skew = Math.tan(10 * Math.PI / 180) * height;
-        const cornerRadius = 7;
-        const padding = 5;
+    getFlyinX(ctx, targetX, flyinTime, dwellTime, flyoutTime, currentTime) {
         let transitionFraction = 0;
-        if (this.time < titleFlyInTime) {
-            transitionFraction = this.time / titleFlyInTime;
-        } else if (this.time < titleFlyInTime + titleDwellTime) {
+        if (currentTime < flyinTime) {
+            transitionFraction = currentTime / flyinTime;
+        } else if (currentTime < flyinTime + dwellTime) {
             transitionFraction = 1;
         } else {
-            transitionFraction = 1 + (this.time - titleFlyInTime - titleDwellTime) / titleFlyOutTime;
+            transitionFraction = 1 + (currentTime - flyinTime - dwellTime) / flyoutTime;
         }
 
         // Modify transitionFraction to ease-in/out
@@ -355,7 +366,16 @@ export class Level {
         };
 
         transitionFraction = easeInOutTransition(transitionFraction);
-        let titleX = padding + (ctx.canvas.width) * (1 - transitionFraction);
+        return targetX + (ctx.canvas.width - targetX) * (1 - transitionFraction);
+    }
+
+    renderTitleFlyIn(ctx) {
+        const height = 100;
+        const skew = Math.tan(10 * Math.PI / 180) * height;
+        const cornerRadius = 7;
+        const padding = 5;
+        
+        let titleX = this.getFlyinX(ctx, padding, titleFlyInTime, titleDwellTime, titleFlyOutTime, this.time);
         let width = ctx.canvas.width - 3 * padding - skew;
 
 
@@ -392,14 +412,14 @@ export class Level {
         const mobBoxStartX = width - 30;
         const mobBoxStartY = 47;
         let i = 0
-        for (let m of this.axeOrcs) {
+        for (let j = 0; j < this.numAxeOrcs; j++) {
             ctx.fillStyle = 'white';
             ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
             ctx.fillStyle = 'orange';
             ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
             i++;
         }
-        for (let m of this.spearOrcs) {
+        for (let j = 0; j < this.numSpearOrcs; j++) {
             ctx.fillStyle = 'white';
             ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
             ctx.fillStyle = 'black';
@@ -436,8 +456,9 @@ export class Level {
             this.renderStatChip(ctx, x, y, 60, distanceRemaining.toFixed(0) + 'ft');
         }
 
-        this.renderTitleFlyIn(ctx);
-
+        if (this.time < titleFlyInTime + titleDwellTime + titleFlyOutTime ) {
+            this.renderTitleFlyIn(ctx);
+        }
     }
 
     roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
