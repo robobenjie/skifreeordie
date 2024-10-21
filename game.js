@@ -28,7 +28,7 @@ window.addEventListener('load', function () {
     let gun = new Gun(character, mobManager);
     let laserGun = new LaserGun(character, mobManager);
     let pistol = new Pistol(character, mobManager);
-    character.equipRightHand(pistol);
+    character.equipRightHand(sword);
 
     let svgText;
     let characterImg;
