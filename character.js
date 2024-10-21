@@ -308,11 +308,11 @@ class Character {
         ctx.fillRect(padding_x, padding_y + 2, healthWidth, 4);
 
         // Below the health bar print speed and y distance
-        ctx.fillStyle = "black";
-        ctx.font = "12px Arial";        
-        ctx.textAlign = "left";
-        ctx.fillText("Speed: " + (Math.max(0, this.skiPhysics.velocity.y) / 8).toFixed(0) + " mph", padding_x, padding_y + height + 20);
-        ctx.fillText("Distance: " + ((this.y - 100)/10).toFixed(0) + " feet", padding_x, padding_y + height + 40);
+        //ctx.fillStyle = "black";
+        //ctx.font = "12px Arial";        
+        //ctx.textAlign = "left";
+        //ctx.fillText("Speed: " + (Math.max(0, this.skiPhysics.velocity.y) / 8).toFixed(0) + " mph", padding_x, padding_y + height + 20);
+        //ctx.fillText("Distance: " + ((this.y - 100)/10).toFixed(0) + " feet", padding_x, padding_y + height + 40);
 
     }
 

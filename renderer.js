@@ -89,8 +89,8 @@ class Renderer {
 
         this.ctx.restore();
 
-        if (this.character.level && this.character.level.isComplete()) {
-            this.character.level.renderScoreCard(this.ctx);
+        if (this.character.level ) {
+            this.character.level.render(this.ctx)
         }
     }
 

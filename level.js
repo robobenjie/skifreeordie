@@ -43,6 +43,10 @@ const secondHalves = [
     "Hellscape", "Armageddon", "Catastrophe", "Devastation", "Reckoning", "Cairn"] // doubel black
 ];
 
+const titleFlyInTime = 0.7;
+const titleDwellTime = 1.5;
+const titleFlyOutTime = 0.7;
+
 // Function to generate ski run name based on difficulty
 function generateSkiRunName(difficulty) {
   // Pick the difficulty range (include one level away)
@@ -213,6 +217,14 @@ export class Level {
         ];
     }
 
+    render(ctx) {
+        if (this.isComplete()) {
+            this.renderScoreCard(ctx);
+        } else {
+            this.renderStatChips(ctx);
+        }
+    }
+
     renderScoreCard(ctx) {
         const cardWidth = 400;
         const cardHeight = 300;
@@ -250,7 +262,7 @@ export class Level {
         scoreData.forEach((item, index) => {
             const rowProgress = Math.min((progress * (scoreData.length + 1) - index * 0.75), 1);
             const rowX = startX + cardWidth * (1 - rowProgress);
-            this.renderRow(ctx, rowX, currentY, cardWidth, rowHeight, item.title, item.value, '$' + item.cash, false);
+            this.renderRow(ctx, rowX, currentY, cardWidth, rowHeight, item.title, item.value, '🥇' + item.cash, false);
             currentY += rowHeight + this.ScorePadding;
             totalCash += item.cash;
         });
@@ -259,7 +271,7 @@ export class Level {
         currentY += rowHeight * 0.5;
         const totalRowProgress = Math.min((progress * (scoreData.length + 1) - scoreData.length), 1);
         const totalRowX = startX + cardWidth * (1 - totalRowProgress);
-        this.renderRow(ctx, totalRowX, currentY, cardWidth, rowHeight, 'TOTAL', '', '$' + totalCash, true);
+        this.renderRow(ctx, totalRowX, currentY, cardWidth, rowHeight, 'TOTAL', '', '🥇' + totalCash, true);
     }
 
     renderRow(ctx, x, y, width, height, topic, value, reward, bold) {
@@ -288,8 +300,162 @@ export class Level {
 
         // Draw reward
         ctx.textAlign = 'right';
+        if (bold) {
+            ctx.font = "22px Roboto Mono, sans-serif";
+        } else {
+            ctx.font = "normal 100 22px Roboto Mono, sans-serif";
+        }
         ctx.fillText(reward, x + width - this.ScorePadding * 2, y + height / 2 + height_fudge);
     }
+
+    renderTitleFlyIn(ctx) {
+        if (this.time > titleFlyInTime + titleDwellTime + titleFlyOutTime) {
+            return;
+        }
+        const height = 100;
+        const skew = Math.tan(10 * Math.PI / 180) * height;
+        const cornerRadius = 7;
+        const padding = 5;
+        let transitionFraction = 0;
+        if (this.time < titleFlyInTime) {
+            transitionFraction = this.time / titleFlyInTime;
+        } else if (this.time < titleFlyInTime + titleDwellTime) {
+            transitionFraction = 1;
+        } else {
+            transitionFraction = 1 + (this.time - titleFlyInTime - titleDwellTime) / titleFlyOutTime;
+        }
+
+        // Modify transitionFraction to ease-in/out
+        let easeInOutTransition = (t) => {
+            return t < 0.5
+                ? 4 * t * t * t
+                : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        };
+
+        transitionFraction = easeInOutTransition(transitionFraction);
+        let titleX = padding + (ctx.canvas.width) * (1 - transitionFraction);
+        let width = ctx.canvas.width - 3 * padding - skew;
+
+
+        ctx.save();
+        ctx.translate(titleX, 25);
+        this.roundedParallelogram(ctx, 0, 0, width, height, skew, cornerRadius);
+        ctx.fillStyle = this.getDifficultyColor();
+        ctx.fill();
+
+        // Create gradient for the fade effect
+        let gradient = ctx.createLinearGradient(padding + skew, 0, width, 0);
+        gradient.addColorStop(0, this.getDifficultyColor());
+        gradient.addColorStop(1, 'white');
+
+        // Draw the fading rectangle
+        ctx.fillStyle = gradient;
+        ctx.fillRect(padding + skew, 36, width - padding - 5, 3);
+        ctx.font = "30px Roboto";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left";
+        ctx.fillText(this.name, padding + skew + 16, 32);
+
+        const goalTimeString = `Time to Beat: ${Math.floor(this.goalTime)}:${(this.goalTime % 1).toFixed(2).slice(2)}s`;
+        const distanceString = 'Run Length: ' + this.length.toFixed(0) + 'ft';
+        ctx.font = "16px Roboto";
+        const y_start = 58;
+        const y_gap = 20;
+        ctx.fillText(goalTimeString, padding + skew + 16, y_start);
+        ctx.fillText(distanceString, padding + skew + 16, y_start + y_gap);
+
+        const mobBoxSize = 20;
+        const mobBoxSmallSize = 10;
+        const mobBoxPadding = 3;
+        const mobBoxStartX = width - 30;
+        const mobBoxStartY = 47;
+        let i = 0
+        for (let m of this.axeOrcs) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
+            ctx.fillStyle = 'orange';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
+            i++;
+        }
+        for (let m of this.spearOrcs) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
+            i++;
+        }
+
+        ctx.restore();
+    }
+
+    renderStatChips(ctx) {
+
+        if (this.time > titleFlyInTime + titleDwellTime + titleFlyOutTime / 2) {
+
+            let x = 10;
+            let y = 30;
+            // Format time to MM:SS, capping at 59:59
+            let minutes = Math.floor(this.time / 60);
+            let seconds = Math.floor(this.time % 60);
+            let millis = Math.floor((this.time - Math.floor(this.time)) * 100);
+            
+            if (minutes > 59) {
+                minutes = 59;
+                seconds = 59;
+            }
+            
+            let formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${millis.toString().padStart(2, '0')}`;
+            this.renderStatChip(ctx, x, y, 80, formattedTime);
+            y += 30;
+            let speed = Math.sqrt(this.character.velocity.x * this.character.velocity.x + this.character.velocity.y * this.character.velocity.y) / 8;
+            this.renderStatChip(ctx, x, y, 70, speed.toFixed(0) + ' mph');
+            y += 30;
+            let distanceRemaining = (this.length - (this.character.y - this.startY) / 10);
+            this.renderStatChip(ctx, x, y, 60, distanceRemaining.toFixed(0) + 'ft');
+        }
+
+        this.renderTitleFlyIn(ctx);
+
+    }
+
+    roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
+        // Start path
+        ctx.beginPath();
+        ctx.moveTo(x + cornerRadius + skew, y);
+        ctx.lineTo(x + width - cornerRadius + skew, y);
+        ctx.arcTo(x + width + skew, y, x + width + skew, y + cornerRadius, cornerRadius);
+        ctx.lineTo(x + width, y + height - cornerRadius);
+        ctx.arcTo(x + width, y + height, x + width - cornerRadius, y + height, cornerRadius);
+        ctx.lineTo(x + cornerRadius, y + height);
+        ctx.arcTo(x, y + height, x, y + height - cornerRadius, cornerRadius);
+        ctx.lineTo(x + skew, y + cornerRadius);
+        ctx.arcTo(x + skew, y, x + cornerRadius + skew, y, cornerRadius);
+    }
+
+    renderStatChip(ctx, x, y, width, str) {
+        // Calculate dimensions
+        const height = 20;
+        const skew = Math.tan(10 * Math.PI / 180) * height;
+        const cornerRadius = 4;
+        
+        this.roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius);
+
+        // Set styles
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = 'darkblue';
+        ctx.lineWidth = 2;
+        ctx.fill();
+        ctx.stroke();
+
+        // Add text
+        ctx.fillStyle = 'darkblue';
+        ctx.font = '14px Roboto';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(str, x + width / 2, y + height / 2 + 1);
+        ctx.textBaseline = 'alphabetic';
+    }
+
 
     getDifficultyColor() {
         switch (this.LevelDifficulty) {
