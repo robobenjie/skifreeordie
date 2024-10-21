@@ -41,6 +41,7 @@ class Character {
 
         // set up state vars
         this.health = this.maxHealth;
+        this.medals = 0;
 
         this.joystick.addTapListener(() => {
             if (this.skiPhysics.isJumping()) {
@@ -307,13 +308,23 @@ class Character {
         ctx.fillStyle = "#ff9f85";
         ctx.fillRect(padding_x, padding_y + 2, healthWidth, 4);
 
-        // Below the health bar print speed and y distance
-        //ctx.fillStyle = "black";
-        //ctx.font = "12px Arial";        
-        //ctx.textAlign = "left";
-        //ctx.fillText("Speed: " + (Math.max(0, this.skiPhysics.velocity.y) / 8).toFixed(0) + " mph", padding_x, padding_y + height + 20);
-        //ctx.fillText("Distance: " + ((this.y - 100)/10).toFixed(0) + " feet", padding_x, padding_y + height + 40);
-
+        // Draw medals
+        if (this.medals > 0) {
+            const medalEmoji = '🏅';
+            const medalText = `${medalEmoji}${this.medals}`;
+            const medalY = padding_y + height + 10;
+            
+            ctx.font = '300 18px Oswald'    
+            ctx.textBaseline = 'top';
+            ctx.textAlign = 'right';
+            
+            const medalX = ctx.canvas.width - padding_x;
+            
+            ctx.fillStyle = 'black';
+            ctx.fillText(medalText, medalX, medalY);
+            ctx.textBaseline = 'alphabetic';
+            ctx.textAlign = 'left';
+        }
     }
 
     draw(ctx) {

@@ -247,7 +247,7 @@ export class Level {
 
         // Draw title text
         ctx.fillStyle = 'rgba(255, 255, 255, 1.0)';
-        ctx.font = "26px 'Roboto'";
+        ctx.font = "26px Roboto";
         ctx.textAlign = 'center';
         ctx.fillText(this.name, startX + cardWidth / 2, startY + titleHeight / 2 + 8);
 
@@ -271,7 +271,7 @@ export class Level {
         currentY += rowHeight * 0.5;
         const totalRowProgress = Math.min((progress * (scoreData.length + 1) - scoreData.length), 1);
         const totalRowX = startX + cardWidth * (1 - totalRowProgress);
-        this.renderRow(ctx, totalRowX, currentY, cardWidth, rowHeight, 'TOTAL', '', '🥇' + totalCash, true);
+        this.renderRow(ctx, totalRowX, currentY + 1, cardWidth, rowHeight, 'TOTAL', '', '🥇' + totalCash, true);
     }
 
     renderRow(ctx, x, y, width, height, topic, value, reward, bold) {
@@ -301,9 +301,10 @@ export class Level {
         // Draw reward
         ctx.textAlign = 'right';
         if (bold) {
-            ctx.font = "22px Roboto Mono, sans-serif";
+            
+            ctx.font = '300 22px Oswald';
         } else {
-            ctx.font = "normal 100 22px Roboto Mono, sans-serif";
+            ctx.font = '300 22px Oswald';
         }
         ctx.fillText(reward, x + width - this.ScorePadding * 2, y + height / 2 + height_fudge);
     }

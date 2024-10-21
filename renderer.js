@@ -89,6 +89,8 @@ class Renderer {
 
         this.ctx.restore();
 
+        this.character.drawHealthBar(this.ctx);
+
         if (this.character.level ) {
             this.character.level.render(this.ctx)
         }
