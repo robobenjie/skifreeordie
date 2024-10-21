@@ -116,6 +116,10 @@ export class Level {
         // Calculate animation progress
         this.animationDuration = 1; // ms
         this.timeSinceComplete = 0;
+
+        this.scores = null;
+        this._isComplete = false;
+        this.cashMoveRate = 500;
     }
 
     start() {
@@ -127,7 +131,7 @@ export class Level {
     }
 
     isComplete() {
-        return (this.character.y - this.startY) / 10 > this.length;
+        return this._isComplete;
     }
 
     goblinKilled() {
@@ -147,6 +151,24 @@ export class Level {
             this.time += dt;
         } else {
             this.timeSinceComplete += dt;
+            if (this.scores && this.timeSinceComplete > 1.0) {
+                // Find the top-most non-empty row
+                let topRowIndex = this.scores.findIndex(row => row.cash > 0);
+                
+                if (topRowIndex !== -1 && topRowIndex < this.scores.length - 1) {
+                    // Calculate the amount to move
+                    let amountToMove = Math.min(this.cashMoveRate * dt, this.scores[topRowIndex].cash);
+                    
+                    // Move cash from top row to bottom row
+                    this.scores[topRowIndex].cash -= amountToMove;
+                    this.scores[this.scores.length - 1].cash += amountToMove;
+                }
+                if (topRowIndex == this.scores.length - 1) {
+                    let amountToMove = Math.min(this.cashMoveRate * dt, this.scores[topRowIndex].cash);
+                    this.scores[topRowIndex].cash -= amountToMove;
+                    this.character.medals += amountToMove;
+                }
+            }
         }
         let y = (this.character.y - this.startY) / 10;
         if (y - this.lastGoblinSpawn > this.yPerGoblin) {
@@ -171,12 +193,14 @@ export class Level {
             this.endingPlaced = true;
         }
 
-        if (y > this.length) {
+        if (y > this.length && !this.isComplete()) {
             this.mobManager.notifyLevelComplete();
             this.terrainManager.setJumpRampPercentage(0);
             this.terrainManager.setTreePercentage(0.2)
-            this.timeComplete = this.time;
+            this.scores = this.getScoreCardData();
+            this._isComplete = true;
         }
+
     }
 
     getCashForTime() {
@@ -214,6 +238,7 @@ export class Level {
             { title: 'GOBLIN KILLS', value: this.goblinsKilled, cash: this.cashPerGoblin * this.goblinsKilled },
             { title: 'ENEMY KILLS', value: this.enemiesKilled, cash: this.cashPerEnemy * this.enemiesKilled },
             { title: 'AIRTIME', value: this.airTime.toFixed(2) + 's', cash: this.getCashForAirTime() },
+            { title: 'TOTAL', value: '', cash: 0 },
         ];
     }
 
@@ -253,25 +278,21 @@ export class Level {
 
         // Draw rows with animation
         let currentY = startY + 60;
-        const scoreData = this.getScoreCardData();
-        let totalCash = 0;
+        const scoreData = this.scores;
 
         const elapsedTime = this.timeSinceComplete;
         const progress = Math.min(elapsedTime / this.animationDuration, 1);
-
         scoreData.forEach((item, index) => {
             const rowProgress = Math.min((progress * (scoreData.length + 1) - index * 0.75), 1);
             const rowX = startX + cardWidth * (1 - rowProgress);
-            this.renderRow(ctx, rowX, currentY, cardWidth, rowHeight, item.title, item.value, '🥇' + item.cash, false);
+            let bold = false;
+            if (item.title == "TOTAL") {
+                currentY += rowHeight * 0.5;
+                bold = true;
+            }
+            this.renderRow(ctx, rowX, currentY, cardWidth, rowHeight, item.title, item.value, '🥇' + Math.round(item.cash), bold);
             currentY += rowHeight + this.ScorePadding;
-            totalCash += item.cash;
         });
-
-        // Render total row with animation
-        currentY += rowHeight * 0.5;
-        const totalRowProgress = Math.min((progress * (scoreData.length + 1) - scoreData.length), 1);
-        const totalRowX = startX + cardWidth * (1 - totalRowProgress);
-        this.renderRow(ctx, totalRowX, currentY + 1, cardWidth, rowHeight, 'TOTAL', '', '🥇' + totalCash, true);
     }
 
     renderRow(ctx, x, y, width, height, topic, value, reward, bold) {

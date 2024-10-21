@@ -311,7 +311,7 @@ class Character {
         // Draw medals
         if (this.medals > 0) {
             const medalEmoji = '🏅';
-            const medalText = `${medalEmoji}${this.medals}`;
+            const medalText = `${medalEmoji}${Math.round(this.medals)}`;
             const medalY = padding_y + height + 10;
             
             ctx.font = '300 18px Oswald'    
