@@ -111,6 +111,54 @@ class ColoredParticle extends Particle {
     }
 }
 
+class FallingSnowParticle extends Particle {
+    constructor(x, y, velocity, lifetime) {
+        super(x, y, velocity, lifetime);
+        this.color = 'rgba(255, 255, 255, 0.7)';
+    }
+
+    update(dt, windSpeed) {
+        if (!this.active) return;
+
+        // Add Brownian motion in the x direction
+        const brownianForce = (Math.random() - 0.5) * 2; // Random value between -1 and 1
+        const brownianStrength = 200; // Adjust this value to control the intensity of the motion
+        this.velocity.x += brownianForce * brownianStrength * dt;
+
+        // Optional: Add some damping to prevent excessive speeds
+        const damping = 0.01;
+        //this.velocity.x -= this.velocity.x * damping * dt;
+
+        // Update position based on velocity
+        this.position.x += this.velocity.x * dt + windSpeed * dt;
+        this.position.y += this.velocity.y * dt;
+
+        // Increment the age
+        this.age += dt;
+
+        // Check if particle has exceeded its lifetime
+        if (this.age >= this.lifetime) {
+            this.active = false;  // Mark as expired
+        }
+    }
+}
+
+export class FallingSnowParticleEffect extends ParticleEngineBase {
+    constructor(maxParticles) {
+        super(maxParticles, FallingSnowParticle);
+    }
+
+
+    // Update all active particles
+    update(dt, windSpeed) {
+        for (let particle of this.particles) {
+            if (particle.active) {
+                particle.update(dt, windSpeed);
+            }
+        }
+    }
+}
+
 export class MobDeathParticleEffect extends ParticleEngineBase {
     constructor(maxParticles) {
         super(maxParticles, ColoredParticle);

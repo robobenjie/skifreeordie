@@ -6,10 +6,29 @@ import ParticleEngine from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
+import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
 import { Sword, Gun, LaserGun, miniGun, Pistol } from './weapons.js';
 
 window.addEventListener('load', function () {
+    // Wait for the #shopSvg to load before initializing the game
+    const svgObject = document.getElementById('shopSvg');
+    if (svgObject.contentDocument) {
+        // If already loaded, initialize the shop
+        console.log("already loaded");
+        initializeGame();
+    } else {
+        console.log("not loaded yet");
+        // Wait for the SVG to load and then initialize the shop
+        svgObject.addEventListener('load', () => {
+            console.log("loaded now: loaded");
+            initializeGame();
+        });
+    }
+
+});
+    
+function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
     let lastTime = 0; // For delta time calculation
@@ -28,6 +47,12 @@ window.addEventListener('load', function () {
     let gun = new Gun(character, mobManager);
     let laserGun = new LaserGun(character, mobManager);
     let pistol = new Pistol(character, mobManager);
+
+    let shop = new Shop(character, ctx);
+    const svgObject = document.getElementById('shopSvg');
+    svgObject.contentDocument.documentElement.style.display = 'none';
+
+
     character.equipRightHand(sword);
 
     let svgText;
@@ -89,38 +114,21 @@ window.addEventListener('load', function () {
         // Game Not Paused:
         gameTime += dt;
 
-        // Interpolate and draw the SVG
-        if (svgText) {
-            const interpolationFactor = gameTime % 1; // This will cycle between 0 and 1
-            const interpolatedSVG = interpolateSVG(svgText, "angle_2", "angle_1", interpolationFactor);
-            
-            svgToImage(interpolatedSVG).then(img => {
-                characterImg = img;
-            }).catch(error => {
-                console.error('Error converting SVG to image:', error.message);
-            });
+        if (true){
+            shop.update(dt);
+            shop.draw(ctx);
+        } else {
 
-            if (characterImg) {
-                ctx.drawImage(characterImg, 100, 100, 30, 50);
-            }
+            character.update(dt, ctx);
+            camera.update(dt);
+            particleEngine.update(dt);
+            treeManager.update(dt, character, ctx);
+            mobManager.update(dt);
+
+            renderer.render();
+        
+            joystick.draw(ctx);
         }
-
-        if (level) {
-            level.update(dt);
-            if (level.isComplete()) {
-                // do stuff?
-            }
-        }
-
-        character.update(dt, ctx);
-        camera.update(dt);
-        particleEngine.update(dt);
-        treeManager.update(dt, character, ctx);
-        mobManager.update(dt);
-
-        renderer.render();
-    
-        joystick.draw(ctx);
         lastTime = time;
 
         requestAnimationFrame(update);
@@ -132,4 +140,4 @@ window.addEventListener('load', function () {
     // Initial call to set the canvas size correctly and start the update loop
     resizeCanvas();
     requestAnimationFrame(update);
-});
+};
