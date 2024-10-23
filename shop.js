@@ -1,6 +1,7 @@
-import { FallingSnowParticleEffect } from "./particle_engine.js";
+import { FallingSnowParticleEffect, SparkParticleEffect } from "./particle_engine.js";
 import randomCentered, { Clickable, calculateFlyInOut } from "./utils.js";
 
+const HAMMER_RATE = 6;
 export class Shop {
   constructor(character, ctx, canvas) {
       this.character = character;
@@ -20,7 +21,7 @@ export class Shop {
       this.elapsedTime = 0;
       this.ctx = ctx;
       this.lastSnowTime = 0;
-      this.snowRate = 40;
+      this.snowRate = 120;
       this.signature = null;
 
       this.checkingOut = true;
@@ -37,8 +38,15 @@ export class Shop {
       this.treeSpawnTime = 0;
       this.lastTreeSpawnTime = 0;
 
-      this.snowEffect = new FallingSnowParticleEffect(800);
-      this.backgroundSnowEffect = new FallingSnowParticleEffect(800);
+      this.snowEffect = new FallingSnowParticleEffect(1200);
+      this.backgroundSnowEffect = new FallingSnowParticleEffect(1200);
+      this.sparkEffect = new SparkParticleEffect(50);
+
+      // Warm up the snow effects
+      const warmUpDuration = 3;  // Simulate 10 seconds of snow
+      const wind = -60;
+      this.snowEffect.warmUp(ctx, warmUpDuration, wind, this.snowRate);
+      this.backgroundSnowEffect.warmUp(ctx, warmUpDuration, wind, this.snowRate);
 
       this.canvas = canvas;
       this.clickables = [];  // New list to store clickable objects
@@ -96,12 +104,18 @@ export class Shop {
 
   update(dt) {
       // Update logic here
-      let wind = -80
+      let wind = -60
       this.elapsedTime += dt;
       this.snowEffect.update(dt, wind, this.ctx);
       this.backgroundSnowEffect.update(dt, wind, this.ctx);
+      if (!this.checkingOut && this.elapsedTime > this.checkoutEndTime + 1.0) {  
+        if (Math.sin(this.elapsedTime * HAMMER_RATE) * Math.sin((this.elapsedTime - dt) * HAMMER_RATE) < 0) {
+          this.hammerSparks()
+        }
+      }
+      this.sparkEffect.update(dt);
       if (this.elapsedTime > this.lastSnowTime + 1 / this.snowRate) {
-        let xpos = (Math.random() * 4 - 1) * this.ctx.canvas.width;
+        let xpos = (Math.random() * 7 - 1) * this.ctx.canvas.width;
         let ypos = 0;
         this.snowEffect.emit(xpos, ypos, {x:0.0, y:80.0}, 10);
         xpos = (Math.random() * 4 - 1) * this.ctx.canvas.width;
@@ -128,6 +142,15 @@ export class Shop {
 
   }
 
+  hammerSparks() {
+    for (let i = 0; i < 6 + randomCentered(5); i++) {
+      let dir = -Math.PI / 2 + randomCentered(Math.PI / 2);
+      let speed = 300 + randomCentered(100);
+      let lifetime = 0.3 + randomCentered(0.2);
+      this.sparkEffect.emit(570, 1460, {x:Math.cos(dir) * speed, y:Math.sin(dir) * speed}, lifetime, "#ff6601");
+    }
+  }
+
   draw(ctx) {
     function rotateInImageFrame(pivot, amount) {
       ctx.translate(pivot.x, pivot.y);
@@ -136,10 +159,7 @@ export class Shop {
     }
     if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair && this.confirmLed) {
       const checkingOut = this.checkingOut || this.elapsedTime < this.checkoutEndTime + 1.0;
-      ctx.save();
-      ctx.scale(0.8, 0.8);
-      this.backgroundSnowEffect.draw(ctx);
-      ctx.restore();
+
 
       let height = ctx.canvas.height;
       const scale = height / this.chair.height;
@@ -160,6 +180,11 @@ export class Shop {
         ctx.restore();
       }
 
+      ctx.save();
+      ctx.scale(1/scale * 0.8, 1/ scale * 0.8);
+      this.backgroundSnowEffect.draw(ctx);
+      ctx.restore();
+
       // Draw the chair if the image is loaded
       ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
       // Update the transform for each clickable
@@ -177,7 +202,7 @@ export class Shop {
       if (!checkingOut) {
         // Dwarf Hammer Arm
         ctx.save(); {
-          let amt = Math.sin(this.elapsedTime * 6);
+          let amt = Math.sin(this.elapsedTime * HAMMER_RATE);
           amt = Math.pow(Math.abs(amt), 0.5);
           rotateInImageFrame({x: 692, y: 1325}, amt * 0.06);
           ctx.drawImage(this.hammerBicep, 0, 0, width, height);    
@@ -221,7 +246,7 @@ export class Shop {
         ctx.drawImage(this.characterLeftPants, 0, 0, width, height);
       }ctx.restore();
 
-
+      this.sparkEffect.draw(ctx);
 
       ctx.restore(); // chair swing
 

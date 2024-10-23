@@ -162,8 +162,36 @@ export class FallingSnowParticleEffect extends ParticleEngineBase {
             }
         }
     }
+
+    warmUp(ctx, duration, wind, emissionRate) {
+        const warmUpSteps = 100;  // Number of update steps to simulate
+        const dt = duration / warmUpSteps;
+
+        for (let i = 0; i < warmUpSteps; i++) {
+            this.update(dt, wind, ctx);
+            
+            // Emit particles throughout the warm-up period
+            const particlesToEmit = Math.floor(emissionRate * dt);
+            for (let j = 0; j < particlesToEmit; j++) {
+                const x = Math.random() * ctx.canvas.width * 6;
+                const y = Math.random() * ctx.canvas.height * 2;
+                this.emit(x, y, {x: 0, y: 80}, 10);
+            }
+        }
+    }
 }
 
+export class SparkParticleEffect extends ParticleEngineBase {
+    constructor(maxParticles) {
+        super(maxParticles, ColoredParticle);
+    }
+
+    emit(x, y, velocity, lifetime, color) {
+        let particle = super.emit(x, y, velocity, lifetime);
+        particle.color = color;
+    }
+
+}
 export class MobDeathParticleEffect extends ParticleEngineBase {
     constructor(maxParticles) {
         super(maxParticles, ColoredParticle);
