@@ -1,4 +1,5 @@
 import { FallingSnowParticleEffect } from "./particle_engine.js";
+import randomCentered from "./utils.js";
 
 export class Shop {
   constructor(character, ctx) {
@@ -15,6 +16,15 @@ export class Shop {
       this.ctx = ctx;
       this.lastSnowTime = 0;
       this.snowRate = 40;
+
+      this.treesImages = [
+        new Image(),
+      ]
+      this.treesImages[0].src = "images/big_tree_1.svg";
+
+      this.trees = [];
+      this.treeSpawnTime = 0;
+      this.lastTreeSpawnTime = 0;
 
       this.snowEffect = new FallingSnowParticleEffect(800);
       this.backgroundSnowEffect = new FallingSnowParticleEffect(800);
@@ -97,8 +107,8 @@ export class Shop {
       // Update logic here
       let wind = -80
       this.elapsedTime += dt;
-      this.snowEffect.update(dt, wind);
-      this.backgroundSnowEffect.update(dt, wind);
+      this.snowEffect.update(dt, wind, this.ctx);
+      this.backgroundSnowEffect.update(dt, wind, this.ctx);
       if (this.elapsedTime > this.lastSnowTime + 1 / this.snowRate) {
         let xpos = (Math.random() * 4 - 1) * this.ctx.canvas.width;
         let ypos = 0;
@@ -106,6 +116,23 @@ export class Shop {
         xpos = (Math.random() * 4 - 1) * this.ctx.canvas.width;
         this.backgroundSnowEffect.emit(xpos, ypos, {x:0.0, y:80.0}, 15);
         this.lastSnowTime = this.elapsedTime;
+      }
+      if (this.elapsedTime > this.treeSpawnTime) {
+        this.treeSpawnTime = this.elapsedTime + 6 + randomCentered(3);
+        this.trees.push({
+          x: this.ctx.canvas.width + this.treesImages[0].width / 2,
+          y: 400 + randomCentered(100),
+          age: 0,
+          img: this.treesImages[0],
+        });
+      }
+      for (let tree of this.trees) {
+        tree.x -= 150 * dt;
+        tree.y += 100 * dt;
+        tree.age += dt;
+        if (tree.x < -100) {
+          this.trees.splice(this.trees.indexOf(tree), 1);
+        }
       }
   }
 
@@ -131,6 +158,17 @@ export class Shop {
         }
         let width = this.chair.width;
         height = this.chair.height;
+
+        for (let tree of this.trees) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(1 - tree.age / 5, 0);
+          ctx.translate(tree.x + width / 2, tree.y + height / 2);
+          ctx.scale(1 - tree.age / 10, 1 - tree.age / 10);
+         
+          ctx.drawImage(tree.img, -width / 2, -height / 2, width, height);
+          ctx.restore();
+        }
+
         // Draw the chair if the image is loaded
         ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
         ctx.drawImage(this.cable, 0, 0, width, height);
@@ -168,7 +206,6 @@ export class Shop {
           } ctx.restore()
           ctx.drawImage(this.characterLeftPants, 0, 0, width, height);
         }ctx.restore();
-
 
         ctx.restore(); // translate
         ctx.restore(); // scale

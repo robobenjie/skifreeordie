@@ -117,7 +117,7 @@ class FallingSnowParticle extends Particle {
         this.color = 'rgba(255, 255, 255, 0.7)';
     }
 
-    update(dt, windSpeed) {
+    update(dt, windSpeed, ctx) {
         if (!this.active) return;
 
         // Add Brownian motion in the x direction
@@ -125,9 +125,14 @@ class FallingSnowParticle extends Particle {
         const brownianStrength = 200; // Adjust this value to control the intensity of the motion
         this.velocity.x += brownianForce * brownianStrength * dt;
 
-        // Optional: Add some damping to prevent excessive speeds
-        const damping = 0.01;
-        //this.velocity.x -= this.velocity.x * damping * dt;
+        // Add motion towards the center of the canvas
+        const center = { x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 };
+        const direction = { x: center.x - this.position.x, y: center.y - this.position.y };
+        const distance = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
+        const attractionStrength = .00001; // Adjust this value to control the intensity of the attraction
+        this.velocity.x += direction.x * attractionStrength * dt * distance;
+        this.velocity.y += direction.y * attractionStrength * dt * distance;
+
 
         // Update position based on velocity
         this.position.x += this.velocity.x * dt + windSpeed * dt;
@@ -150,10 +155,10 @@ export class FallingSnowParticleEffect extends ParticleEngineBase {
 
 
     // Update all active particles
-    update(dt, windSpeed) {
+    update(dt, windSpeed, ctx) {
         for (let particle of this.particles) {
             if (particle.active) {
-                particle.update(dt, windSpeed);
+                particle.update(dt, windSpeed, ctx);
             }
         }
     }
