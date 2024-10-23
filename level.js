@@ -1,3 +1,5 @@
+import { calculateFlyInOut } from './utils.js';
+
 export const LevelDifficulty  = {
     GREEN_CIRCLE: 0,
     BLUE_SQUARE: 1,
@@ -300,9 +302,25 @@ export class Level {
         scoreData.forEach((item, index) => {
             let rowX = 0;
             if (!this._cashTransferComplete) {
-                rowX = this.getFlyinX(ctx, startX, this.animationDuration, 100, 10, this.timeSinceComplete - 0.1 * index);
+                rowX = calculateFlyInOut(
+                    ctx.canvas.width,  // start
+                    startX,            // dwell
+                    startX,        // same as dwell
+                    this.animationDuration,
+                    100,
+                    10,
+                    this.timeSinceComplete - 0.1 * index
+                );
             } else {
-                rowX = this.getFlyinX(ctx, startX, 0, 0.1 * index, this.animationDuration, this.timeSinceComplete - this.cashTransferEndTime);
+                rowX = calculateFlyInOut(
+                    startX,            // start
+                    startX,            // dwell
+                    -cardWidth,        // out (off-screen to the left)
+                    0,
+                    0.1 * index,
+                    this.animationDuration,
+                    this.timeSinceComplete - this.cashTransferEndTime
+                );
             }
             let bold = false;
             if (item.title == "TOTAL") {
@@ -348,26 +366,6 @@ export class Level {
         }
         ctx.fillText(reward, x + width - this.ScorePadding * 2, y + height / 2 + height_fudge);
     }
-    getFlyinX(ctx, targetX, flyinTime, dwellTime, flyoutTime, currentTime) {
-        let transitionFraction = 0;
-        if (currentTime < flyinTime) {
-            transitionFraction = currentTime / flyinTime;
-        } else if (currentTime < flyinTime + dwellTime) {
-            transitionFraction = 1;
-        } else {
-            transitionFraction = 1 + (currentTime - flyinTime - dwellTime) / flyoutTime;
-        }
-
-        // Modify transitionFraction to ease-in/out
-        let easeInOutTransition = (t) => {
-            return t < 0.5
-                ? 4 * t * t * t
-                : 1 - Math.pow(-2 * t + 2, 3) / 2;
-        };
-
-        transitionFraction = easeInOutTransition(transitionFraction);
-        return targetX + (ctx.canvas.width - targetX) * (1 - transitionFraction);
-    }
 
     renderTitleFlyIn(ctx) {
         const height = 100;
@@ -375,7 +373,15 @@ export class Level {
         const cornerRadius = 7;
         const padding = 5;
         
-        let titleX = this.getFlyinX(ctx, padding, titleFlyInTime, titleDwellTime, titleFlyOutTime, this.time);
+        let titleX = calculateFlyInOut(
+            ctx.canvas.width,  // start
+            padding,           // dwell
+            -ctx.canvas.width,        // out (off-screen to the left)
+            titleFlyInTime,
+            titleDwellTime,
+            titleFlyOutTime,
+            this.time
+        );
         let width = ctx.canvas.width - 3 * padding - skew;
 
 

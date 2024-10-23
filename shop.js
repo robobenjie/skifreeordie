@@ -1,5 +1,5 @@
 import { FallingSnowParticleEffect } from "./particle_engine.js";
-import randomCentered, { Clickable } from "./utils.js";
+import randomCentered, { Clickable, calculateFlyInOut } from "./utils.js";
 
 export class Shop {
   constructor(character, ctx, canvas) {
@@ -10,6 +10,8 @@ export class Shop {
       this.characterRightLeg = null;
       this.characterLeftPants = null;
       this.characterRightPants = null;
+      this.dwarfPaymentBicep = null;
+      this.dwarfPaymentArm = null;
       this.cardReader = null;
       this.confirmLed = null;
       this.hammerBicep = null;
@@ -23,6 +25,8 @@ export class Shop {
 
       this.checkingOut = true;
       this.confirmLedReady = false;
+      this.checkoutStartTime = 0;
+      this.checkoutEndTime = 0;
 
       this.treesImages = [
         new Image(),
@@ -39,105 +43,19 @@ export class Shop {
       this.canvas = canvas;
       this.clickables = [];  // New list to store clickable objects
       this.initializeClickables();  // New method to set up clickables
+      this.loadImages();
+      this.startCheckout();
+  }
 
-      getModifiedSvg("chair", {
-          replace_colors: [["#ff6601", "#000000"]],
-          hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"]
-      }).then(img => {
-          this.chair = img;  // Set the chair image once it's ready
-      }).catch(err => {
-          console.error("Error loading chair image:", err);
-      });
+  startCheckout() {
+    this.checkingOut = true;
+    this.confirmLedReady = false;
+    this.checkoutStartTime = this.elapsedTime;
+  }
 
-      getModifiedSvg("chair", {
-        replace_colors: [],
-        hide: ["dwarf_head", "dwarf_right_arm", "left_pants", "right_pants", "player_left_leg", "player_right_leg"]
-      }).then(img => {
-        this.purchaseChair = img;
-      }).catch(err => {
-        console.error("Error loading purchase chair image:", err);
-      });
-
-      getModifiedSvg("cable", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.cable = img;
-      }).catch(err => {
-          console.error("Error loading cable image:", err);
-      });
-
-      getModifiedSvg("player_left_leg", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.characterLeftLeg = img;
-      }).catch(err => {
-          console.error("Error loading character left leg image:", err);
-      });
-
-      getModifiedSvg("player_right_leg", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.characterRightLeg = img;
-      }).catch(err => {
-          console.error("Error loading character right leg image:", err);
-      });
-
-      getModifiedSvg("left_pants", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.characterLeftPants = img;
-      }).catch(err => {
-          console.error("Error loading character left pants image:", err);
-      });
-
-      getModifiedSvg("right_pants", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.characterRightPants = img;
-      }).catch(err => {
-          console.error("Error loading character right pants image:", err);
-      });
-
-      getModifiedSvg("hammer_arm_bicep", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.hammerBicep = img;
-      }).catch(err => {
-          console.error("Error loading hammer bicep image:", err);
-      });
-
-      getModifiedSvg("hammer_arm", {
-          replace_colors: [],
-          hide: [""]
-      }).then(img => {
-          this.hammerArm = img;
-      }).catch(err => {
-          console.error("Error loading hammer arm image:", err);
-      });
-
-      getModifiedSvg("card_reader", {
-          replace_colors: [],
-          hide: ["confirm_led"]
-      }).then(img => {
-          this.cardReader = img;
-      }).catch(err => {
-          console.error("Error loading card reader image:", err);
-      });
-
-      getModifiedSvg("confirm_led", {
-        replace_colors: [],
-        hide: []
-      }).then(img => {
-        this.confirmLed = img;
-      }).catch(err => {
-        console.error("Error loading confirm led image:", err);
-      });
+  endCheckout() {
+    this.checkingOut = false;
+    this.checkoutEndTime = this.elapsedTime;
   }
 
   initializeClickables() {
@@ -146,26 +64,32 @@ export class Shop {
     this.clickables.push(cardReaderClickable);
     this.signature = new Signature(cardReaderClickable);
 
-    cardReaderClickable.onDragEnd = () => {
+    cardReaderClickable.addDragEndListener(() => {
       if (this.signature.points.length > 20) {
         this.confirmLedReady = true;
       }
-    };
-    cardReaderClickable.onTap = () => {
+    });
+    cardReaderClickable.addTapListener(() => {
       if (this.signature.points.length > 20) {
           this.confirmLedReady = true;
         }
-    };
+    });
 
-    const confirmLedClickable = new Clickable(590, 760, 970, 1100, this.canvas);
+    const confirmLedClickable = new Clickable(590, 760, 970, 1150, this.canvas);
     this.clickables.push(confirmLedClickable);
-    confirmLedClickable.onTap = () => {
+    confirmLedClickable.addTapListener(() => {
       console.log("confirm tapped");
       if (this.confirmLedReady) {
-        this.checkingOut = false;
-        this.confirmLedReady = false;
+        this.endCheckout();
       }
-    }
+    });
+
+    const cancelLedClickable = new Clickable(230, 440, 970, 1150, this.canvas);
+    this.clickables.push(cancelLedClickable);
+    cancelLedClickable.addTapListener(() => {
+      console.log("cancel tapped");
+      this.endCheckout();
+    });
 
     // Add more clickables as needed...
   }
@@ -211,7 +135,7 @@ export class Shop {
       ctx.translate(-pivot.x, -pivot.y);
     }
     if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair && this.confirmLed) {
-      
+      const checkingOut = this.checkingOut || this.elapsedTime < this.checkoutEndTime + 1.0;
       ctx.save();
       ctx.scale(0.8, 0.8);
       this.backgroundSnowEffect.draw(ctx);
@@ -244,13 +168,13 @@ export class Shop {
       ctx.save();
       const pivot = {x: 530, y: 300};
       rotateInImageFrame(pivot, Math.sin(this.elapsedTime * 1) * 0.02);
-      if (this.checkingOut) {
+      if (checkingOut) {
         ctx.drawImage(this.purchaseChair, 0, 0, width, height);
       } else {
         ctx.drawImage(this.chair, 0, 0, width, height);
       }
 
-      if (!this.checkingOut) {
+      if (!checkingOut) {
         // Dwarf Hammer Arm
         ctx.save(); {
           let amt = Math.sin(this.elapsedTime * 6);
@@ -259,6 +183,21 @@ export class Shop {
           ctx.drawImage(this.hammerBicep, 0, 0, width, height);    
           rotateInImageFrame({x: 776, y: 1392}, amt * 0.22);
           ctx.drawImage(this.hammerArm, 0, 0, width, height);
+        } ctx.restore();
+      } else {
+        // Dwarf Payment Arm
+        let armRotation = 0;
+        const maxArmRotation = -0.8
+        if (this.checkingOut) {
+          armRotation = calculateFlyInOut(maxArmRotation, 0, 0, 1.0, 1000, 1000, this.elapsedTime - this.checkoutStartTime);
+        } else {
+          armRotation = calculateFlyInOut(0, 0, maxArmRotation, 0, 0, 1.0, this.elapsedTime - this.checkoutEndTime);
+        }
+        ctx.save(); {
+          rotateInImageFrame({x: 516, y: 1341}, armRotation);
+          ctx.drawImage(this.dwarfPaymentBicep, 0, 0, width, height);    
+          rotateInImageFrame({x: 451, y: 1420}, -armRotation);
+          ctx.drawImage(this.dwarfPaymentArm, 0, 0, width, height);
         } ctx.restore();
       }
 
@@ -289,19 +228,25 @@ export class Shop {
       ctx.restore(); // scale & translate
       this.snowEffect.draw(ctx);
 
+      // Checking out
+      let y = -height;
       if (this.checkingOut) {
-        ctx.save();
-        ctx.scale(scale, scale);
-        ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
-        ctx.drawImage(this.cardReader, 0, 0, width, height);
-
-        if (this.confirmLedReady && Math.sin(this.elapsedTime * 8) > 0) {
-          ctx.drawImage(this.confirmLed, 0, 0, width, height);
-        }
-        drawCheckoutText(ctx, width);
-        this.signature.draw(ctx);
-        ctx.restore();
+        y = calculateFlyInOut(-height * 0.65, 0, 0, 1.0, 1000, 1000, this.elapsedTime - this.checkoutStartTime);
+      } else {
+        y = calculateFlyInOut(0, 0, -height * 0.65, 0, 0, 1.0, this.elapsedTime - this.checkoutEndTime);
       }
+      ctx.save();
+      ctx.scale(scale, scale);
+      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, y);
+      ctx.drawImage(this.cardReader, 0, 0, width, height);
+
+      if (this.confirmLedReady && Math.sin(this.elapsedTime * 8) > 0) {
+        ctx.drawImage(this.confirmLed, 0, 0, width, height);
+      }
+      drawCheckoutText(ctx, width);
+      this.signature.draw(ctx);
+      ctx.restore();
+
     } else {
       console.log("no chair");
     }
@@ -311,6 +256,126 @@ export class Shop {
     //     ctx.strokeStyle = 'red';
     //     ctx.strokeRect(clickable.x - clickable.width/2, clickable.y - clickable.height/2, clickable.width, clickable.height);
     // });
+  }
+
+  loadImages() {
+
+    getModifiedSvg("chair", {
+      replace_colors: [["#ff6601", "#000000"]],
+      hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"]
+    }).then(img => {
+        this.chair = img;  // Set the chair image once it's ready
+    }).catch(err => {
+        console.error("Error loading chair image:", err);
+    });
+
+    getModifiedSvg("chair", {
+      replace_colors: [],
+      hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"]
+    }).then(img => {
+      this.purchaseChair = img;
+    }).catch(err => {
+      console.error("Error loading purchase chair image:", err);
+    });
+
+    getModifiedSvg("cable", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.cable = img;
+    }).catch(err => {
+        console.error("Error loading cable image:", err);
+    });
+
+    getModifiedSvg("dwarf_payment_arm", {
+      replace_colors: [],
+      hide: []
+    }).then(img => {
+      this.dwarfPaymentArm = img;
+    }).catch(err => {
+      console.error("Error loading dwarf payment arm image:", err);
+    });
+
+    getModifiedSvg("dwarf_payment_bicep", {
+      replace_colors: [],
+      hide: []
+    }).then(img => {
+      this.dwarfPaymentBicep = img;
+    }).catch(err => {
+      console.error("Error loading dwarf payment bicep image:", err);
+    });
+
+    getModifiedSvg("player_left_leg", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.characterLeftLeg = img;
+    }).catch(err => {
+        console.error("Error loading character left leg image:", err);
+    });
+
+    getModifiedSvg("player_right_leg", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.characterRightLeg = img;
+    }).catch(err => {
+        console.error("Error loading character right leg image:", err);
+    });
+
+    getModifiedSvg("left_pants", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.characterLeftPants = img;
+    }).catch(err => {
+        console.error("Error loading character left pants image:", err);
+    });
+
+    getModifiedSvg("right_pants", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.characterRightPants = img;
+    }).catch(err => {
+        console.error("Error loading character right pants image:", err);
+    });
+
+    getModifiedSvg("hammer_arm_bicep", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.hammerBicep = img;
+    }).catch(err => {
+        console.error("Error loading hammer bicep image:", err);
+    });
+
+    getModifiedSvg("hammer_arm", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.hammerArm = img;
+    }).catch(err => {
+        console.error("Error loading hammer arm image:", err);
+    });
+
+    getModifiedSvg("card_reader", {
+        replace_colors: [],
+        hide: ["confirm_led"]
+    }).then(img => {
+        this.cardReader = img;
+    }).catch(err => {
+        console.error("Error loading card reader image:", err);
+    });
+
+    getModifiedSvg("confirm_led", {
+      replace_colors: [],
+      hide: []
+    }).then(img => {
+      this.confirmLed = img;
+    }).catch(err => {
+      console.error("Error loading confirm led image:", err);
+    });
   }
 }
 
@@ -365,11 +430,12 @@ class Signature {
         this.clickable = clickable;
         this.points = [];
         this.isDrawing = false;
+        this.wasDrawing = false;
         this.pixelSize = 6; // Size of each "pixel" in the signature
 
-        this.clickable.onDragStart = (x, y) => this.startDrawing(x, y);
-        this.clickable.onDragMove = (x, y) => this.addPoint(x, y);
-        this.clickable.onDragEnd = () => this.stopDrawing();
+        this.clickable.addDragStartListener((x, y) => this.startDrawing(x, y));
+        this.clickable.addDragMoveListener((x, y) => this.addPoint(x, y));
+        this.clickable.addDragEndListener(() => this.stopDrawing());
     }
 
     startDrawing(x, y) {
@@ -399,7 +465,7 @@ class Signature {
                 return;
             }
 
-            if (this.points.length > 0) {
+            if (this.points.length > 0 && this.wasDrawing) {
                 const lastPoint = this.points[this.points.length - 1];
                 const dx = discreteX - lastPoint.x;
                 const dy = discreteY - lastPoint.y;
@@ -415,18 +481,19 @@ class Signature {
                         }
                     }
                 } else {
-                    if (discreteX !== 0 || discreteY !== 0 || this.points.length === 0) {
-                        this.points.push({x: discreteX, y: discreteY});
-                    }
+                    this.points.push({x: discreteX, y: discreteY});
                 }
             } else {
                 this.points.push({x: discreteX, y: discreteY});
+                this.wasDrawing = true;
             }
+                        
         }
     }
 
     stopDrawing() {
         this.isDrawing = false;
+        this.wasDrawing = false;
     }
 
     draw(ctx) {
