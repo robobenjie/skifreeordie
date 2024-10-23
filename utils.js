@@ -24,16 +24,14 @@ export class Clickable {
     }
 
     setCtxTransform(ctx) {
-        this.transform = ctx.getTransform();
+        const newTransform = ctx.getTransform();
+        if (JSON.stringify(newTransform) !== JSON.stringify(this.transform)) {
+            console.log('Transform updated:', newTransform);
+            this.transform = newTransform;
+        }
     }
 
     isPointInside(x, y) {
-        if (this.transform) {
-            const inverted = this.transform.invertSelf();
-            const point = new DOMPoint(x, y).matrixTransform(inverted);
-            x = point.x;
-            y = point.y;
-        }
         return (
             x >= this.x - this.width / 2 &&
             x <= this.x + this.width / 2 &&
@@ -42,13 +40,25 @@ export class Clickable {
         );
     }
 
+    transformPoint(x, y) {
+        if (this.transform) {
+            const inverted = this.transform.invertSelf();
+            const point = new DOMPoint(x, y).matrixTransform(inverted);
+            return { x: point.x, y: point.y };
+        }
+        return { x, y };
+    }
+
     handleTouchStart(event) {
         console.log("touch start");
         event.preventDefault();
         if (event.touches.length > 0) {
             let touch = event.touches[0];
-            let x = touch.clientX - this.canvas.getBoundingClientRect().left;
-            let y = touch.clientY - this.canvas.getBoundingClientRect().top;
+            let canvasX = touch.clientX - this.canvas.getBoundingClientRect().left;
+            let canvasY = touch.clientY - this.canvas.getBoundingClientRect().top;
+
+            
+            let { x, y } = this.transformPoint(canvasX, canvasY);
             
             if (this.isPointInside(x, y)) {
                 this.isActive = true;
@@ -61,8 +71,11 @@ export class Clickable {
     handleTouchMove(event) {
         if (this.isActive && event.touches.length > 0) {
             let touch = event.touches[0];
-            let x = touch.clientX - this.canvas.getBoundingClientRect().left;
-            let y = touch.clientY - this.canvas.getBoundingClientRect().top;
+            let canvasX = touch.clientX - this.canvas.getBoundingClientRect().left;
+            let canvasY = touch.clientY - this.canvas.getBoundingClientRect().top;
+            
+            let { x, y } = this.transformPoint(canvasX, canvasY);
+            
             if (this.onDragMove) this.onDragMove(x, y);
         }
     }
@@ -76,8 +89,10 @@ export class Clickable {
                 let x, y;
                 if (event.changedTouches.length > 0) {
                     let touch = event.changedTouches[0];
-                    x = touch.clientX - this.canvas.getBoundingClientRect().left;
-                    y = touch.clientY - this.canvas.getBoundingClientRect().top;
+                    let canvasX = touch.clientX - this.canvas.getBoundingClientRect().left;
+                    let canvasY = touch.clientY - this.canvas.getBoundingClientRect().top;
+                    
+                    ({ x, y } = this.transformPoint(canvasX, canvasY));
                 }
                 this.onDragEnd(x, y);
             }
@@ -85,10 +100,6 @@ export class Clickable {
     }
 }
 
-export function rotateInImageFrame(ctx, pivot, amount) {
-    ctx.translate(pivot.x, pivot.y);
-    ctx.rotate(amount);
-    ctx.translate(-pivot.x, -pivot.y);
-  }
+
 
 export default randomCentered;

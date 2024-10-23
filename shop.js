@@ -11,6 +11,7 @@ export class Shop {
       this.characterLeftPants = null;
       this.characterRightPants = null;
       this.cardReader = null;
+      this.confirmLed = null;
       this.hammerBicep = null;
       this.hammerArm = null;
       this.cable = null;
@@ -18,8 +19,10 @@ export class Shop {
       this.ctx = ctx;
       this.lastSnowTime = 0;
       this.snowRate = 40;
+      this.signature = null;
 
       this.checkingOut = true;
+      this.confirmLedReady = false;
 
       this.treesImages = [
         new Image(),
@@ -120,22 +123,49 @@ export class Shop {
 
       getModifiedSvg("card_reader", {
           replace_colors: [],
-          hide: [""]
+          hide: ["confirm_led"]
       }).then(img => {
           this.cardReader = img;
       }).catch(err => {
           console.error("Error loading card reader image:", err);
+      });
+
+      getModifiedSvg("confirm_led", {
+        replace_colors: [],
+        hide: []
+      }).then(img => {
+        this.confirmLed = img;
+      }).catch(err => {
+        console.error("Error loading confirm led image:", err);
       });
   }
 
   initializeClickables() {
     // Example clickable for the card reader
     const cardReaderClickable = new Clickable(275, 730, 610, 830, this.canvas);
-    cardReaderClickable.onTap = () => {
-      console.log("Card reader tapped!");
-      // Add your card reader tap logic here
-    };
     this.clickables.push(cardReaderClickable);
+    this.signature = new Signature(cardReaderClickable);
+
+    cardReaderClickable.onDragEnd = () => {
+      if (this.signature.points.length > 20) {
+        this.confirmLedReady = true;
+      }
+    };
+    cardReaderClickable.onTap = () => {
+      if (this.signature.points.length > 20) {
+          this.confirmLedReady = true;
+        }
+    };
+
+    const confirmLedClickable = new Clickable(590, 760, 970, 1100, this.canvas);
+    this.clickables.push(confirmLedClickable);
+    confirmLedClickable.onTap = () => {
+      console.log("confirm tapped");
+      if (this.confirmLedReady) {
+        this.checkingOut = false;
+        this.confirmLedReady = false;
+      }
+    }
 
     // Add more clickables as needed...
   }
@@ -180,7 +210,7 @@ export class Shop {
       ctx.rotate(amount);
       ctx.translate(-pivot.x, -pivot.y);
     }
-    if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair) {
+    if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair && this.confirmLed) {
       
       ctx.save();
       ctx.scale(0.8, 0.8);
@@ -264,7 +294,12 @@ export class Shop {
         ctx.scale(scale, scale);
         ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
         ctx.drawImage(this.cardReader, 0, 0, width, height);
+
+        if (this.confirmLedReady && Math.sin(this.elapsedTime * 8) > 0) {
+          ctx.drawImage(this.confirmLed, 0, 0, width, height);
+        }
         drawCheckoutText(ctx, width);
+        this.signature.draw(ctx);
         ctx.restore();
       }
     } else {
@@ -325,6 +360,86 @@ function drawCheckoutText(ctx, width) {
   ctx.fillText("Signature:", x, y);
 }
 
+class Signature {
+    constructor(clickable) {
+        this.clickable = clickable;
+        this.points = [];
+        this.isDrawing = false;
+        this.pixelSize = 6; // Size of each "pixel" in the signature
+
+        this.clickable.onDragStart = (x, y) => this.startDrawing(x, y);
+        this.clickable.onDragMove = (x, y) => this.addPoint(x, y);
+        this.clickable.onDragEnd = () => this.stopDrawing();
+    }
+
+    startDrawing(x, y) {
+        this.isDrawing = true;
+        this.addPoint(x, y);
+    }
+
+    addPoint(x, y) {
+        if (this.isDrawing) {
+            // Ensure x and y are valid numbers
+            if (typeof x !== 'number' || typeof y !== 'number' || isNaN(x) || isNaN(y)) {
+                console.warn('Invalid coordinates:', x, y);
+                return;
+            }
+
+            // Discretize the point to align with our pixel grid
+            const discreteX = Math.floor(x / this.pixelSize) * this.pixelSize;
+            const discreteY = Math.floor(y / this.pixelSize) * this.pixelSize;
+
+            if (!this.clickable.isPointInside(discreteX, discreteY)) {
+                return;
+            }
+            
+            // Prevent adding [0,0] unless it's the first point and intentional
+            if (discreteX === 0 && discreteY === 0 && this.points.length > 0) {
+                console.warn('Skipping [0,0] point');
+                return;
+            }
+
+            if (this.points.length > 0) {
+                const lastPoint = this.points[this.points.length - 1];
+                const dx = discreteX - lastPoint.x;
+                const dy = discreteY - lastPoint.y;
+                const steps = Math.max(Math.abs(dx), Math.abs(dy)) / this.pixelSize;
+                
+                if (steps > 1) {
+                    for (let i = 1; i <= steps; i++) {
+                        const t = i / steps;
+                        const interpolatedX = Math.round(lastPoint.x + dx * t);
+                        const interpolatedY = Math.round(lastPoint.y + dy * t);
+                        if (interpolatedX !== 0 || interpolatedY !== 0 || this.points.length === 0) {
+                            this.points.push({x: interpolatedX, y: interpolatedY});
+                        }
+                    }
+                } else {
+                    if (discreteX !== 0 || discreteY !== 0 || this.points.length === 0) {
+                        this.points.push({x: discreteX, y: discreteY});
+                    }
+                }
+            } else {
+                this.points.push({x: discreteX, y: discreteY});
+            }
+        }
+    }
+
+    stopDrawing() {
+        this.isDrawing = false;
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = "#434741"; // Black color for the signature
+        for (let point of this.points) {
+            ctx.fillRect(point.x, point.y, this.pixelSize, this.pixelSize);
+        }
+    }
+
+    clear() {
+        this.points = [];
+    }
+}
 
 
 function getModifiedSvg(label, { replace_colors = [], hide = [] }) {
