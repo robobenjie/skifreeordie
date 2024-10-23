@@ -1,6 +1,7 @@
 import { FallingSnowParticleEffect, SparkParticleEffect } from "./particle_engine.js";
 import randomCentered, { Clickable, calculateFlyInOut } from "./utils.js";
-
+import getModifiedSvg from "./svg_utils.js";
+import { getItemsForSale } from "./equipment.js";
 const HAMMER_RATE = 6;
 export class Shop {
   constructor(character, ctx, canvas) {
@@ -24,10 +25,12 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this.checkingOut = true;
+      this.checkingOut = false;
       this.confirmLedReady = false;
       this.checkoutStartTime = 0;
-      this.checkoutEndTime = 0;
+      this.checkoutEndTime = -100;
+
+      this.initItems();
 
       this.treesImages = [
         new Image(),
@@ -52,7 +55,6 @@ export class Shop {
       this.clickables = [];  // New list to store clickable objects
       this.initializeClickables();  // New method to set up clickables
       this.loadImages();
-      this.startCheckout();
   }
 
   startCheckout() {
@@ -140,6 +142,13 @@ export class Shop {
         }
       }
 
+  }
+
+  initItems() {
+    this.forSaleItems = getItemsForSale(this.character);
+    for (let item of this.forSaleItems) {
+      item.loadImage();
+    }
   }
 
   hammerSparks() {
@@ -285,16 +294,17 @@ export class Shop {
 
   loadImages() {
 
-    getModifiedSvg("chair", {
+    getModifiedSvg("images/shop_lift.svg", "chair", {
       replace_colors: [["#ff6601", "#000000"]],
-      hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"]
+      hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"],
+      show: []
     }).then(img => {
-        this.chair = img;  // Set the chair image once it's ready
+        this.chair = img;
     }).catch(err => {
         console.error("Error loading chair image:", err);
     });
 
-    getModifiedSvg("chair", {
+    getModifiedSvg("images/shop_lift.svg", "chair", {
       replace_colors: [],
       hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"]
     }).then(img => {
@@ -303,7 +313,7 @@ export class Shop {
       console.error("Error loading purchase chair image:", err);
     });
 
-    getModifiedSvg("cable", {
+    getModifiedSvg("images/shop_lift.svg", "cable", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -312,7 +322,7 @@ export class Shop {
         console.error("Error loading cable image:", err);
     });
 
-    getModifiedSvg("dwarf_payment_arm", {
+    getModifiedSvg("images/shop_lift.svg", "dwarf_payment_arm", {
       replace_colors: [],
       hide: []
     }).then(img => {
@@ -321,7 +331,7 @@ export class Shop {
       console.error("Error loading dwarf payment arm image:", err);
     });
 
-    getModifiedSvg("dwarf_payment_bicep", {
+    getModifiedSvg("images/shop_lift.svg", "dwarf_payment_bicep", {
       replace_colors: [],
       hide: []
     }).then(img => {
@@ -330,7 +340,7 @@ export class Shop {
       console.error("Error loading dwarf payment bicep image:", err);
     });
 
-    getModifiedSvg("player_left_leg", {
+    getModifiedSvg("images/shop_lift.svg", "player_left_leg", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -339,7 +349,7 @@ export class Shop {
         console.error("Error loading character left leg image:", err);
     });
 
-    getModifiedSvg("player_right_leg", {
+    getModifiedSvg("images/shop_lift.svg", "player_right_leg", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -348,7 +358,7 @@ export class Shop {
         console.error("Error loading character right leg image:", err);
     });
 
-    getModifiedSvg("left_pants", {
+    getModifiedSvg("images/shop_lift.svg", "left_pants", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -357,7 +367,7 @@ export class Shop {
         console.error("Error loading character left pants image:", err);
     });
 
-    getModifiedSvg("right_pants", {
+    getModifiedSvg("images/shop_lift.svg", "right_pants", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -366,7 +376,7 @@ export class Shop {
         console.error("Error loading character right pants image:", err);
     });
 
-    getModifiedSvg("hammer_arm_bicep", {
+    getModifiedSvg("images/shop_lift.svg", "hammer_arm_bicep", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -375,7 +385,7 @@ export class Shop {
         console.error("Error loading hammer bicep image:", err);
     });
 
-    getModifiedSvg("hammer_arm", {
+    getModifiedSvg("images/shop_lift.svg", "hammer_arm", {
         replace_colors: [],
         hide: [""]
     }).then(img => {
@@ -384,7 +394,7 @@ export class Shop {
         console.error("Error loading hammer arm image:", err);
     });
 
-    getModifiedSvg("card_reader", {
+    getModifiedSvg("images/shop_lift.svg", "card_reader", {
         replace_colors: [],
         hide: ["confirm_led"]
     }).then(img => {
@@ -393,7 +403,7 @@ export class Shop {
         console.error("Error loading card reader image:", err);
     });
 
-    getModifiedSvg("confirm_led", {
+    getModifiedSvg("images/shop_lift.svg", "confirm_led", {
       replace_colors: [],
       hide: []
     }).then(img => {
@@ -534,157 +544,6 @@ class Signature {
 }
 
 
-function getModifiedSvg(label, { replace_colors = [], hide = [] }) {
-  return new Promise((resolve, reject) => {
-    const svgObject = document.getElementById('shopSvg'); // Assuming the SVG is in an <object> tag
 
-    if (svgObject.contentDocument) {
-      // SVG is already loaded
-      processSvg(svgObject.contentDocument);
-    } else {
-      // Wait for the SVG to load
-      svgObject.addEventListener('load', () => {
-        const svgDoc = svgObject.contentDocument;
-        if (svgDoc) {
-          processSvg(svgDoc);
-        } else {
-          reject(new Error('SVG contentDocument not available after load.'));
-        }
-      });
-    }
-
-    function processSvg(svgDoc) {
-      // Get all <g> elements
-
-      // Create a deep clone of the SVG document
-      const clonedSvgDoc = svgDoc.cloneNode(true);
-      
-      // Use the cloned document for further processing
-      svgDoc = clonedSvgDoc;
-
-      const groups = svgDoc.getElementsByTagName('g');
-
-      // Find the correct group with the matching `inkscape:label`
-      let element = null;
-      for (let group of groups) {
-        const labelAttr = group.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label');
-        if (labelAttr === label) {
-          element = group;
-          break;
-        }
-      }
-
-      if (!element) {
-        return reject(`No element found with label: ${label}`);
-      }
-
-      // Function to recursively collect all visible elements
-      function collectVisibleElements(node, collection) {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          // Check if the element is visible (not explicitly hidden)
-          const computedStyle = window.getComputedStyle(node);
-          if (computedStyle.display !== 'none' && computedStyle.visibility !== 'hidden') {
-            collection.push(node);
-          }
-        }
-        for (let child of node.childNodes) {
-          collectVisibleElements(child, collection);
-        }
-      }
-
-      // Collect all visible elements in the SVG
-      const allVisibleElements = [];
-      collectVisibleElements(svgDoc.documentElement, allVisibleElements);
-
-      // Function to check if an element is a descendant of another
-      function isDescendant(parent, child) {
-        if (child === parent) {
-          return true;
-        }
-        let node = child.parentNode;
-        while (node != null) {
-          if (node === parent) {
-            return true;
-          }
-          node = node.parentNode;
-        }
-        return false;
-      }
-
-      // Filter out elements that are descendants of our target element
-      const elementsToHide = allVisibleElements.filter(el => !(isDescendant(element, el) || isDescendant(el, element)));
-
-      // Add these elements to hide
-      elementsToHide.forEach(el => {
-        const labelAttr = el.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label');
-        if (labelAttr) {
-          hide.push(labelAttr);
-        }
-      });
-
-      console.log(label)
-      console.log(hide);
-
-      let paths = svgDoc.getElementsByTagName('path');
-      let pathAndGroups = [...paths, ...groups];
-
-      // Hide specific children
-      hide.forEach(hideLabel => {
-        const childToHide = Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === hideLabel);
-        if (childToHide) {
-          childToHide.setAttribute('display', 'none');
-          // Check if there's a style attribute
-          if (childToHide.hasAttribute('style')) {
-            let styleString = childToHide.getAttribute('style');
-            // Parse the style string
-            let styles = styleString.split(';').reduce((acc, style) => {
-              let [key, value] = style.split(':').map(s => s.trim());
-              if (key && value) acc[key] = value;
-              return acc;
-            }, {});
-
-            // Remove any 'display' property from the styles
-            if ('display' in styles) {
-              delete styles['display'];
-              // Reconstruct the style string without 'display'
-              styleString = Object.entries(styles)
-                .map(([key, value]) => `${key}:${value}`)
-                .join(';');
-              
-              // Set the new style string or remove the attribute if empty
-              if (styleString) {
-                childToHide.setAttribute('style', styleString);
-              } else {
-                childToHide.removeAttribute('style');
-              }
-            }
-          }
-        }
-      });
-
-      // Convert the modified SVG to an Image object
-      console.log(svgDoc);
-      let svgData = new XMLSerializer().serializeToString(svgDoc.documentElement);
-      replace_colors.forEach(([oldColor, newColor]) => {
-        svgData = svgData.replace(new RegExp(oldColor, 'g'), newColor);
-      });
-      console.log(svgDoc);
-      const img = new Image();
-      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-      const url = URL.createObjectURL(svgBlob);
-
-      img.onload = function () {
-        resolve(img); // Return the image when loaded
-        URL.revokeObjectURL(url); // Clean up the blob URL
-      };
-
-      img.onerror = function () {
-        reject(new Error('Failed to load SVG as image.'));
-      };
-
-      img.src = url;
-    }
-  });
-}
 
 export default Shop;

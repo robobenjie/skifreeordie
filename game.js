@@ -9,6 +9,7 @@ import MobManager from './mob.js';
 import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
 import { Sword, Gun, LaserGun, miniGun, Pistol } from './weapons.js';
+import { getItemsForSale } from './equipment.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -28,7 +29,7 @@ window.addEventListener('load', function () {
 
 });
     
-function initializeGame() {
+async function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
     let lastTime = 0; // For delta time calculation
@@ -140,5 +141,10 @@ function initializeGame() {
 
     // Initial call to set the canvas size correctly and start the update loop
     resizeCanvas();
+
+    const equipment = getItemsForSale(character);
+    await Promise.all(equipment.map(item => item.loadImage()));
+
+    // Start the game loop only after all images are loaded
     requestAnimationFrame(update);
-};
+}

@@ -122,6 +122,17 @@ export class Pistol extends Gun {
     }
 }
 
+export class RocketLauncher extends Gun {
+    constructor(character, mobManager) {
+        super(character, mobManager);
+        this.coolDown = 1.2;
+        this.damage = 6;
+        this.knockback = 60000;
+        this.firingArc = 45;
+        this.firingDistance = 300;
+        this.hitPercentage = 1.0;
+    }
+}
 export class LaserGun extends Gun {
     constructor(character, mobManager) {
         super(character, mobManager);
@@ -133,7 +144,7 @@ export class LaserGun extends Gun {
         this.hitPercentage = 1.0;
     }
 }
-export class Sword extends Weapon {
+export class MeleeWeapon extends Weapon {
     constructor(character, mobManager) {
         super(WeaponType.HAND, character, mobManager);
         this.state = SwordState.HELD;
@@ -192,6 +203,13 @@ export class Sword extends Weapon {
             ctx.fillStyle = "orange";
             ctx.fillRect(this.character.x, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
         }
+    }
+}
+
+export class Sword extends MeleeWeapon {
+    constructor(character, mobManager) {
+        super(character, mobManager);
+        this.stringName = "sword";
     }
 }
 
