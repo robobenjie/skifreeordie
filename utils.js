@@ -64,7 +64,7 @@ export class Clickable {
     setCtxTransform(ctx) {
         const newTransform = ctx.getTransform();
         if (JSON.stringify(newTransform) !== JSON.stringify(this.transform)) {
-            console.log('Transform updated:', newTransform);
+            //console.log('Transform updated:', newTransform);
             this.transform = newTransform;
         }
     }
@@ -79,26 +79,47 @@ export class Clickable {
     }
 
     transformPoint(x, y) {
+        return this._applyTransform(x, y, false);
+    }
+
+    untransformPoint(x, y) {
+        return this._applyTransform(x, y, true);
+    }
+
+    _applyTransform(x, y, inverse) {
         if (this.transform) {
-            const inverted = this.transform.invertSelf();
-            const point = new DOMPoint(x, y).matrixTransform(inverted);
-            return { x: point.x, y: point.y };
+            try {
+                const transform = new DOMMatrix(this.transform);
+                const matrix = inverse ? transform : transform.inverse();
+                const point = new DOMPoint(x, y).matrixTransform(matrix);
+                
+                if (isNaN(point.x) || isNaN(point.y) || !isFinite(point.x) || !isFinite(point.y)) {
+                    console.warn('Invalid transformation result:', point);
+                    return { x, y };
+                }
+                
+                return { x: point.x, y: point.y };
+            } catch (error) {
+                console.error(`Error in ${inverse ? 'untransformPoint' : 'transformPoint'}:`, error);
+                return { x, y };
+            }
         }
         return { x, y };
     }
 
     getXY(touch) {
+
         let rect = touch.target.getBoundingClientRect();
         let canvasX = touch.clientX - rect.left;
         let canvasY = touch.clientY - rect.top;
         let target = touch.target;
         const x = Math.round((canvasX * target.width) / rect.width);
         const y = Math.round((canvasY * target.height) / rect.height);
-        return this.transformPoint(x, y);
+        let ans = this.transformPoint(x, y);
+        return ans;
     }
 
     handleTouchStart(event) {
-        console.log("touch start");
         event.preventDefault();
         if (event.touches.length > 0) {
             let { x, y } = this.getXY(event.touches[0]);

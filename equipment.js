@@ -11,8 +11,8 @@ class Equipment {
     getSlots() {
         return this.data.slots || [];
     }
-    getShopImage() {
-        return this.data.shop_image;
+    getImage() {
+        return this.image;
     }
     getColorChanges() {
         return this.data.color_changes || [];
@@ -38,13 +38,14 @@ class Equipment {
     async loadImage() {
         try {
             this.image = await getModifiedSvg(
-                `images/${this.getShopImage()}`,
+                `images/${this.data.shop_image}`,
                 this.getLayerGroup(),
                 {
                     replace_colors: this.getColorChanges(),
                     show: this.getUnhide()
                 }
             );
+
         } catch (error) {
             console.error(`Failed to load image for ${this.getID()}:`, error);
         }
@@ -57,11 +58,16 @@ export const SpeedJacket = new Equipment({
     layer_group: "jacket",
     shop_image: "jacket.svg",
     display_name: "Speed Jacket",
-    description: "Increases speed by 10%",
+    description: ["Increases speed by 10%"],
+    stats: {
+        speed: 3,
+        cool: 2,
+        armor: 1
+    },
     slots: ["jacket"],
     color_changes: [
-            ["#ff6600ff", "#00FFFF"],
-            ["#d45500ff", "#00AAAA"]
+            ["#ff6600", "#00ffff"],
+            ["#d45500", "#00aaaa"]
     ],
     price: 400
 })

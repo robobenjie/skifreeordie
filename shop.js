@@ -18,6 +18,7 @@ export class Shop {
       this.confirmLed = null;
       this.hammerBicep = null;
       this.hammerArm = null;
+      this.overlay = null;
       this.cable = null;
       this.elapsedTime = 0;
       this.ctx = ctx;
@@ -29,6 +30,7 @@ export class Shop {
       this.confirmLedReady = false;
       this.checkoutStartTime = 0;
       this.checkoutEndTime = -100;
+      this.checkoutItem = null;
 
       this.initItems();
 
@@ -55,17 +57,24 @@ export class Shop {
       this.clickables = [];  // New list to store clickable objects
       this.initializeClickables();  // New method to set up clickables
       this.loadImages();
+
+      this.draggableItems = [];
+      this.dropAreas = [];
+      this.initDraggableItems();
+      this.initDropAreas();
   }
 
-  startCheckout() {
+  startCheckout(item) {
     this.checkingOut = true;
     this.confirmLedReady = false;
     this.checkoutStartTime = this.elapsedTime;
+    this.checkoutItem = item;
   }
 
   endCheckout() {
     this.checkingOut = false;
     this.checkoutEndTime = this.elapsedTime;
+    this.draggableItems.forEach(item => item.resetPosition());
   }
 
   initializeClickables() {
@@ -90,7 +99,10 @@ export class Shop {
     confirmLedClickable.addTapListener(() => {
       console.log("confirm tapped");
       if (this.confirmLedReady) {
+        this.draggableItems = this.draggableItems.filter(item => item.item !== this.checkoutItem);
         this.endCheckout();
+        this.character.equip(this.checkoutItem);
+        this.loadImages();
       }
     });
 
@@ -146,9 +158,6 @@ export class Shop {
 
   initItems() {
     this.forSaleItems = getItemsForSale(this.character);
-    for (let item of this.forSaleItems) {
-      item.loadImage();
-    }
   }
 
   hammerSparks() {
@@ -166,7 +175,7 @@ export class Shop {
       ctx.rotate(amount);
       ctx.translate(-pivot.x, -pivot.y);
     }
-    if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair && this.confirmLed) {
+    if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair && this.confirmLed && this.overlay) {
       const checkingOut = this.checkingOut || this.elapsedTime < this.checkoutEndTime + 1.0;
 
 
@@ -207,6 +216,7 @@ export class Shop {
       } else {
         ctx.drawImage(this.chair, 0, 0, width, height);
       }
+      this.dropAreas.forEach(area => area.setCtxTransform(this.ctx));
 
       if (!checkingOut) {
         // Dwarf Hammer Arm
@@ -271,13 +281,20 @@ export class Shop {
       }
       ctx.save();
       ctx.scale(scale, scale);
-      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, y);
+
+
+
+      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
+      if (!this.checkingOut) {
+        this.drawStoreOverlay(ctx, width, height);
+      }
+      ctx.translate(0, y);
       ctx.drawImage(this.cardReader, 0, 0, width, height);
 
       if (this.confirmLedReady && Math.sin(this.elapsedTime * 8) > 0) {
         ctx.drawImage(this.confirmLed, 0, 0, width, height);
       }
-      drawCheckoutText(ctx, width);
+      drawCheckoutText(ctx, width, this.checkoutItem);
       this.signature.draw(ctx);
       ctx.restore();
 
@@ -292,12 +309,54 @@ export class Shop {
     // });
   }
 
+  drawStoreOverlay(ctx, width, height) {
+    ctx.drawImage(this.overlay, 0, 0, width, height);
+    
+    // Draw draggable items
+    this.draggableItems.forEach(item => item.draw(ctx));
+  }
+
+  initDraggableItems() {
+    const itemSize = 250;
+    const itemSpacing = 10;
+    const itemsPerRow = 3;
+    const startX = 80;
+    const startY = 150;
+
+    this.forSaleItems.forEach((item, index) => {
+        const row = Math.floor(index / itemsPerRow);
+        const col = index % itemsPerRow;
+        const x = startX + col * (itemSize + itemSpacing) + itemSize / 2;
+        const y = startY + row * (itemSize + itemSpacing) + itemSize / 2;
+
+        const draggableItem = new DraggableItem(item, x, y, itemSize, itemSize, this.canvas, this);
+        draggableItem.shop = this;
+        this.draggableItems.push(draggableItem);
+        this.clickables.push(draggableItem);
+    });
+  }
+
+  initDropAreas() {
+    let jacketDrop = new DropArea(160, 450, 1260, 1530, this.canvas, "jacket");
+    this.dropAreas.push(jacketDrop);
+  }
+
   loadImages() {
 
+    const allEquipment = this.character.getAllEquipment();
+    let replaceColors = [];
+    let show = [];
+    for (let item of allEquipment) {
+      if (item) {
+        replaceColors.push(...item.getColorChanges());
+        show.push(...item.getUnhide());
+      }
+    }
+
     getModifiedSvg("images/shop_lift.svg", "chair", {
-      replace_colors: [["#ff6601", "#000000"]],
+      replace_colors: replaceColors,
       hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"],
-      show: []
+      show: show
     }).then(img => {
         this.chair = img;
     }).catch(err => {
@@ -305,8 +364,9 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "chair", {
-      replace_colors: [],
-      hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"]
+      replace_colors: replaceColors,
+      hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"],
+      show: show
     }).then(img => {
       this.purchaseChair = img;
     }).catch(err => {
@@ -341,8 +401,9 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "player_left_leg", {
-        replace_colors: [],
-        hide: [""]
+        replace_colors: replaceColors,
+        hide: [""],
+        show: show
     }).then(img => {
         this.characterLeftLeg = img;
     }).catch(err => {
@@ -350,8 +411,9 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "player_right_leg", {
-        replace_colors: [],
-        hide: [""]
+        replace_colors: replaceColors,
+        hide: [""],
+        show: show
     }).then(img => {
         this.characterRightLeg = img;
     }).catch(err => {
@@ -359,8 +421,9 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "left_pants", {
-        replace_colors: [],
-        hide: [""]
+        replace_colors: replaceColors,
+        hide: [""],
+        show: show
     }).then(img => {
         this.characterLeftPants = img;
     }).catch(err => {
@@ -368,8 +431,9 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "right_pants", {
-        replace_colors: [],
-        hide: [""]
+        replace_colors: replaceColors,
+        hide: [""],
+        show: show
     }).then(img => {
         this.characterRightPants = img;
     }).catch(err => {
@@ -411,10 +475,18 @@ export class Shop {
     }).catch(err => {
       console.error("Error loading confirm led image:", err);
     });
+    getModifiedSvg("images/shop_lift.svg", "store_overlay", {
+      replace_colors: [],
+      hide: []
+    }).then(img => {
+      this.overlay = img;
+    }).catch(err => {
+      console.error("Error loading overlay image:", err);
+    });
   }
 }
 
-function drawCheckoutText(ctx, width) {
+function drawCheckoutText(ctx, width, item) {
   ctx.fillStyle = "#434741"
   ctx.font = "40px Pixelify Sans";
   ctx.textAlign = "center";
@@ -429,30 +501,32 @@ function drawCheckoutText(ctx, width) {
   //ctx.font = "30px Pixelify Sans";
   //ctx.fillText("Equipment Rental", width / 2, y);
   //y += bigGap;
+  if (!item) {
+    return;
+  }
   ctx.textAlign = "left";
   ctx.font = "40px Tiny5";
   ctx.fillText("----------------------", x, y);
   y += bigGap;
-  ctx.fillText("FLAMING LONGSWORD", x, y);
+  ctx.fillText(item.getDisplayName().toUpperCase(), x, y);
   y += bigGap;
   ctx.font = "35px Tiny5";
-  ctx.fillText("DAMAGE - X X", x, y);
+  for (let [stat, value] of Object.entries(item.getStats())) {
+    let statText = stat.toUpperCase() + ' - ' + 'X '.repeat(value);
+    ctx.fillText(statText, x, y);
+    y += smallGap;
+  }
+  ctx.fillText(item.getDescription()[0] || "", x, y);
   y += smallGap;
-  ctx.fillText("REACH - X X X X", x, y)
-  y += smallGap;
-  ctx.fillText("SPEED - X", x, y);
-  y += bigGap;
-  ctx.fillText("A long bladed weapon.", x, y);
-  y += smallGap;
-  ctx.fillText("Sets enemies on fire.", x, y);
-  y += smallGap;
+  ctx.fillText(item.getDescription()[1] || "", x, y);
+  y = 547;
   ctx.font = "40px Tiny5";
   ctx.fillText("----------------------", x, y);
   y += smallGap;
   ctx.font = "40px Tiny5";
   ctx.fillText("RENTAL FEE", x, y)
   ctx.textAlign = "right";
-  ctx.fillText("250 GM", width - x, y);
+  ctx.fillText(`${item.getPrice()} GM`, width - x, y);
   ctx.textAlign = "left";
   y += smallGap;
   ctx.fillText("----------------------", x, y);
@@ -543,7 +617,72 @@ class Signature {
     }
 }
 
+class DraggableItem extends Clickable {
+    constructor(item, x, y, width, height, canvas, shop) {
+        super(x - width / 2,  x + width / 2, y - height / 2, y + height / 2, canvas);
+        this.item = item;
+        this.originalX = x;
+        this.originalY = y;
+        this.isDragging = false;
+        this.dragOffsetX = 0;
+        this.dragOffsetY = 0;
+        this.shop = shop;
 
+        this.addDragStartListener(this.onDragStart.bind(this));
+        this.addDragMoveListener(this.onDragMove.bind(this));
+        this.addDragEndListener(this.onDragEnd.bind(this));
+    }
 
+    onDragStart(x, y) {
+        this.isDragging = true;
+        this.dragOffsetX = x - this.x;
+        this.dragOffsetY = y - this.y;
+    }
+
+    onDragMove(x, y) {
+        if (this.isDragging) {
+            this.x = x - this.dragOffsetX;
+            this.y = y - this.dragOffsetY;
+        }
+    }
+
+    resetPosition() {
+        this.x = this.originalX;
+        this.y = this.originalY;
+    }
+
+    onDragEnd(x, y) {
+        this.isDragging = false;
+        // Check if it's dropped in a valid area, if not, return to original position
+        if (!this.isDroppedInValidArea(x, y)) {
+            this.x = this.originalX;
+            this.y = this.originalY;
+        }
+    }
+
+    isDroppedInValidArea(x, y) {
+        for (const area of this.shop.dropAreas) {
+            if (area.isPointInside(x, y) && this.item.getSlots().includes(area.slotName)) {
+                this.shop.startCheckout(this.item);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    draw(ctx) {
+        const image = this.item.getImage();
+        if (image) {
+            ctx.drawImage(image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+        }
+    }
+}
+
+class DropArea extends Clickable   {
+  constructor(minX, maxX, minY, maxY, canvas, slotName) {
+    super(minX, maxX, minY, maxY, canvas);
+    this.slotName = slotName;
+  }
+}
 
 export default Shop;

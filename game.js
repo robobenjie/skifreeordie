@@ -54,7 +54,7 @@ async function initializeGame() {
     svgObject.contentDocument.documentElement.style.display = 'none';
 
 
-    character.equipRightHand(sword);
+    //character.equipRightHand(sword);
 
     let svgText;
     let characterImg;
@@ -116,7 +116,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (false){
+        if (true){
             shop.update(dt);
             shop.draw(ctx);
         } else {

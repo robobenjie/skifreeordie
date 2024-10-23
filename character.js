@@ -13,6 +13,12 @@ class Character {
 
         this.rightHand = undefined;
         this.leftHand = undefined;
+        this.jacket = undefined;
+        this.pants = undefined;
+        this.hat = undefined;
+        this.goggles = undefined;
+        this.boots = undefined;
+        this.skis = undefined;
         
         this.x = x;
         this.y = y;
@@ -61,6 +67,32 @@ class Character {
             }
         });
 
+    }
+
+    equip(equipment) {
+        if (equipment.getSlots().includes("jacket")) {
+            this.jacket = equipment;
+        }
+        if (equipment.getSlots().includes("pants")) {
+            this.pants = equipment;
+        }
+        if (equipment.getSlots().includes("skis")) {
+            this.skis = equipment;
+        }
+        if (equipment.getSlots().includes("boots")) {
+            this.boots = equipment;
+        }
+        if (equipment.getSlots().includes("hat")) {
+            this.hat = equipment;
+        }
+        if (equipment.getSlots().includes("goggles")) {
+            this.goggles = equipment;
+        }
+        console.log(this.getAllEquipment());
+    }
+
+    getAllEquipment() {
+        return [this.jacket, this.rightHand, this.leftHand, this.boots, this.hat, this.goggles, this.pants, this.skis];
     }
 
     equipRightHand(weapon) {
