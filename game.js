@@ -48,7 +48,7 @@ function initializeGame() {
     let laserGun = new LaserGun(character, mobManager);
     let pistol = new Pistol(character, mobManager);
 
-    let shop = new Shop(character, ctx);
+    let shop = new Shop(character, ctx, canvas);
     const svgObject = document.getElementById('shopSvg');
     svgObject.contentDocument.documentElement.style.display = 'none';
 
@@ -102,6 +102,7 @@ function initializeGame() {
     });
 
     let level = undefined;
+
 
     function update(time) {
         let dt = (time - lastTime) / 1000.0;

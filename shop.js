@@ -1,14 +1,16 @@
 import { FallingSnowParticleEffect } from "./particle_engine.js";
-import randomCentered from "./utils.js";
+import randomCentered, { Clickable } from "./utils.js";
 
 export class Shop {
-  constructor(character, ctx) {
+  constructor(character, ctx, canvas) {
       this.character = character;
       this.chair = null;  // Initialize the chair as null
+      this.purchaseChair = null;
       this.characterLeftLeg = null;
       this.characterRightLeg = null;
       this.characterLeftPants = null;
       this.characterRightPants = null;
+      this.cardReader = null;
       this.hammerBicep = null;
       this.hammerArm = null;
       this.cable = null;
@@ -16,6 +18,8 @@ export class Shop {
       this.ctx = ctx;
       this.lastSnowTime = 0;
       this.snowRate = 40;
+
+      this.checkingOut = true;
 
       this.treesImages = [
         new Image(),
@@ -29,6 +33,10 @@ export class Shop {
       this.snowEffect = new FallingSnowParticleEffect(800);
       this.backgroundSnowEffect = new FallingSnowParticleEffect(800);
 
+      this.canvas = canvas;
+      this.clickables = [];  // New list to store clickable objects
+      this.initializeClickables();  // New method to set up clickables
+
       getModifiedSvg("chair", {
           replace_colors: [["#ff6601", "#000000"]],
           hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"]
@@ -36,6 +44,15 @@ export class Shop {
           this.chair = img;  // Set the chair image once it's ready
       }).catch(err => {
           console.error("Error loading chair image:", err);
+      });
+
+      getModifiedSvg("chair", {
+        replace_colors: [],
+        hide: ["dwarf_head", "dwarf_right_arm", "left_pants", "right_pants", "player_left_leg", "player_right_leg"]
+      }).then(img => {
+        this.purchaseChair = img;
+      }).catch(err => {
+        console.error("Error loading purchase chair image:", err);
       });
 
       getModifiedSvg("cable", {
@@ -100,8 +117,28 @@ export class Shop {
       }).catch(err => {
           console.error("Error loading hammer arm image:", err);
       });
+
+      getModifiedSvg("card_reader", {
+          replace_colors: [],
+          hide: [""]
+      }).then(img => {
+          this.cardReader = img;
+      }).catch(err => {
+          console.error("Error loading card reader image:", err);
+      });
   }
 
+  initializeClickables() {
+    // Example clickable for the card reader
+    const cardReaderClickable = new Clickable(275, 730, 610, 830, this.canvas);
+    cardReaderClickable.onTap = () => {
+      console.log("Card reader tapped!");
+      // Add your card reader tap logic here
+    };
+    this.clickables.push(cardReaderClickable);
+
+    // Add more clickables as needed...
+  }
 
   update(dt) {
       // Update logic here
@@ -134,49 +171,56 @@ export class Shop {
           this.trees.splice(this.trees.indexOf(tree), 1);
         }
       }
+
   }
 
-
-
   draw(ctx) {
-      if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm) {
+    function rotateInImageFrame(pivot, amount) {
+      ctx.translate(pivot.x, pivot.y);
+      ctx.rotate(amount);
+      ctx.translate(-pivot.x, -pivot.y);
+    }
+    if (this.chair && this.cable && this.characterLeftLeg && this.characterRightLeg && this.characterLeftPants && this.characterRightPants && this.hammerBicep && this.hammerArm && this.cardReader && this.purchaseChair) {
+      
+      ctx.save();
+      ctx.scale(0.8, 0.8);
+      this.backgroundSnowEffect.draw(ctx);
+      ctx.restore();
+
+      let height = ctx.canvas.height;
+      const scale = height / this.chair.height;
+
+      ctx.save();
+      ctx.scale(scale, scale);
+
+      let width = this.chair.width;
+      height = this.chair.height;
+
+      for (let tree of this.trees) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(1 - tree.age / 5, 0);
+        ctx.translate(tree.x + width / 2, tree.y + height / 2);
+        ctx.scale(1 - tree.age / 10, 1 - tree.age / 10);
         
-        ctx.save();
-        ctx.scale(0.8, 0.8);
-        this.backgroundSnowEffect.draw(ctx);
+        ctx.drawImage(tree.img, -width / 2, -height / 2, width, height);
         ctx.restore();
+      }
 
-        let height = ctx.canvas.height;
-        const scale = height / this.chair.height;
-
-        ctx.save();
-        ctx.scale(scale, scale);
-        function rotateInImageFrame(pivot, amount) {
-          ctx.translate(pivot.x, pivot.y);
-          ctx.rotate(amount);
-          ctx.translate(-pivot.x, -pivot.y);
-        }
-        let width = this.chair.width;
-        height = this.chair.height;
-
-        for (let tree of this.trees) {
-          ctx.save();
-          ctx.globalAlpha = Math.max(1 - tree.age / 5, 0);
-          ctx.translate(tree.x + width / 2, tree.y + height / 2);
-          ctx.scale(1 - tree.age / 10, 1 - tree.age / 10);
-         
-          ctx.drawImage(tree.img, -width / 2, -height / 2, width, height);
-          ctx.restore();
-        }
-
-        // Draw the chair if the image is loaded
-        ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
-        ctx.drawImage(this.cable, 0, 0, width, height);
-        ctx.save();
-        const pivot = {x: 530, y: 300};
-        rotateInImageFrame(pivot, Math.sin(this.elapsedTime * 1) * 0.02);
+      // Draw the chair if the image is loaded
+      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
+      // Update the transform for each clickable
+      this.clickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
+      ctx.drawImage(this.cable, 0, 0, width, height);
+      ctx.save();
+      const pivot = {x: 530, y: 300};
+      rotateInImageFrame(pivot, Math.sin(this.elapsedTime * 1) * 0.02);
+      if (this.checkingOut) {
+        ctx.drawImage(this.purchaseChair, 0, 0, width, height);
+      } else {
         ctx.drawImage(this.chair, 0, 0, width, height);
+      }
 
+      if (!this.checkingOut) {
         // Dwarf Hammer Arm
         ctx.save(); {
           let amt = Math.sin(this.elapsedTime * 6);
@@ -186,34 +230,99 @@ export class Shop {
           rotateInImageFrame({x: 776, y: 1392}, amt * 0.22);
           ctx.drawImage(this.hammerArm, 0, 0, width, height);
         } ctx.restore();
-
-        // Right leg
-        ctx.save(); {
-          rotateInImageFrame({x:245, y:1506}, Math.sin(this.elapsedTime * 3) * 0.02);
-          ctx.save(); {
-            rotateInImageFrame({x:245, y: 1674}, Math.sin(this.elapsedTime * 3) * 0.1);
-            ctx.drawImage(this.characterRightLeg, 0, 0, width, height);
-          } ctx.restore()
-          ctx.drawImage(this.characterRightPants, 0, 0, width, height);
-        } ctx.restore();
-
-        // Left leg
-        ctx.save(); {
-          rotateInImageFrame({x:346, y:1506}, Math.sin(this.elapsedTime * 3 + Math.PI) * 0.02);
-          ctx.save(); {
-            rotateInImageFrame({x:346, y: 1661}, Math.sin(this.elapsedTime * 3 + Math.PI) * 0.1);
-            ctx.drawImage(this.characterLeftLeg, 0, 0, width, height);
-          } ctx.restore()
-          ctx.drawImage(this.characterLeftPants, 0, 0, width, height);
-        }ctx.restore();
-
-        ctx.restore(); // translate
-        ctx.restore(); // scale
-        this.snowEffect.draw(ctx);
-      } else {
-        console.log("no chair");
       }
+
+      // Right leg
+      ctx.save(); {
+        rotateInImageFrame({x:245, y:1506}, Math.sin(this.elapsedTime * 3) * 0.02);
+        ctx.save(); {
+          rotateInImageFrame({x:245, y: 1674}, Math.sin(this.elapsedTime * 3) * 0.1);
+          ctx.drawImage(this.characterRightLeg, 0, 0, width, height);
+        } ctx.restore()
+        ctx.drawImage(this.characterRightPants, 0, 0, width, height);
+      } ctx.restore();
+
+      // Left leg
+      ctx.save(); {
+        rotateInImageFrame({x:346, y:1506}, Math.sin(this.elapsedTime * 3 + Math.PI) * 0.02);
+        ctx.save(); {
+          rotateInImageFrame({x:346, y: 1661}, Math.sin(this.elapsedTime * 3 + Math.PI) * 0.1);
+          ctx.drawImage(this.characterLeftLeg, 0, 0, width, height);
+        } ctx.restore()
+        ctx.drawImage(this.characterLeftPants, 0, 0, width, height);
+      }ctx.restore();
+
+
+
+      ctx.restore(); // chair swing
+
+      ctx.restore(); // scale & translate
+      this.snowEffect.draw(ctx);
+
+      if (this.checkingOut) {
+        ctx.save();
+        ctx.scale(scale, scale);
+        ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
+        ctx.drawImage(this.cardReader, 0, 0, width, height);
+        drawCheckoutText(ctx, width);
+        ctx.restore();
+      }
+    } else {
+      console.log("no chair");
+    }
+
+    // You can add debug drawing for clickables if needed
+    // this.clickables.forEach(clickable => {
+    //     ctx.strokeStyle = 'red';
+    //     ctx.strokeRect(clickable.x - clickable.width/2, clickable.y - clickable.height/2, clickable.width, clickable.height);
+    // });
   }
+}
+
+function drawCheckoutText(ctx, width) {
+  ctx.fillStyle = "#434741"
+  ctx.font = "40px Pixelify Sans";
+  ctx.textAlign = "center";
+  let y = 279;
+  let x = 289;
+
+  const bigGap = 41;
+  const smallGap = 31;
+
+  ctx.fillText("Swords and Boards", width / 2, y);
+  y += smallGap;
+  //ctx.font = "30px Pixelify Sans";
+  //ctx.fillText("Equipment Rental", width / 2, y);
+  //y += bigGap;
+  ctx.textAlign = "left";
+  ctx.font = "40px Tiny5";
+  ctx.fillText("----------------------", x, y);
+  y += bigGap;
+  ctx.fillText("FLAMING LONGSWORD", x, y);
+  y += bigGap;
+  ctx.font = "35px Tiny5";
+  ctx.fillText("DAMAGE - X X", x, y);
+  y += smallGap;
+  ctx.fillText("REACH - X X X X", x, y)
+  y += smallGap;
+  ctx.fillText("SPEED - X", x, y);
+  y += bigGap;
+  ctx.fillText("A long bladed weapon.", x, y);
+  y += smallGap;
+  ctx.fillText("Sets enemies on fire.", x, y);
+  y += smallGap;
+  ctx.font = "40px Tiny5";
+  ctx.fillText("----------------------", x, y);
+  y += smallGap;
+  ctx.font = "40px Tiny5";
+  ctx.fillText("RENTAL FEE", x, y)
+  ctx.textAlign = "right";
+  ctx.fillText("250 GM", width - x, y);
+  ctx.textAlign = "left";
+  y += smallGap;
+  ctx.fillText("----------------------", x, y);
+  y += smallGap;
+  ctx.fillText("Signature:", x, y);
 }
 
 
