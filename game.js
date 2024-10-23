@@ -116,7 +116,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (true){
+        if (false){
             shop.update(dt);
             shop.draw(ctx);
         } else {
