@@ -3,6 +3,7 @@ import randomCentered, { Clickable, calculateFlyInOut } from "./utils.js";
 import getModifiedSvg from "./svg_utils.js";
 import { getItemsForSale } from "./equipment.js";
 const HAMMER_RATE = 6;
+const CHECKOUT_TEXT_COLOR = "#434741";
 export class Shop {
   constructor(character, ctx, canvas) {
       this.character = character;
@@ -31,6 +32,8 @@ export class Shop {
       this.checkoutStartTime = 0;
       this.checkoutEndTime = -100;
       this.checkoutItem = null;
+      this.selectedDraggable = null;
+      this.chosenSlot = null;
 
       this.initItems();
 
@@ -64,11 +67,14 @@ export class Shop {
       this.initDropAreas();
   }
 
-  startCheckout(item) {
+  startCheckout(draggable, item, slot) {
     this.checkingOut = true;
     this.confirmLedReady = false;
     this.checkoutStartTime = this.elapsedTime;
     this.checkoutItem = item;
+    this.chosenSlot = slot;
+    this.signature.clear();
+    this.selectedDraggable = draggable;
   }
 
   endCheckout() {
@@ -101,7 +107,7 @@ export class Shop {
       if (this.confirmLedReady) {
         this.draggableItems = this.draggableItems.filter(item => item.item !== this.checkoutItem);
         this.endCheckout();
-        this.character.equip(this.checkoutItem);
+        this.character.equip(this.checkoutItem, this.chosenSlot);
         this.loadImages();
       }
     });
@@ -287,6 +293,13 @@ export class Shop {
       ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
       if (!this.checkingOut) {
         this.drawStoreOverlay(ctx, width, height);
+      } else if (this.selectedDraggable) {
+        this.selectedDraggable.x = 680;
+        this.selectedDraggable.y = 1600;
+        ctx.fillStyle = "#ffffffaa";
+        const rectsize = 300;  
+        ctx.fillRect(this.selectedDraggable.x - rectsize / 2, this.selectedDraggable.y - rectsize / 2, rectsize, rectsize);
+        this.selectedDraggable.draw(ctx);
       }
       ctx.translate(0, y);
       ctx.drawImage(this.cardReader, 0, 0, width, height);
@@ -312,8 +325,23 @@ export class Shop {
   drawStoreOverlay(ctx, width, height) {
     ctx.drawImage(this.overlay, 0, 0, width, height);
     
-    // Draw draggable items
-    this.draggableItems.forEach(item => item.draw(ctx));
+    // Draw draggable items 
+    this.draggableItems.forEach(item => {
+      // Draw item name and cost
+      ctx.font = '35px Roboto';
+      ctx.fillStyle = CHECKOUT_TEXT_COLOR;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      
+      const x = item.originalX;
+      const y = item.originalY;
+      // Draw item name
+      ctx.fillText(item.item.getDisplayName(), x, y + item.height / 2 + 10);
+      
+      // Draw item cost
+      ctx.fillText(`🥇 ${item.item.getPrice()}`, x, y + item.height / 2 + 55);
+      item.draw(ctx);
+    });
   }
 
   initDraggableItems() {
@@ -339,6 +367,10 @@ export class Shop {
   initDropAreas() {
     let jacketDrop = new DropArea(160, 450, 1260, 1530, this.canvas, "jacket");
     this.dropAreas.push(jacketDrop);
+    let rightHandDrop = new DropArea(150, 300, 1330, 1540, this.canvas, "right_hand");
+    this.dropAreas.push(rightHandDrop);
+    let leftHandDrop = new DropArea(300, 450, 1330, 1540, this.canvas, "left_hand");
+    this.dropAreas.push(leftHandDrop);
   }
 
   loadImages() {
@@ -346,10 +378,16 @@ export class Shop {
     const allEquipment = this.character.getAllEquipment();
     let replaceColors = [];
     let show = [];
-    for (let item of allEquipment) {
+    console.log("Equipment slots:", Object.keys(allEquipment));
+    for (let slot in allEquipment) {
+      let item = allEquipment[slot];
       if (item) {
         replaceColors.push(...item.getColorChanges());
-        show.push(...item.getUnhide());
+        if (slot === "left_hand" || slot === "right_hand") {
+          show.push(...item.getUnhide().map(unhide => `${slot}.${unhide}`));
+        } else {
+          show.push(...item.getUnhide());
+        }
       }
     }
 
@@ -487,7 +525,7 @@ export class Shop {
 }
 
 function drawCheckoutText(ctx, width, item) {
-  ctx.fillStyle = "#434741"
+  ctx.fillStyle = CHECKOUT_TEXT_COLOR;
   ctx.font = "40px Pixelify Sans";
   ctx.textAlign = "center";
   let y = 279;
@@ -545,6 +583,10 @@ class Signature {
         this.clickable.addDragStartListener((x, y) => this.startDrawing(x, y));
         this.clickable.addDragMoveListener((x, y) => this.addPoint(x, y));
         this.clickable.addDragEndListener(() => this.stopDrawing());
+    }
+
+    clear() {
+      this.points = [];
     }
 
     startDrawing(x, y) {
@@ -663,7 +705,7 @@ class DraggableItem extends Clickable {
     isDroppedInValidArea(x, y) {
         for (const area of this.shop.dropAreas) {
             if (area.isPointInside(x, y) && this.item.getSlots().includes(area.slotName)) {
-                this.shop.startCheckout(this.item);
+                this.shop.startCheckout(this, this.item, area.slotName);
                 return true;
             }
         }
@@ -673,7 +715,11 @@ class DraggableItem extends Clickable {
     draw(ctx) {
         const image = this.item.getImage();
         if (image) {
-            ctx.drawImage(image, this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+            let maxSize = Math.max(image.width, image.height);
+            let scale = this.width / maxSize;
+            let scaledWidth = image.width * scale;
+            let scaledHeight = image.height * scale;
+            ctx.drawImage(image, this.x - scaledWidth / 2, this.y - scaledHeight / 2, scaledWidth, scaledHeight);
         }
     }
 }

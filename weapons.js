@@ -6,10 +6,13 @@ export const WeaponType = {
 }
 
 export class Weapon {
-    constructor(type, character, mobManager) {
+    constructor(type) {
+        this.type = type;
+    }
+
+    equip(character, mobManager) {
         this.character = character;
         this.mobManager = mobManager;
-        this.type = type;
     }
 
     damageMob(mob, damage) {
@@ -33,14 +36,14 @@ const SwordState = {
 }
 
 export class Gun extends Weapon {
-    constructor(character, mobManager) {
+    constructor(gunData) {
         super(WeaponType.HAND, character, mobManager);
-        this.coolDown = 0.01;
-        this.damage = 0.5;
-        this.knockback = 10000;
-        this.firingArc = 45;
-        this.firingDistance = 300;
-        this.hitPercentage = 0.3;
+        this.coolDown = gunData.coolDown;
+        this.damage = gunData.damage;
+        this.knockback = gunData.knockback;
+        this.firingArc = gunData.firingArc;
+        this.firingDistance = gunData.firingDistance;
+        this.hitPercentage = gunData.hitPercentage;
 
         this.lastAttackTime = 0;
         this.target = null;
@@ -98,7 +101,8 @@ export class Gun extends Weapon {
     }
 }
 
-export class miniGun extends Gun {
+
+/*export class miniGun extends Gun {
     constructor(character, mobManager) {
         super(character, mobManager);
         this.coolDown = 0.01;
@@ -144,16 +148,18 @@ export class LaserGun extends Gun {
         this.hitPercentage = 1.0;
     }
 }
+    */
 export class MeleeWeapon extends Weapon {
-    constructor(character, mobManager) {
-        super(WeaponType.HAND, character, mobManager);
-        this.state = SwordState.HELD;
-        this.coolDown = 0.3;
-        this.hitAreaHeight = 5;
-        this.hitAreaWidth = 45;
-        this.damage = 3.5;
-        this.knockback = 50000;
+    constructor(weaponData) {
+        super(WeaponType.HAND);
+        this.coolDown = weaponData.coolDown;
+        this.hitAreaHeight = weaponData.hitAreaHeight;
+        this.hitAreaWidth = weaponData.hitAreaWidth;
+        this.damage = weaponData.damage;
+        this.knockback = weaponData.knockback;
 
+
+        this.state = SwordState.HELD;
         this.lastAttackTime = 0;
     }
     
@@ -203,13 +209,6 @@ export class MeleeWeapon extends Weapon {
             ctx.fillStyle = "orange";
             ctx.fillRect(this.character.x, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
         }
-    }
-}
-
-export class Sword extends MeleeWeapon {
-    constructor(character, mobManager) {
-        super(character, mobManager);
-        this.stringName = "sword";
     }
 }
 

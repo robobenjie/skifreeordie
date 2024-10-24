@@ -137,6 +137,57 @@ function processSvg(svgDoc, label, { replace_colors, hide, show }) {
         }
       });
 
+      // Show specific children
+      show.forEach(showLabel => {
+        console.log("showing", showLabel);
+        const [parentLabel, childLabel] = showLabel.split('.');
+        let childToShow;
+
+        if (childLabel) {
+          // Find the parent group first
+          const parentGroup = Array.from(groups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === parentLabel);
+          if (parentGroup) {
+            // Then find the child within the parent group
+            childToShow = Array.from(parentGroup.getElementsByTagName('*')).find(el => el.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === childLabel);
+          }
+        } else {
+          // If there's no dot notation, search as before
+          childToShow = Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === showLabel);
+        }
+
+        if (childToShow) {
+          console.log("showing", childToShow);
+          childToShow.removeAttribute('display');
+          // Check if there's a style attribute
+          if (childToShow.hasAttribute('style')) {
+            let styleString = childToShow.getAttribute('style');
+            // Parse the style string
+            let styles = styleString.split(';').reduce((acc, style) => {
+              let [key, value] = style.split(':').map(s => s.trim());
+              if (key && value) acc[key] = value;
+              return acc;
+            }, {});
+
+            // Remove any 'display' property from the styles
+            if ('display' in styles) {
+              delete styles['display'];
+              // Reconstruct the style string without 'display'
+              styleString = Object.entries(styles)
+                .map(([key, value]) => `${key}:${value}`)
+                .join(';');
+
+              // Set the new style string or remove the attribute if empty
+              if (styleString) {
+                childToShow.setAttribute('style', styleString);
+              } else {
+                childToShow.removeAttribute('style');
+              }
+            }
+          }
+          console.log("modified", childToShow);
+        }
+      });
+
       // Convert the modified SVG to an Image object
       collectVisibleElements(svgDoc.documentElement, allVisibleElements);
 
@@ -154,6 +205,8 @@ function processSvg(svgDoc, label, { replace_colors, hide, show }) {
         }
             return false;
         }
+
+        console.log(svgDoc);
 
         // Convert the modified SVG to an Image object
         let svgData = new XMLSerializer().serializeToString(svgDoc);

@@ -1,4 +1,3 @@
-import { fetchSVG, interpolateSVG, svgToImage } from './svg_interpolation.js';
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import { Camera } from './camera.js';
@@ -8,7 +7,6 @@ import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
-import { Sword, Gun, LaserGun, miniGun, Pistol } from './weapons.js';
 import { getItemsForSale } from './equipment.js';
 
 window.addEventListener('load', function () {
@@ -42,12 +40,9 @@ async function initializeGame() {
     let camera = new Camera(canvas, character);
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
+    character.mobManager = mobManager;
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager, camera);
 
-    let sword = new Sword(character, mobManager);
-    let gun = new Gun(character, mobManager);
-    let laserGun = new LaserGun(character, mobManager);
-    let pistol = new Pistol(character, mobManager);
 
     let shop = new Shop(character, ctx, canvas);
     const svgObject = document.getElementById('shopSvg');
@@ -116,7 +111,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (true){
+        if (true) { //!character.getAllEquipment().some(item => item !== undefined)) {
             shop.update(dt);
             shop.draw(ctx);
         } else {

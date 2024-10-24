@@ -69,7 +69,7 @@ class Character {
 
     }
 
-    equip(equipment) {
+    equip(equipment, chosenSlot) {
         if (equipment.getSlots().includes("jacket")) {
             this.jacket = equipment;
         }
@@ -88,11 +88,28 @@ class Character {
         if (equipment.getSlots().includes("goggles")) {
             this.goggles = equipment;
         }
+        if (chosenSlot == "right_hand") {
+            this.rightHand = equipment;
+            equipment.equip(this, this.mobManager);
+        }
+        if (chosenSlot == "left_hand") {
+            this.leftHand = equipment;
+            equipment.equip(this, this.mobManager);
+        }
         console.log(this.getAllEquipment());
     }
 
     getAllEquipment() {
-        return [this.jacket, this.rightHand, this.leftHand, this.boots, this.hat, this.goggles, this.pants, this.skis];
+        return {
+            jacket: this.jacket,
+            right_hand: this.rightHand,
+            left_hand: this.leftHand,
+            boots: this.boots,
+            hat: this.hat,
+            goggles: this.goggles,
+            pants: this.pants,
+            skis: this.skis
+        };
     }
 
     equipRightHand(weapon) {

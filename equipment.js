@@ -1,9 +1,24 @@
 import getModifiedSvg from './svg_utils.js';
+import { MeleeWeapon, Gun } from './weapons.js';
 
 class Equipment {
     constructor(data) {
         this.data = data;
         this.image = null;
+
+        this.weapon = null;
+
+        if (data.melee_weapon) {
+            this.weapon = new MeleeWeapon(this.data.melee_weapon);
+        }
+        if (data.gun) {
+            this.weapon = new Gun(this.data.gun);
+        }
+    }
+    equip(character, mobManager) {
+        if (this.weapon) {
+            this.weapon.equip(character, mobManager);
+        }
     }
     getID() {
         return this.data.id;
@@ -51,7 +66,21 @@ class Equipment {
         }
     }
 
+    update(dt) {
+        if (this.weapon) {
+            this.weapon.update(dt);
+        }
+    }
+
+    draw(ctx) {
+        if (this.weapon) {
+            this.weapon.draw(ctx);
+        }
+    }
+
 }
+
+const JACKET_BASE = "#ff6600";
 
 export const SpeedJacket = new Equipment({
     id: "speed_jacket",
@@ -61,19 +90,65 @@ export const SpeedJacket = new Equipment({
     description: ["Increases speed by 10%"],
     stats: {
         speed: 3,
-        cool: 2,
         armor: 1
     },
     slots: ["jacket"],
     color_changes: [
-            ["#ff6600", "#00ffff"],
+            [JACKET_BASE, "#545E75"],
             ["#d45500", "#00aaaa"]
     ],
+    unhide: ["jacket_trim_stripe", "jacket_big_stripe"],
     price: 400
 })
 
+export const Sword = new Equipment({
+    id: "sword",
+    layer_group: "sword",
+    shop_image: "sword.svg",
+    display_name: "Sword",
+    description: ["Elegant melee weapon"],
+    stats: {
+        speed: 1,
+        reach: 2,
+        damage: 1
+    },
+    slots: ["right_hand", "left_hand"],
+    unhide: ["sword"],
+    melee_weapon: {
+        coolDown: 0.3,
+        hitAreaHeight: 5,
+        hitAreaWidth: 45,
+        damage: 3.5,
+        knockback: 50000
+    },
+    price: 250
+})
+
+export const Pistol = new Equipment({
+    id: "pistol",
+    layer_group: "pistol",
+    shop_image: "pistol.svg",
+    display_name: "Pistol",
+    description: ["A small pistol"],
+    stats: {
+        speed: 1,
+        damage: 1
+    },
+    slots: ["right_hand", "left_hand"],
+    unhide: ["pistol"],
+    gun_data: {
+        coolDown: 0.01,
+        damage: 0.5,
+        knockback: 10000,
+        firingArc: 45,
+        firingDistance: 300,
+        hitPercentage: 0.3
+    },
+    price: 100,
+})
+
 export function getItemsForSale(character) {
-    return [SpeedJacket];
+    return [SpeedJacket, Sword, Pistol];
 }
 
 export default Equipment;
