@@ -13,7 +13,7 @@ const CharacterState = {
 };
 
 class SkiPhysics {
-    constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass) {
+    constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass, camera) {
         this.x = x;
         this.y = y;
         this.z = 0;
@@ -23,6 +23,7 @@ class SkiPhysics {
         this.skiSpacing = 10;
         this.isSnowboard = false;
         this.mass = mass;
+        this.camera = camera;
 
         this.terrainManager = terrainManager;
 
@@ -46,7 +47,7 @@ class SkiPhysics {
         this.floatDrag = 6;
         this.stompSpeed = 8;
 
-        this.trails = [new Trail(this.isSnowboard)];
+        this.trails = [new Trail(this.isSnowboard, this.camera)];
 
         // Set up state vars:
         this.state = CharacterState.NORMAL;
@@ -184,7 +185,7 @@ class SkiPhysics {
                 }
                 this.z = 0;
                 this.zVelocity = 0;
-                this.trails.push(new Trail(this.isSnowboard));
+                this.trails.push(new Trail(this.isSnowboard, this.camera));
             }
         } else if (this.state == CharacterState.NORMAL) {
             if (angleChangeRate > this.maxTurnRate) {
@@ -222,7 +223,7 @@ class SkiPhysics {
             };
 
             if (this.trails.length == 0) {
-                this.trails.push(new Trail(this.isSnowboard));
+                this.trails.push(new Trail(this.isSnowboard, this.camera));
             }
             this.trails[this.trails.length - 1].update(this)
     
@@ -379,8 +380,12 @@ function angleDifference(a, b) {
 }
 
 
+const OFF_TOP_THRESHOLD = 300;
 class Trail{
-    constructor(isSnowboard){
+    constructor(isSnowboard, camera){
+        if (camera === undefined) {
+            debugger;
+        }
         this.leftFrontTrail = [];
         this.rightFrontTrail = [];
         this.leftRearTrail = [];
@@ -388,6 +393,7 @@ class Trail{
         this.color = "#E8E8F0"
         this.trailResolutionPx = 10;
         this.trailLen = 500;
+        this.camera = camera;
         this.isSnowboard = isSnowboard;
         this.skiWidth = 1;
     }
@@ -408,7 +414,7 @@ class Trail{
             }
 
             // limit to 100 points
-            if (this.leftFrontTrail.length > 500) {
+            if (this.leftFrontTrail.length > this.trailLen || this.camera.distanceOffScreenY(this.leftFrontTrail[0].y) > OFF_TOP_THRESHOLD) {
                 this.leftFrontTrail.shift();
                 this.leftRearTrail.shift();
                 if (!this.isSnowboard) {

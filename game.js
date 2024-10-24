@@ -30,6 +30,7 @@ window.addEventListener('load', function () {
 
 async function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
+    let camera = new Camera(canvas);
     let ctx = canvas.getContext('2d');
     let lastTime = 0; // For delta time calculation
     let gameTime = 0; // Total time elapsed since start
@@ -37,9 +38,9 @@ async function initializeGame() {
     let joystick = new VirtualJoystick(canvas);
     let particleEngine = new ParticleEngine(1000);
     let treeManager = new TerrainManager(canvas);
-    let character = new Character(100, 100, particleEngine, treeManager, joystick);
-    let camera = new Camera(canvas, character);
-    character.setCamera(camera);
+    let character = new Character(100, 100, particleEngine, treeManager, joystick, camera);
+    camera.setCharacter(character);
+
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
     character.mobManager = mobManager;
@@ -134,7 +135,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (true) { //!character.getAllEquipment().some(item => item !== undefined)) {
+        if (false) { //!character.getAllEquipment().some(item => item !== undefined)) {
             shop.update(dt);
             shop.draw(ctx);
         } else {

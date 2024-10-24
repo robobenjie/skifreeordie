@@ -51,13 +51,13 @@ class MobManager {
         //const onLeft = Math.random() < 0.5;
         //var loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
         let loc = this.camera.offBottomOfScreen(this.character);
-        this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect));
+        this.addMob(new AxeBoarderOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
     }
 
     spawnSpearOrc() {
         const onLeft = Math.random() < 0.5;
         let loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
-        this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect));
+        this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
     }
 
     update(dt) {
@@ -332,12 +332,12 @@ class Mob {
 }
 
 class AxeBoarderOrc extends Mob {
-    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect) {
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 5, 8, 25, 'orange', character, deathEffect);
         this.colors = ["orange", "yellow", "green"]
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass, camera);
         this.skiPhysics.setIsSnowboard(true);
         this.skiPhysics.skiWidth = 6;
         this.skiSpacing = 0;
@@ -472,12 +472,12 @@ class AxeBoarderOrc extends Mob {
 }
 
 class SpearOrc extends Mob {
-    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect) {
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.colors = ["black", "green"];
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass, camera);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 2;
         } else {
@@ -589,7 +589,7 @@ class Goblin extends Mob {
 
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass);
+        this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass, camera);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 6;
         } else {

@@ -1,7 +1,6 @@
 export class Camera {
-    constructor(canvas, character) {
+    constructor(canvas) {
         this.canvas = canvas;
-        this.character = character;
         this.characterFraction = 0.33;
         this.CameraDamping = 15;
         this.cameraStiffness = 150;
@@ -15,6 +14,10 @@ export class Camera {
         this.canvasWidth = 0;
         this.canvasHeight = 0;
 
+    }
+
+    setCharacter(character) {
+        this.character = character;
     }
 
     setCanvasSize(width, height) {

@@ -3,13 +3,14 @@ import SkiPhysics from "./skiPhysics.js";
 import Sword from "./weapons.js";
 
 class Character {
-    constructor(x, y, particleEngine, treeManager, joystick) {
+    constructor(x, y, particleEngine, treeManager, joystick, camera) {
         this.level = undefined;
         this.mass = 100;
-        this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager, this.mass);
+        this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager, this.mass, camera);
         this.skiPhysics.maxTurnRate = 5.0;
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
+        this.camera = camera;
 
         this.rightHand = undefined;
         this.leftHand = undefined;
@@ -67,10 +68,6 @@ class Character {
             }
         });
 
-    }
-
-    setCamera(camera) {
-        this.camera = camera;
     }
 
     spendMedals(medals) {
