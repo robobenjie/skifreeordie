@@ -38,8 +38,6 @@ export async function getModifiedSvg(svgUrl, label, { replace_colors = [], hide 
     const optionsKey = JSON.stringify({ label, ...options});
     const cacheKey = `${svgUrl}_${optionsKey}`;
 
-    console.log("cache key:", cacheKey);
-
     if (memoizedResults.has(cacheKey)) {
         return memoizedResults.get(cacheKey);
     }
@@ -152,7 +150,6 @@ function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, str
 
       // Show specific children
       show.forEach(showLabel => {
-        console.log("showing", showLabel);
         const [parentLabel, childLabel] = showLabel.split('.');
         let childToShow;
 
@@ -169,7 +166,6 @@ function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, str
         }
 
         if (childToShow) {
-          console.log("showing", childToShow);
           childToShow.removeAttribute('display');
           // Check if there's a style attribute
           if (childToShow.hasAttribute('style')) {
@@ -197,12 +193,10 @@ function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, str
               }
             }
           }
-          console.log("modified", childToShow);
         }
       });
 
 
-      console.log("red", stroke_red, "yellow", stroke_yellow, "green", stroke_green, "ghost", ghost);
       if (stroke_red) {
             const filter="url(#strokeFilterRed)";
             stroke_red.forEach(label => {
@@ -235,9 +229,6 @@ function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, str
 
       // Convert the modified SVG to an Image object
       collectVisibleElements(svgDoc.documentElement, allVisibleElements);
-
-
-        console.log(svgDoc);
 
         // Convert the modified SVG to an Image object
         let svgData = new XMLSerializer().serializeToString(svgDoc);

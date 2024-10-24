@@ -83,6 +83,7 @@ export class Shop {
     this.checkoutItem = item;
     this.chosenSlot = slot;
     this.signature.clear();
+    draggable.setTarget({x:680, y:1600});
     this.selectedDraggable = draggable;
   }
 
@@ -90,6 +91,7 @@ export class Shop {
     this.checkingOut = false;
     this.checkoutEndTime = this.elapsedTime;
     this.draggableItems.forEach(item => item.resetPosition());
+    this.clearImageEffects();
   }
 
   initializeClickables() {
@@ -167,6 +169,9 @@ export class Shop {
         if (tree.x < -100) {
           this.trees.splice(this.trees.indexOf(tree), 1);
         }
+      }
+      for (let draggable of this.draggableItems) {
+        draggable.update(dt);
       }
 
   }
@@ -303,8 +308,6 @@ export class Shop {
       if (!this.checkingOut) {
         this.drawStoreOverlay(ctx, width, height);
       } else if (this.selectedDraggable) {
-        this.selectedDraggable.x = 680;
-        this.selectedDraggable.y = 1600;
         ctx.fillStyle = "#ffffffaa";
         const rectsize = 300;  
         ctx.fillRect(this.selectedDraggable.x - rectsize / 2, this.selectedDraggable.y - rectsize / 2, rectsize, rectsize);
@@ -451,7 +454,10 @@ export class Shop {
     getModifiedSvg("images/shop_lift.svg", "chair", {
         replace_colors: replaceColors,
         hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"],
-        show: show
+        show: show,
+        stroke_yellow: strokeYellow,
+        stroke_green: strokeGreen,
+        ghost: ghost
     }).then(img => {
         this.purchaseChair = img;
     }).catch(err => {
@@ -712,6 +718,8 @@ class DraggableItem extends Clickable {
         this.item = item;
         this.originalX = x;
         this.originalY = y;
+        this.targetX = x;
+        this.targetY = y;
         this.isDragging = false;
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
@@ -732,8 +740,8 @@ class DraggableItem extends Clickable {
 
     onDragMove(x, y) {
         if (this.isDragging) {
-            this.x = x - this.dragOffsetX;
-            this.y = y - this.dragOffsetY;
+            this.targetX = x - this.dragOffsetX;
+            this.targetY = y - this.dragOffsetY;
 
             let newSlot = null;
             for (const area of this.shop.dropAreas) {
@@ -771,16 +779,20 @@ class DraggableItem extends Clickable {
 
     onDragEnd(x, y) {
         this.isDragging = false;
-        this.shop.updateImageEffects([], 'reset');
         if (!this.isDroppedInValidArea(x, y)) {
             this.resetPosition();
+            this.shop.clearImageEffects();
         }
-        this.shop.clearImageEffects();
+    }
+
+    setTarget(newtarget) {
+      this.targetX = newtarget.x;
+      this.targetY = newtarget.y;
     }
 
     resetPosition() {
-        this.x = this.originalX;
-        this.y = this.originalY;
+        this.targetX = this.originalX;
+        this.targetY = this.originalY;
     }
 
     isDroppedInValidArea(x, y) {
@@ -791,6 +803,15 @@ class DraggableItem extends Clickable {
             }
         }
         return false;
+    }
+
+    update(dt) {
+      const decayRate = 0.1; // Adjust this value to control the speed of decay
+      const dx = this.targetX - this.x;
+      const dy = this.targetY - this.y;
+
+      this.x += dx * decayRate;
+      this.y += dy * decayRate;
     }
 
     draw(ctx) {
