@@ -1,4 +1,5 @@
-import { calculateFlyInOut } from './utils.js';
+import { calculateFlyInOut, roundedParallelogram } from './utils.js';
+
 
 export const LevelDifficulty  = {
     GREEN_CIRCLE: 0,
@@ -122,7 +123,7 @@ export class Level {
         this.scores = null;
         this._isComplete = false;
         this._cashTransferComplete = false;
-        this.cashTransferEndTime = 0;
+        this.cashTransferEndTime = -1;
         this.totalTransferEndTime = -1;
         this.cashMoveRate = 200;
     }
@@ -181,10 +182,16 @@ export class Level {
                         this.character.medals += amountToMove;
                         if (this.scores[topRowIndex].cash <= 0) {
                             this._cashTransferComplete = true;
-                            this.cashTransferEndTime = this.timeSinceComplete;
+                            if (this.cashTransferEndTime == -1) {
+                                this.cashTransferEndTime = this.timeSinceComplete;
+                            }
                         }
                     }
                 }
+                if (this._cashTransferComplete && this.timeSinceComplete - this.cashTransferEndTime > 3.0) {
+                    this.character.completeLevel();
+                }
+
             }
         }
         let y = (this.character.y - this.startY) / 10;
@@ -387,7 +394,7 @@ export class Level {
 
         ctx.save();
         ctx.translate(titleX, 25);
-        this.roundedParallelogram(ctx, 0, 0, width, height, skew, cornerRadius);
+        roundedParallelogram(ctx, 0, 0, width, height, skew, cornerRadius);
         ctx.fillStyle = this.getDifficultyColor();
         ctx.fill();
 
@@ -467,27 +474,13 @@ export class Level {
         }
     }
 
-    roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
-        // Start path
-        ctx.beginPath();
-        ctx.moveTo(x + cornerRadius + skew, y);
-        ctx.lineTo(x + width - cornerRadius + skew, y);
-        ctx.arcTo(x + width + skew, y, x + width + skew, y + cornerRadius, cornerRadius);
-        ctx.lineTo(x + width, y + height - cornerRadius);
-        ctx.arcTo(x + width, y + height, x + width - cornerRadius, y + height, cornerRadius);
-        ctx.lineTo(x + cornerRadius, y + height);
-        ctx.arcTo(x, y + height, x, y + height - cornerRadius, cornerRadius);
-        ctx.lineTo(x + skew, y + cornerRadius);
-        ctx.arcTo(x + skew, y, x + cornerRadius + skew, y, cornerRadius);
-    }
-
     renderStatChip(ctx, x, y, width, str) {
         // Calculate dimensions
         const height = 20;
         const skew = Math.tan(10 * Math.PI / 180) * height;
         const cornerRadius = 4;
         
-        this.roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius);
+        roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius);
 
         // Set styles
         ctx.fillStyle = 'white';

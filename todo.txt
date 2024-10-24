@@ -1,6 +1,5 @@
 TODO:
 
-- Implement gun
 - Implement jump themed weapon
 - Add tree avoidance to mobs
 - Add bomb goblins
@@ -12,6 +11,4 @@ TODO:
 - Art for character
 - Art for mobs
 - Art and animations for weapons
-- Shop screen
 - Bosses
-- Item selection 

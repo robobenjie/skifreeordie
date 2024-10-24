@@ -1,10 +1,11 @@
 import { FallingSnowParticleEffect, SparkParticleEffect } from "./particle_engine.js";
-import randomCentered, { Clickable, calculateFlyInOut } from "./utils.js";
+import randomCentered, { Clickable, calculateFlyInOut, roundedParallelogram } from "./utils.js";
 import getModifiedSvg from "./svg_utils.js";
 import { getItemsForSale } from "./equipment.js";
 const HAMMER_RATE = 6;
 const CHECKOUT_TEXT_COLOR = "#434741";
 const SHOP_TEXT_COLOR = "#293241";
+
 const SLOT_TO_GROUP_MAP = {
   "jacket": ["player_jacket"],
   "left_hand": ["left_glove"],
@@ -37,6 +38,8 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
+      this._levelsTillNextShop = 0;
+
       this.checkingOut = false;
       this.confirmLedReady = false;
       this.checkoutStartTime = 0;
@@ -44,8 +47,6 @@ export class Shop {
       this.checkoutItem = null;
       this.selectedDraggable = null;
       this.chosenSlot = null;
-
-      this.initItems();
 
       this.treesImages = [
         new Image(),
@@ -68,16 +69,28 @@ export class Shop {
 
       this.canvas = canvas;
       this.camera = camera;
-      this.clickables = [];  // New list to store clickable objects
-      this.initializeClickables();  // New method to set up clickables
-      this.clearImageEffects(); // Initialize the effects
-      this.loadImages();
-
-
+      this.clickables = [];  // All clickables.
+      this.cardReaderClickables = [];
+      this.screenClickables = [];
       this.draggableItems = [];
       this.dropAreas = [];
-      this.initDraggableItems();
+
+      this.resetShop();
+      this.loadImages();
       this.initDropAreas();
+
+  }
+
+  resetShop() {
+    this.clearImageEffects(); // Initialize the effects
+    this.initItems();
+    this.initializeClickables();  // New method to set up clickables
+    this.initDraggableItems();
+  }
+
+
+  levelsTillNextShop() {
+    return this._levelsTillNextShop;
   }
 
   startCheckout(draggable, item, slot) {
@@ -102,8 +115,8 @@ export class Shop {
     // Example clickable for the card reader
     const cardReaderClickable = new Clickable(275, 730, 610, 830, this.canvas);
     this.clickables.push(cardReaderClickable);
+    this.cardReaderClickables.push(cardReaderClickable);
     this.signature = new Signature(cardReaderClickable);
-
     cardReaderClickable.addDragEndListener(() => {
       if (this.signature.points.length > 20) {
         this.confirmLedReady = true;
@@ -117,6 +130,7 @@ export class Shop {
 
     const confirmLedClickable = new Clickable(590, 760, 970, 1150, this.canvas);
     this.clickables.push(confirmLedClickable);
+    this.cardReaderClickables.push(confirmLedClickable);
     confirmLedClickable.addTapListener(() => {
       console.log("confirm tapped");
       if (this.confirmLedReady) {
@@ -126,9 +140,21 @@ export class Shop {
 
     const cancelLedClickable = new Clickable(230, 440, 970, 1150, this.canvas);
     this.clickables.push(cancelLedClickable);
+    this.cardReaderClickables.push(cancelLedClickable);
     cancelLedClickable.addTapListener(() => {
       console.log("cancel tapped");
       this.endCheckout();
+    });
+
+    const doneClickable = new Clickable(600, 1020, 1840, 1970, this.canvas);
+    this.clickables.push(doneClickable);
+    this.screenClickables.push(doneClickable);
+    doneClickable.addTapListener(() => {
+      if (!this.checkingOut) {
+        this._levelsTillNextShop += 1;
+        console.log("done! tapped");
+        this.resetShop();
+      }
     });
 
     // Add more clickables as needed...
@@ -235,7 +261,7 @@ export class Shop {
       // Draw the chair if the image is loaded
       ctx.translate(this.camera.getCanvasWidth() / 2 / scale - width / 2, 0);
       // Update the transform for each clickable
-      this.clickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
+      this.screenClickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
       ctx.drawImage(this.cable, 0, 0, width, height);
       ctx.save();
       const pivot = {x: 530, y: 300};
@@ -319,11 +345,17 @@ export class Shop {
         this.drawStoreOverlay(ctx, width, height);
       } else if (this.selectedDraggable) {
         ctx.fillStyle = "#ffffffaa";
-        const rectsize = 200;  
-        ctx.fillRect(this.selectedDraggable.x - rectsize / 2, this.selectedDraggable.y - rectsize / 2, rectsize, rectsize);
+        const rectsizeX = 280;
+        const rectsizeY = 230;
+        roundedParallelogram(ctx, this.selectedDraggable.x - rectsizeX / 2, this.selectedDraggable.y - rectsizeY / 2, rectsizeX, rectsizeY, 20, 20);
+        ctx.fill();
+        ctx.strokeStyle = SHOP_TEXT_COLOR;
+        ctx.lineWidth = 4; 
+        ctx.stroke();
         this.selectedDraggable.draw(ctx);
       }
       ctx.translate(0, y);
+      this.cardReaderClickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
       ctx.drawImage(this.cardReader, 0, 0, width, height);
 
       if (this.confirmLedReady && Math.sin(this.elapsedTime * 8) > 0) {
@@ -396,6 +428,7 @@ export class Shop {
         draggableItem.shop = this;
         this.draggableItems.push(draggableItem);
         this.clickables.push(draggableItem);
+        this.screenClickables.push(draggableItem);
     });
   }
 

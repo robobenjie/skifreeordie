@@ -54,9 +54,6 @@ async function initializeGame() {
 
     //character.equipRightHand(sword);
 
-    let svgText;
-    let characterImg;
-
     // Fetch the SVG outside the update loop
     (async () => {
         try {
@@ -105,12 +102,7 @@ async function initializeGame() {
     let level3 = new DoubleBlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
     character.update(0.01, ctx);
     camera.update(0.01);
-    //treeManager.addLevelSelect(level1, level2, level3);
-    //level1.start();
-    //level1.length = 40;
 
-    //character.level = level1;
-    //character.level.start();
 
     treeManager.setGetLevelsCallback(() => {
         let randomLevels = getThreeLevels(LevelDifficulty.BLUE_SQUARE);
@@ -135,7 +127,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (false) { //!character.getAllEquipment().some(item => item !== undefined)) {
+        if (character.completedLevels >= shop.levelsTillNextShop()) { 
             shop.update(dt);
             shop.draw(ctx);
         } else {

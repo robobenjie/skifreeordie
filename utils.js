@@ -1,11 +1,17 @@
-function getCanvasLogicalWidth(canvas) {
-    return parseFloat(canvas.style.width);  // Convert from "800px" to 800
-}
 
-function getCanvasLogicalHeight(canvas) {
-    return parseFloat(canvas.style.height); // Convert from "600px" to 600
+export function roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
+    // Start path
+    ctx.beginPath();
+    ctx.moveTo(x + cornerRadius + skew, y);
+    ctx.lineTo(x + width - cornerRadius + skew, y);
+    ctx.arcTo(x + width + skew, y, x + width + skew, y + cornerRadius, cornerRadius);
+    ctx.lineTo(x + width, y + height - cornerRadius);
+    ctx.arcTo(x + width, y + height, x + width - cornerRadius, y + height, cornerRadius);
+    ctx.lineTo(x + cornerRadius, y + height);
+    ctx.arcTo(x, y + height, x, y + height - cornerRadius, cornerRadius);
+    ctx.lineTo(x + skew, y + cornerRadius);
+    ctx.arcTo(x + skew, y, x + cornerRadius + skew, y, cornerRadius);
 }
-
 
 export function randomCentered(size) {
     return Math.random() * size * 2 - size;

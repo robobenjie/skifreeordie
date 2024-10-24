@@ -49,6 +49,7 @@ class Character {
         // set up state vars
         this.health = this.maxHealth;
         this.medals = 526;
+        this.completedLevels = 0;
 
         this.joystick.addTapListener(() => {
             if (this.skiPhysics.isJumping()) {
@@ -72,6 +73,11 @@ class Character {
 
     spendMedals(medals) {
         this.medals -= medals;
+    }
+
+    completeLevel() {
+        this.completedLevels++;
+        this.level = undefined;
     }
 
     equip(equipment, chosenSlot) {
@@ -126,10 +132,12 @@ class Character {
     }
 
     scoreKill(mob) {
-        if (mob.type == "goblin") {
-            this.level.goblinKilled();
-        } else {
-            this.level.enemyKilled();
+        if (this.level !== undefined) {
+            if (mob.type == "goblin") {
+                this.level.goblinKilled();
+            } else {
+                this.level.enemyKilled();
+            }
         }
     }
 
