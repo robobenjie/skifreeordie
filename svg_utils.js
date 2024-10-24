@@ -31,10 +31,24 @@ class SVGLoader {
 }
 const svgLoader = new SVGLoader();
 
+const memoizedResults = new Map();
+
 export async function getModifiedSvg(svgUrl, label, { replace_colors = [], hide = [], show = [], stroke_red = [], stroke_green = [], stroke_yellow = [], ghost = [] }) {
+    const options = {replace_colors, hide, show, stroke_red, stroke_green, stroke_yellow, ghost}
+    const optionsKey = JSON.stringify({ label, ...options});
+    const cacheKey = `${svgUrl}_${optionsKey}`;
+
+    console.log("cache key:", cacheKey);
+
+    if (memoizedResults.has(cacheKey)) {
+        return memoizedResults.get(cacheKey);
+    }
+
     try {
         const svgDoc = await svgLoader.loadSVG(svgUrl);
-        return processSvg(svgDoc.cloneNode(true), label, { replace_colors, hide, show, stroke_red, stroke_green, stroke_yellow, ghost });
+        const result = processSvg(svgDoc.cloneNode(true), label, options);
+        memoizedResults.set(cacheKey, result);
+        return result;
     } catch (error) {
         console.error('Error loading SVG:', error);
         throw error;
