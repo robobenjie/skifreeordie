@@ -27,6 +27,7 @@ window.addEventListener('load', function () {
 
 });
     
+
 async function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
     let ctx = canvas.getContext('2d');
@@ -38,13 +39,14 @@ async function initializeGame() {
     let treeManager = new TerrainManager(canvas);
     let character = new Character(100, 100, particleEngine, treeManager, joystick);
     let camera = new Camera(canvas, character);
+    character.setCamera(camera);
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
     character.mobManager = mobManager;
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager, camera);
 
 
-    let shop = new Shop(character, ctx, canvas);
+    let shop = new Shop(character, ctx, canvas, camera);
     const svgObject = document.getElementById('shopSvg');
     svgObject.contentDocument.documentElement.style.display = 'none';
 
@@ -65,10 +67,31 @@ async function initializeGame() {
     })();
 
     function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        character.x = canvas.width / 2;
-        character.y = canvas.height / 4;
+        const dpr = window.devicePixelRatio || 1;
+    
+        // Get the CSS size of the canvas (how it appears on the page)
+        const rect = {
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+    
+        // Adjust the canvas width and height to match the device pixel ratio
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+    
+        console.log("dpr is ", dpr);
+        // Scale the canvas context to match the device pixel ratio
+        ctx.scale(dpr, dpr);
+    
+        // Set CSS dimensions to maintain the correct visual size (CSS pixels)
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+
+        camera.setCanvasSize(rect.width, rect.height);
+    
+        // Adjust character's position based on the new canvas size
+        character.x = rect.width / 2;
+        character.y = rect.height / 4;
     }
 
     // resetOnFocus

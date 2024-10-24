@@ -125,14 +125,6 @@ class FallingSnowParticle extends Particle {
         const brownianStrength = 200; // Adjust this value to control the intensity of the motion
         this.velocity.x += brownianForce * brownianStrength * dt;
 
-        // Add motion towards the center of the canvas
-        const center = { x: ctx.canvas.width / 2, y: ctx.canvas.height / 2 };
-        const direction = { x: center.x - this.position.x, y: center.y - this.position.y };
-        const distance = Math.sqrt(direction.x * direction.x + direction.y * direction.y);
-        const attractionStrength = .00001; // Adjust this value to control the intensity of the attraction
-        this.velocity.x += direction.x * attractionStrength * dt * distance;
-        this.velocity.y += direction.y * attractionStrength * dt * distance;
-
 
         // Update position based on velocity
         this.position.x += this.velocity.x * dt + windSpeed * dt;
@@ -149,8 +141,9 @@ class FallingSnowParticle extends Particle {
 }
 
 export class FallingSnowParticleEffect extends ParticleEngineBase {
-    constructor(maxParticles) {
+    constructor(maxParticles, camera) {
         super(maxParticles, FallingSnowParticle);
+        this.camera = camera;
     }
 
 
@@ -173,8 +166,8 @@ export class FallingSnowParticleEffect extends ParticleEngineBase {
             // Emit particles throughout the warm-up period
             const particlesToEmit = Math.floor(emissionRate * dt);
             for (let j = 0; j < particlesToEmit; j++) {
-                const x = Math.random() * ctx.canvas.width * 6;
-                const y = Math.random() * ctx.canvas.height * 2;
+                const x = Math.random() * this.camera.getCanvasWidth() * 6;
+                const y = Math.random() * this.camera.getCanvasHeight() * 2;
                 this.emit(x, y, {x: 0, y: 80}, 10);
             }
         }

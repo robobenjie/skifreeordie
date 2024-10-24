@@ -28,14 +28,14 @@
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
      inkscape:zoom="0.5946522"
-     inkscape:cx="397.71147"
+     inkscape:cx="396.87064"
      inkscape:cy="561.67286"
      inkscape:window-width="1392"
      inkscape:window-height="757"
      inkscape:window-x="0"
      inkscape:window-y="38"
      inkscape:window-maximized="0"
-     inkscape:current-layer="layer4" />
+     inkscape:current-layer="layer1" />
   <defs
      id="defs1">
     <radialGradient
@@ -69,7 +69,7 @@
     <g
        id="g107"
        inkscape:label="sword"
-       transform="translate(31.569107,-182.04804)">
+       transform="rotate(-44.475099,-131.95936,199.12895)">
       <path
          id="rect112"
          style="fill:#999999;stroke-width:1.7;stroke-linecap:square;stroke-opacity:0.424116"

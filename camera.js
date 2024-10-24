@@ -12,6 +12,22 @@ export class Camera {
         this.targetScale = 1;
         this.startOfGame = true;
 
+        this.canvasWidth = 0;
+        this.canvasHeight = 0;
+
+    }
+
+    setCanvasSize(width, height) {
+        this.canvasWidth = width;
+        this.canvasHeight = height;
+    }
+
+    getCanvasWidth() {
+        return this.canvasWidth;
+    }
+
+    getCanvasHeight() {
+        return this.canvasHeight;
     }
 
     update(dt) {
@@ -42,7 +58,7 @@ export class Camera {
 
 
     applyTransform(ctx) {
-        ctx.translate(this.canvas.width / 2, this.canvas.height * this.characterFraction);
+        ctx.translate(this.canvasWidth / 2, this.canvasHeight * this.characterFraction);
         ctx.scale(1 / this.scale, 1 / this.scale);        
         ctx.translate(-this.x, -this.y);
     }
@@ -52,12 +68,12 @@ export class Camera {
      * @returns {number} Exposed area in pixels squared per second.
      */
     getExposedAreaY() {
-        const visibleWidth = this.canvas.width * this.scale;
+        const visibleWidth = this.canvasWidth * this.scale;
         return Math.abs(this.velocity.y) * visibleWidth;
     }
 
     getExposedAreaX() {
-        const visibleHeight = this.canvas.height * this.scale;
+        const visibleHeight = this.canvasHeight * this.scale;
         return Math.abs(this.velocity.x) * visibleHeight;
     }
 
@@ -72,8 +88,8 @@ export class Camera {
      */
     distanceOffScreenY(pointY) {
         // Calculate the top and bottom bounds of the visible screen in world coordinates
-        const topScreenY = (0 - this.canvas.height * this.characterFraction) * this.scale + this.y;
-        const bottomScreenY = (this.canvas.height - this.canvas.height * this.characterFraction) * this.scale + this.y;
+        const topScreenY = (0 - this.canvasHeight * this.characterFraction) * this.scale + this.y;
+        const bottomScreenY = (this.canvasHeight - this.canvasHeight * this.characterFraction) * this.scale + this.y;
 
         if (pointY < topScreenY) {
             return pointY - topScreenY; // Negative: above the top
@@ -94,8 +110,8 @@ export class Camera {
      */
     distanceOffScreenX(pointX) {
         // Calculate the left and right bounds of the visible screen in world coordinates
-        const leftScreenX = (-this.canvas.width / 2) * this.scale + this.x;
-        const rightScreenX = (this.canvas.width / 2) * this.scale + this.x;
+        const leftScreenX = (-this.canvasWidth / 2) * this.scale + this.x;
+        const rightScreenX = (this.canvasWidth / 2) * this.scale + this.x;
 
         if (pointX < leftScreenX) {
             return pointX - leftScreenX; // Negative: to the left
@@ -107,19 +123,19 @@ export class Camera {
     }
 
     topOfScreen() {
-        return (0 - this.canvas.height * this.characterFraction) * this.scale + this.y;
+        return (0 - this.canvasHeight * this.characterFraction) * this.scale + this.y;
     }
 
     bottomOfScreen() {
-        return (this.canvas.height - this.canvas.height * this.characterFraction) * this.scale + this.y;
+        return (this.canvasHeight - this.canvasHeight * this.characterFraction) * this.scale + this.y;
     }
 
     leftOfScreen() {
-        return (-this.canvas.width / 2) * this.scale + this.x;
+        return (-this.canvasWidth / 2) * this.scale + this.x;
     }
 
     rightOfScreen() {
-        return (this.canvas.width / 2) * this.scale + this.x;
+        return (this.canvasWidth / 2) * this.scale + this.x;
     }
 
     isOnScreen(x, y) {
@@ -133,8 +149,8 @@ export class Camera {
      */
     offLeftOfScreen() {
         const offset = 35 * this.scale; // Convert pixel offset to world coordinates
-        const visibleWidth = this.canvas.width * this.scale;
-        const visibleHeight = this.canvas.height * this.scale;
+        const visibleWidth = this.canvasWidth * this.scale;
+        const visibleHeight = this.canvasHeight * this.scale;
 
         const x = this.x - (visibleWidth / 2) - offset;
         const y = this.y + (Math.random() - 0.5) * visibleHeight;
@@ -148,8 +164,8 @@ export class Camera {
      */
     offRightOfScreen() {
         const offset = 35 * this.scale; // Convert pixel offset to world coordinates
-        const visibleWidth = this.canvas.width * this.scale;
-        const visibleHeight = this.canvas.height * this.scale;
+        const visibleWidth = this.canvasWidth * this.scale;
+        const visibleHeight = this.canvasHeight * this.scale;
 
         const x = this.x + (visibleWidth / 2) + offset;
         const y = this.y + (Math.random() - 0.5) * visibleHeight;
@@ -163,8 +179,8 @@ export class Camera {
      */
     offBottomOfScreen() {
         const offset = 35 * this.scale; // Convert pixel offset to world coordinates
-        const visibleWidth = this.canvas.width * this.scale;
-        const visibleHeight = this.canvas.height * this.scale;
+        const visibleWidth = this.canvasWidth * this.scale;
+        const visibleHeight = this.canvasHeight * this.scale;
 
         const y = this.y + (visibleHeight * (1 - this.characterFraction)) + offset;
         const x = this.x + (Math.random() - 0.5) * visibleWidth;
@@ -178,8 +194,8 @@ export class Camera {
      */
     offTopOfScreen() {
         const offset = 35 * this.scale; // Convert pixel offset to world coordinates
-        const visibleWidth = this.canvas.width * this.scale;
-        const visibleHeight = this.canvas.height * this.scale;
+        const visibleWidth = this.canvasWidth * this.scale;
+        const visibleHeight = this.canvasHeight * this.scale;
 
         const y = this.y - (visibleHeight / 2) - offset;
         const x = this.x + (Math.random() - 0.5) * visibleWidth;

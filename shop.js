@@ -4,6 +4,7 @@ import getModifiedSvg from "./svg_utils.js";
 import { getItemsForSale } from "./equipment.js";
 const HAMMER_RATE = 6;
 const CHECKOUT_TEXT_COLOR = "#434741";
+const SHOP_TEXT_COLOR = "#293241";
 const SLOT_TO_GROUP_MAP = {
   "jacket": ["player_jacket"],
   "left_hand": ["left_glove"],
@@ -12,7 +13,7 @@ const SLOT_TO_GROUP_MAP = {
   "right_weapon": ["right_hand"],
 };
 export class Shop {
-  constructor(character, ctx, canvas) {
+  constructor(character, ctx, canvas, camera) {
       this.character = character;
       this.chair = null;  // Initialize the chair as null
       this.purchaseChair = null;
@@ -28,6 +29,8 @@ export class Shop {
       this.hammerArm = null;
       this.overlay = null;
       this.cable = null;
+      this.medalImage = new Image();
+      this.medalImage.src = "images/mono_medal.svg";
       this.elapsedTime = 0;
       this.ctx = ctx;
       this.lastSnowTime = 0;
@@ -53,8 +56,8 @@ export class Shop {
       this.treeSpawnTime = 0;
       this.lastTreeSpawnTime = 0;
 
-      this.snowEffect = new FallingSnowParticleEffect(1200);
-      this.backgroundSnowEffect = new FallingSnowParticleEffect(1200);
+      this.snowEffect = new FallingSnowParticleEffect(1200, camera);
+      this.backgroundSnowEffect = new FallingSnowParticleEffect(1200, camera);
       this.sparkEffect = new SparkParticleEffect(50);
 
       // Warm up the snow effects
@@ -64,6 +67,7 @@ export class Shop {
       this.backgroundSnowEffect.warmUp(ctx, warmUpDuration, wind, this.snowRate);
 
       this.canvas = canvas;
+      this.camera = camera;
       this.clickables = [];  // New list to store clickable objects
       this.initializeClickables();  // New method to set up clickables
       this.clearImageEffects(); // Initialize the effects
@@ -116,10 +120,7 @@ export class Shop {
     confirmLedClickable.addTapListener(() => {
       console.log("confirm tapped");
       if (this.confirmLedReady) {
-        this.draggableItems = this.draggableItems.filter(item => item.item !== this.checkoutItem);
-        this.endCheckout();
-        this.character.equip(this.checkoutItem, this.chosenSlot);
-        this.loadImages();
+        this.purchaseItem();
       }
     });
 
@@ -131,6 +132,14 @@ export class Shop {
     });
 
     // Add more clickables as needed...
+  }
+
+  purchaseItem() {
+    this.draggableItems = this.draggableItems.filter(item => item.item !== this.checkoutItem);
+    this.endCheckout();
+    this.character.spendMedals(this.checkoutItem.getPrice());
+    this.character.equip(this.checkoutItem, this.chosenSlot);
+    this.loadImages();
   }
 
   update(dt) {
@@ -146,17 +155,17 @@ export class Shop {
       }
       this.sparkEffect.update(dt);
       if (this.elapsedTime > this.lastSnowTime + 1 / this.snowRate) {
-        let xpos = (Math.random() * 7 - 1) * this.ctx.canvas.width;
+        let xpos = (Math.random() * 7 - 1) * this.camera.getCanvasWidth();
         let ypos = 0;
         this.snowEffect.emit(xpos, ypos, {x:0.0, y:80.0}, 10);
-        xpos = (Math.random() * 4 - 1) * this.ctx.canvas.width;
+        xpos = (Math.random() * 4 - 1) * this.camera.getCanvasWidth();
         this.backgroundSnowEffect.emit(xpos, ypos, {x:0.0, y:80.0}, 15);
         this.lastSnowTime = this.elapsedTime;
       }
       if (this.elapsedTime > this.treeSpawnTime) {
         this.treeSpawnTime = this.elapsedTime + 6 + randomCentered(3);
         this.trees.push({
-          x: this.ctx.canvas.width + this.treesImages[0].width / 2,
+          x: this.camera.getCanvasWidth() + this.treesImages[0].width / 2,
           y: 400 + randomCentered(100),
           age: 0,
           img: this.treesImages[0],
@@ -199,7 +208,7 @@ export class Shop {
       const checkingOut = this.checkingOut || this.elapsedTime < this.checkoutEndTime + 1.0;
 
 
-      let height = ctx.canvas.height;
+      let height = this.camera.getCanvasHeight();
       const scale = height / this.chair.height;
 
       ctx.save();
@@ -224,7 +233,7 @@ export class Shop {
       ctx.restore();
 
       // Draw the chair if the image is loaded
-      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
+      ctx.translate(this.camera.getCanvasWidth() / 2 / scale - width / 2, 0);
       // Update the transform for each clickable
       this.clickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
       ctx.drawImage(this.cable, 0, 0, width, height);
@@ -291,6 +300,7 @@ export class Shop {
 
       ctx.restore(); // scale & translate
       this.snowEffect.draw(ctx);
+      this.character.drawHealthBar(ctx);
 
       // Checking out
       let y = -height;
@@ -304,12 +314,12 @@ export class Shop {
 
 
 
-      ctx.translate(ctx.canvas.width / 2 / scale - width / 2, 0);
+      ctx.translate(this.camera.getCanvasWidth() / 2 / scale - width / 2, 0);
       if (!this.checkingOut) {
         this.drawStoreOverlay(ctx, width, height);
       } else if (this.selectedDraggable) {
         ctx.fillStyle = "#ffffffaa";
-        const rectsize = 300;  
+        const rectsize = 200;  
         ctx.fillRect(this.selectedDraggable.x - rectsize / 2, this.selectedDraggable.y - rectsize / 2, rectsize, rectsize);
         this.selectedDraggable.draw(ctx);
       }
@@ -341,33 +351,46 @@ export class Shop {
     this.draggableItems.forEach(item => {
       // Draw item name and cost
       ctx.font = '35px Roboto';
-      ctx.fillStyle = CHECKOUT_TEXT_COLOR;
+      ctx.fillStyle = SHOP_TEXT_COLOR;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
       
       const x = item.originalX;
       const y = item.originalY;
       // Draw item name
-      ctx.fillText(item.item.getDisplayName(), x, y + item.height / 2 + 10);
+      ctx.fillText(item.item.getDisplayName(), x, y + item.height / 2);
       
       // Draw item cost
-      ctx.fillText(`🥇 ${item.item.getPrice()}`, x, y + item.height / 2 + 55);
+      const fontSize = 31;
+      const text = `${item.item.getPrice()}`;
+      const textWidth = ctx.measureText(text).width;
+      const totalWidth = textWidth + fontSize; // text width + image width
+      const textX = x - totalWidth / 2 + fontSize; // Adjust text position to keep it centered
+
+      const scale = fontSize / this.medalImage.height;
+      // Draw medal image
+      const costY = y + item.height / 2 + 38;
+      // Draw item cost
+      ctx.fillText(text, textX + fontSize * 0.75, costY);
+      ctx.drawImage(this.medalImage, textX - fontSize, costY + 13 - fontSize / 2, this.medalImage.width * scale, this.medalImage.height * scale);
+
       item.draw(ctx);
     });
   }
 
   initDraggableItems() {
-    const itemSize = 250;
-    const itemSpacing = 10;
-    const itemsPerRow = 3;
+    const itemSize = 180;
+    const itemSpacingX = 45;
+    const itemSpacingY = 95;
+    const itemsPerRow = 4;
     const startX = 80;
-    const startY = 150;
+    const startY = 220;
 
     this.forSaleItems.forEach((item, index) => {
         const row = Math.floor(index / itemsPerRow);
         const col = index % itemsPerRow;
-        const x = startX + col * (itemSize + itemSpacing) + itemSize / 2;
-        const y = startY + row * (itemSize + itemSpacing) + itemSize / 2;
+        const x = startX + col * (itemSize + itemSpacingX) + itemSize / 2;
+        const y = startY + row * (itemSize + itemSpacingY) + itemSize / 2;
 
         const draggableItem = new DraggableItem(item, x, y, itemSize, itemSize, this.canvas, this);
         draggableItem.shop = this;
@@ -409,7 +432,6 @@ export class Shop {
         });
     }
 
-    console.log("new effects", effects);
 
     // Only call loadImages if the effects have changed
     if (JSON.stringify(this.currentEffects) !== JSON.stringify(effects)) {
@@ -770,8 +792,6 @@ class DraggableItem extends Clickable {
 
             const unhoveredSlots = this.item.getSlots().filter(slot => slot !== newSlot);
             effectMapping.stroke_yellow.push(...unhoveredSlots);
-
-            console.log(effectMapping);
 
             this.shop.updateImageEffects(effectMapping);
         }

@@ -148,7 +148,7 @@ export const Pistol = new Equipment({
 })
 
 export function getItemsForSale(character) {
-    return [SpeedJacket, Sword, Pistol];
+    return [SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
 }
 
 export default Equipment;

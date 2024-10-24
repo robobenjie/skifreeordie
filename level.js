@@ -276,7 +276,7 @@ export class Level {
         this.ScorePadding = 4;
 
         // Center the score card on the screen
-        const startX = (ctx.canvas.width - cardWidth) / 2;
+        const startX = (this.camera.getCanvasWidth() - cardWidth) / 2;
         const startY = 70;
 
         // Draw background
@@ -303,7 +303,7 @@ export class Level {
             let rowX = 0;
             if (!this._cashTransferComplete) {
                 rowX = calculateFlyInOut(
-                    ctx.canvas.width,  // start
+                    this.camera.getCanvasWidth(),  // start
                     startX,            // dwell
                     startX,        // same as dwell
                     this.animationDuration,
@@ -374,15 +374,15 @@ export class Level {
         const padding = 5;
         
         let titleX = calculateFlyInOut(
-            ctx.canvas.width,  // start
+            this.camera.getCanvasWidth(),  // start
             padding,           // dwell
-            -ctx.canvas.width,        // out (off-screen to the left)
+            -this.camera.getCanvasWidth(),        // out (off-screen to the left)
             titleFlyInTime,
             titleDwellTime,
             titleFlyOutTime,
             this.time
         );
-        let width = ctx.canvas.width - 3 * padding - skew;
+        let width = this.camera.getCanvasWidth() - 3 * padding - skew;
 
 
         ctx.save();

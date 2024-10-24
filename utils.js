@@ -1,3 +1,12 @@
+function getCanvasLogicalWidth(canvas) {
+    return parseFloat(canvas.style.width);  // Convert from "800px" to 800
+}
+
+function getCanvasLogicalHeight(canvas) {
+    return parseFloat(canvas.style.height); // Convert from "600px" to 600
+}
+
+
 export function randomCentered(size) {
     return Math.random() * size * 2 - size;
 }

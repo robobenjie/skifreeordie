@@ -47,7 +47,7 @@ class Character {
 
         // set up state vars
         this.health = this.maxHealth;
-        this.medals = 0;
+        this.medals = 526;
 
         this.joystick.addTapListener(() => {
             if (this.skiPhysics.isJumping()) {
@@ -67,6 +67,14 @@ class Character {
             }
         });
 
+    }
+
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
+    spendMedals(medals) {
+        this.medals -= medals;
     }
 
     equip(equipment, chosenSlot) {
@@ -347,7 +355,7 @@ class Character {
         // Draw a health bar across the top of the screen
         const padding_x = 10;
         const padding_y = 10;
-        const width = ctx.canvas.width - 2 * padding_x;
+        const width = this.camera.getCanvasWidth() - 2 * padding_x;
         const height = 12;
         const healthWidth = width * this.health / this.maxHealth;
         ctx.fillStyle = "#cccccc";
@@ -367,7 +375,7 @@ class Character {
             ctx.textBaseline = 'top';
             ctx.textAlign = 'right';
             
-            const medalX = ctx.canvas.width - padding_x;
+            const medalX = this.camera.getCanvasWidth() - padding_x;
             
             ctx.fillStyle = 'black';
             ctx.fillText(medalText, medalX, medalY);
