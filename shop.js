@@ -391,7 +391,7 @@ export class Shop {
   }
 
   updateImageEffects(effectMapping) {
-    const effects = JSON.parse(JSON.stringify(this.currentEffects));
+    const effects = {stroke_red: [], stroke_green: [], stroke_yellow: [], ghost: []};
 
     for (const [effectType, slots] of Object.entries(effectMapping)) {
         slots.forEach(slot => {
@@ -405,6 +405,8 @@ export class Shop {
             }
         });
     }
+
+    console.log("new effects", effects);
 
     // Only call loadImages if the effects have changed
     if (JSON.stringify(this.currentEffects) !== JSON.stringify(effects)) {
@@ -751,7 +753,7 @@ class DraggableItem extends Clickable {
               effectMapping.stroke_green.push(newSlot);
                   if (newSlot === 'left_hand') {
                       effectMapping.ghost.push('left_weapon');
-                  }
+                  } 
                   if (newSlot === 'right_hand') {
                       effectMapping.ghost.push('right_weapon');
                   }
