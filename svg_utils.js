@@ -29,20 +29,19 @@ class SVGLoader {
         return loadPromise;
     }
 }
-
 const svgLoader = new SVGLoader();
 
-export async function getModifiedSvg(svgUrl, label, { replace_colors = [], hide = [], show = [] }) {
+export async function getModifiedSvg(svgUrl, label, { replace_colors = [], hide = [], show = [], stroke_red = [], stroke_green = [], stroke_yellow = [], ghost = [] }) {
     try {
         const svgDoc = await svgLoader.loadSVG(svgUrl);
-        return processSvg(svgDoc.cloneNode(true), label, { replace_colors, hide, show });
+        return processSvg(svgDoc.cloneNode(true), label, { replace_colors, hide, show, stroke_red, stroke_green, stroke_yellow, ghost });
     } catch (error) {
         console.error('Error loading SVG:', error);
         throw error;
     }
 }
 
-function processSvg(svgDoc, label, { replace_colors, hide, show }) {
+function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, stroke_green, stroke_yellow, ghost }) {
     return new Promise((resolve, reject) => {
 
         const groups = svgDoc.getElementsByTagName('g');
@@ -188,23 +187,41 @@ function processSvg(svgDoc, label, { replace_colors, hide, show }) {
         }
       });
 
+
+      console.log("red", stroke_red, "yellow", stroke_yellow, "green", stroke_green, "ghost", ghost);
+      if (stroke_red) {
+            const filter="url(#strokeFilterRed)";
+            stroke_red.forEach(label => {
+            Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === label).setAttribute('filter', filter);
+        });
+      }
+      if (stroke_green) {
+        const filter="url(#strokeFilterGreen)";
+        stroke_green.forEach(label => {
+            Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === label).setAttribute('filter', filter);
+        });
+      }
+
+      if (stroke_yellow) {
+        const filter="url(#strokeFilterYellow)";
+        stroke_yellow.forEach(label => {
+            Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === label).setAttribute('filter', filter);
+        });
+      }
+
+      if (ghost) {
+        const filter="url(#ghostFilter)";
+        ghost.forEach(label => {
+            Array.from(pathAndGroups).find(g => g.getAttributeNS('http://www.inkscape.org/namespaces/inkscape', 'label') === label).setAttribute('filter', filter);
+        });
+      }
+
+
+
+
       // Convert the modified SVG to an Image object
       collectVisibleElements(svgDoc.documentElement, allVisibleElements);
 
-      // Function to check if an element is a descendant of another
-      function isDescendant(parent, child) {
-        if (child === parent) {
-          return true;
-        }
-        let node = child.parentNode;
-        while (node != null) {
-          if (node === parent) {
-            return true;
-          }
-          node = node.parentNode;
-        }
-            return false;
-        }
 
         console.log(svgDoc);
 

@@ -4,6 +4,13 @@ import getModifiedSvg from "./svg_utils.js";
 import { getItemsForSale } from "./equipment.js";
 const HAMMER_RATE = 6;
 const CHECKOUT_TEXT_COLOR = "#434741";
+const SLOT_TO_GROUP_MAP = {
+  "jacket": ["player_jacket"],
+  "left_hand": ["left_glove"],
+  "right_hand": ["right_glove"],
+  "left_weapon": ["left_hand"],
+  "right_weapon": ["right_hand"],
+};
 export class Shop {
   constructor(character, ctx, canvas) {
       this.character = character;
@@ -59,7 +66,9 @@ export class Shop {
       this.canvas = canvas;
       this.clickables = [];  // New list to store clickable objects
       this.initializeClickables();  // New method to set up clickables
+      this.clearImageEffects(); // Initialize the effects
       this.loadImages();
+
 
       this.draggableItems = [];
       this.dropAreas = [];
@@ -373,28 +382,64 @@ export class Shop {
     this.dropAreas.push(leftHandDrop);
   }
 
-  loadImages() {
+  clearImageEffects() {
+    const effects = {stroke_red: [], stroke_green: [], stroke_yellow: [], ghost: []};
+    if (JSON.stringify(this.currentEffects) !== JSON.stringify(effects)) {
+      this.currentEffects = effects;
+      this.loadImages();
+    }
+  }
 
+  updateImageEffects(effectMapping) {
+    const effects = JSON.parse(JSON.stringify(this.currentEffects));
+
+    for (const [effectType, slots] of Object.entries(effectMapping)) {
+        slots.forEach(slot => {
+            const groups = SLOT_TO_GROUP_MAP[slot];
+            effects.stroke_red = effects.stroke_red.filter(group => !groups.includes(group));
+            effects.stroke_green = effects.stroke_green.filter(group => !groups.includes(group));
+            effects.stroke_yellow = effects.stroke_yellow.filter(group => !groups.includes(group));
+            effects.ghost = effects.ghost.filter(group => !groups.includes(group));
+            if (groups && effectType) {
+                effects[effectType].push(...groups);
+            }
+        });
+    }
+
+    // Only call loadImages if the effects have changed
+    if (JSON.stringify(this.currentEffects) !== JSON.stringify(effects)) {
+        this.currentEffects = effects;
+        this.loadImages();
+    }
+  }
+
+  loadImages() {
     const allEquipment = this.character.getAllEquipment();
     let replaceColors = [];
     let show = [];
-    console.log("Equipment slots:", Object.keys(allEquipment));
+    let strokeYellow = this.currentEffects.stroke_yellow || [];
+    let strokeGreen = this.currentEffects.stroke_green || [];
+    let ghost = this.currentEffects.ghost || [];
+
     for (let slot in allEquipment) {
-      let item = allEquipment[slot];
-      if (item) {
-        replaceColors.push(...item.getColorChanges());
-        if (slot === "left_hand" || slot === "right_hand") {
-          show.push(...item.getUnhide().map(unhide => `${slot}.${unhide}`));
-        } else {
-          show.push(...item.getUnhide());
+        let item = allEquipment[slot];
+        if (item) {
+            replaceColors.push(...item.getColorChanges());
+            if (slot === "left_hand" || slot === "right_hand") {
+                show.push(...item.getUnhide().map(unhide => `${slot}.${unhide}`));
+            } else {
+                show.push(...item.getUnhide());
+            }
         }
-      }
     }
 
     getModifiedSvg("images/shop_lift.svg", "chair", {
-      replace_colors: replaceColors,
-      hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"],
-      show: show
+        replace_colors: replaceColors,
+        hide: ["player_left_leg", "player_right_leg", "dwarf_payment_arm", "dwarf_payment_bicep", "dwarf_payment_head", "left_pants", "right_pants", "hammer_arm_bicep", "hammer_arm"],
+        show: show,
+        stroke_yellow: strokeYellow,
+        stroke_green: strokeGreen,
+        ghost: ghost
     }).then(img => {
         this.chair = img;
     }).catch(err => {
@@ -402,13 +447,13 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "chair", {
-      replace_colors: replaceColors,
-      hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"],
-      show: show
+        replace_colors: replaceColors,
+        hide: ["dwarf_head", "dwarf_right_arm", "dwarf_payment_arm", "dwarf_payment_bicep", "left_pants", "right_pants", "player_left_leg", "player_right_leg"],
+        show: show
     }).then(img => {
-      this.purchaseChair = img;
+        this.purchaseChair = img;
     }).catch(err => {
-      console.error("Error loading purchase chair image:", err);
+        console.error("Error loading purchase chair image:", err);
     });
 
     getModifiedSvg("images/shop_lift.svg", "cable", {
@@ -421,21 +466,21 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "dwarf_payment_arm", {
-      replace_colors: [],
-      hide: []
+        replace_colors: [],
+        hide: []
     }).then(img => {
-      this.dwarfPaymentArm = img;
+        this.dwarfPaymentArm = img;
     }).catch(err => {
-      console.error("Error loading dwarf payment arm image:", err);
+        console.error("Error loading dwarf payment arm image:", err);
     });
 
     getModifiedSvg("images/shop_lift.svg", "dwarf_payment_bicep", {
-      replace_colors: [],
-      hide: []
+        replace_colors: [],
+        hide: []
     }).then(img => {
-      this.dwarfPaymentBicep = img;
+        this.dwarfPaymentBicep = img;
     }).catch(err => {
-      console.error("Error loading dwarf payment bicep image:", err);
+        console.error("Error loading dwarf payment bicep image:", err);
     });
 
     getModifiedSvg("images/shop_lift.svg", "player_left_leg", {
@@ -506,20 +551,20 @@ export class Shop {
     });
 
     getModifiedSvg("images/shop_lift.svg", "confirm_led", {
-      replace_colors: [],
-      hide: []
+        replace_colors: [],
+        hide: []
     }).then(img => {
-      this.confirmLed = img;
+        this.confirmLed = img;
     }).catch(err => {
-      console.error("Error loading confirm led image:", err);
+        console.error("Error loading confirm led image:", err);
     });
     getModifiedSvg("images/shop_lift.svg", "store_overlay", {
-      replace_colors: [],
-      hide: []
+        replace_colors: [],
+        hide: []
     }).then(img => {
-      this.overlay = img;
+        this.overlay = img;
     }).catch(err => {
-      console.error("Error loading overlay image:", err);
+        console.error("Error loading overlay image:", err);
     });
   }
 }
@@ -661,7 +706,7 @@ class Signature {
 
 class DraggableItem extends Clickable {
     constructor(item, x, y, width, height, canvas, shop) {
-        super(x - width / 2,  x + width / 2, y - height / 2, y + height / 2, canvas);
+        super(x - width / 2, x + width / 2, y - height / 2, y + height / 2, canvas);
         this.item = item;
         this.originalX = x;
         this.originalY = y;
@@ -669,6 +714,7 @@ class DraggableItem extends Clickable {
         this.dragOffsetX = 0;
         this.dragOffsetY = 0;
         this.shop = shop;
+        this.currentSlot = null;
 
         this.addDragStartListener(this.onDragStart.bind(this));
         this.addDragMoveListener(this.onDragMove.bind(this));
@@ -679,27 +725,60 @@ class DraggableItem extends Clickable {
         this.isDragging = true;
         this.dragOffsetX = x - this.x;
         this.dragOffsetY = y - this.y;
+        this.shop.updateImageEffects({stroke_yellow: this.item.getSlots()});
     }
 
     onDragMove(x, y) {
         if (this.isDragging) {
             this.x = x - this.dragOffsetX;
             this.y = y - this.dragOffsetY;
+
+            let newSlot = null;
+            for (const area of this.shop.dropAreas) {
+                if (area.isPointInside(x, y) && this.item.getSlots().includes(area.slotName)) {
+                    newSlot = area.slotName;
+                    break;
+                }
+            }
+
+            const effectMapping = {
+                stroke_yellow: [],
+                stroke_green: [],
+                ghost: []
+            };
+
+            if (newSlot) {
+              effectMapping.stroke_green.push(newSlot);
+                  if (newSlot === 'left_hand') {
+                      effectMapping.ghost.push('left_weapon');
+                  }
+                  if (newSlot === 'right_hand') {
+                      effectMapping.ghost.push('right_weapon');
+                  }
+              }
+
+
+            const unhoveredSlots = this.item.getSlots().filter(slot => slot !== newSlot);
+            effectMapping.stroke_yellow.push(...unhoveredSlots);
+
+            console.log(effectMapping);
+
+            this.shop.updateImageEffects(effectMapping);
         }
+    }
+
+    onDragEnd(x, y) {
+        this.isDragging = false;
+        this.shop.updateImageEffects([], 'reset');
+        if (!this.isDroppedInValidArea(x, y)) {
+            this.resetPosition();
+        }
+        this.shop.clearImageEffects();
     }
 
     resetPosition() {
         this.x = this.originalX;
         this.y = this.originalY;
-    }
-
-    onDragEnd(x, y) {
-        this.isDragging = false;
-        // Check if it's dropped in a valid area, if not, return to original position
-        if (!this.isDroppedInValidArea(x, y)) {
-            this.x = this.originalX;
-            this.y = this.originalY;
-        }
     }
 
     isDroppedInValidArea(x, y) {
