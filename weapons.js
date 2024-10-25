@@ -37,8 +37,8 @@ const SwordState = {
 
 export class Gun extends Weapon {
     constructor(gunData) {
-        super(WeaponType.HAND, character, mobManager);
-        this.coolDown = gunData.coolDown;
+        super(WeaponType.HAND);
+        this.coolDown = gunData.coolDown * (1 + randomCentered(0.2));
         this.damage = gunData.damage;
         this.knockback = gunData.knockback;
         this.firingArc = gunData.firingArc;

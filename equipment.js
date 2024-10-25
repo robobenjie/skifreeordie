@@ -136,19 +136,42 @@ export const Pistol = new Equipment({
     },
     slots: ["right_hand", "left_hand"],
     unhide: ["pistol"],
-    gun_data: {
-        coolDown: 0.01,
-        damage: 0.5,
-        knockback: 10000,
-        firingArc: 45,
+    gun: {
+        coolDown: 1,
+        damage: 3.5,
+        knockback: 50000,
+        firingArc: 35,
         firingDistance: 300,
-        hitPercentage: 0.3
+        hitPercentage: 0.9
+    },
+    price: 100,
+})
+
+export const Pistol2 = new Equipment({
+    id: "pistol",
+    layer_group: "pistol",
+    shop_image: "pistol.svg",
+    display_name: "Pistol",
+    description: ["A small pistol"],
+    stats: {
+        speed: 1,
+        damage: 1
+    },
+    slots: ["right_hand", "left_hand"],
+    unhide: ["pistol"],
+    gun: {
+        coolDown: 1,
+        damage: 3.5,
+        knockback: 50000,
+        firingArc: 35,
+        firingDistance: 300,
+        hitPercentage: 0.9
     },
     price: 100,
 })
 
 export function getItemsForSale(character) {
-    return [SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
+    return [SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
 }
 
 export default Equipment;
