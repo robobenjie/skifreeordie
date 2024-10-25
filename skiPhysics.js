@@ -383,9 +383,6 @@ function angleDifference(a, b) {
 const OFF_TOP_THRESHOLD = 300;
 class Trail{
     constructor(isSnowboard, camera){
-        if (camera === undefined) {
-            debugger;
-        }
         this.leftFrontTrail = [];
         this.rightFrontTrail = [];
         this.leftRearTrail = [];

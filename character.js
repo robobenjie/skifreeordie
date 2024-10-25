@@ -1,6 +1,7 @@
 import CharacterState from "./skiPhysics.js";
 import SkiPhysics from "./skiPhysics.js";
 import Sword from "./weapons.js";
+import getModifiedSvg from "./svg_utils.js";
 
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick, camera) {
@@ -11,6 +12,11 @@ class Character {
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
         this.camera = camera;
+
+        this.image_0 = null;
+        this.image_45 = null;
+        this.image_90 = null;
+        this.image_135 = null;
 
         this.rightHand = undefined;
         this.leftHand = undefined;
@@ -69,6 +75,8 @@ class Character {
             }
         });
 
+        this.loadImages();
+
     }
 
     spendMedals(medals) {
@@ -108,6 +116,7 @@ class Character {
             equipment.equip(this, this.mobManager);
         }
         console.log(this.getAllEquipment());
+        this.loadImages();
     }
 
     getAllEquipment() {
@@ -397,7 +406,16 @@ class Character {
         ctx.translate(0, -this.z * 70);
         this.skiPhysics.drawSkis(ctx, "blue", skiSplay);
         ctx.fillStyle = this.color;
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
+        const imageRatio = this.image_0.width / this.image_0.height;
+        const scale = 3.9;
+        let angles = [0, 45, 90, 135].map(a => a * Math.PI / 180);
+        let closestAngle = angles.reduce((prev, curr) => 
+            Math.abs(curr - (this.skiPhysics.skiAngle - Math.PI)) < Math.abs(prev - (this.skiPhysics.skiAngle - Math.PI)) ? curr : prev
+        );
+
+        let img = this[`image_${closestAngle * 180 / Math.PI}`];
+        ctx.drawImage(img, this.x - this.width * scale / 2 - 2.5, this.y - 45, this.width * scale, this.height * scale * imageRatio);
+        //ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
         if (this.leftHand) {
             this.leftHand.draw(ctx);
         }
@@ -407,5 +425,80 @@ class Character {
         ctx.restore();
 
     }
+
+    loadImages() {
+        const allEquipment = this.getAllEquipment();
+        let replaceColors = [];
+        let show = [];
+        let strokeYellow = [];
+        let strokeGreen = [];
+        let ghost = [];
+    
+        for (let slot in allEquipment) {
+            let item = allEquipment[slot];
+            if (item) {
+                replaceColors.push(...item.getColorChanges());
+                if (slot === "left_hand" || slot === "right_hand") {
+                    show.push(...item.getUnhide().map(unhide => `${slot}.${unhide}`));
+                } else {
+                    show.push(...item.getUnhide());
+                }
+            }
+        }
+
+        getModifiedSvg("images/player.svg", "player_0", {
+            replace_colors: replaceColors,
+            hide: [],
+            show: show,
+            stroke_yellow: strokeYellow,
+            stroke_green: strokeGreen,
+            ghost: ghost
+        }).then(img => {
+            this.image_0 = img;
+        }).catch(err => {
+            console.error("Error loading character image:", err);
+        });
+
+        getModifiedSvg("images/player.svg", "player_45", {
+            replace_colors: replaceColors,
+            hide: [],
+            show: show,
+            stroke_yellow: strokeYellow,
+            stroke_green: strokeGreen,
+            ghost: ghost
+        }).then(img => {
+            this.image_45 = img;
+        }).catch(err => {
+            console.error("Error loading character image:", err);
+        });
+
+        getModifiedSvg("images/player.svg", "player_90", {
+            replace_colors: replaceColors,
+            hide: [],
+            show: show,
+            stroke_yellow: strokeYellow,
+            stroke_green: strokeGreen,
+            ghost: ghost
+        }).then(img => {
+            this.image_90 = img;
+        }).catch(err => {
+            console.error("Error loading character image:", err);
+        });
+
+        getModifiedSvg("images/player.svg", "player_135", {
+            replace_colors: replaceColors,
+            hide: [],
+            show: show,
+            stroke_yellow: strokeYellow,
+            stroke_green: strokeGreen,
+            ghost: ghost
+        }).then(img => {
+            this.image_135 = img;
+        }).catch(err => {
+            console.error("Error loading character image:", err);
+        });
+
+    }
+
 }
 export default Character;
