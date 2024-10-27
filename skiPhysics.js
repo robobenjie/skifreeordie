@@ -29,6 +29,7 @@ class SkiPhysics {
 
         this.accelleration = 400;
         this.drag = 0.5;
+        this.tuckDrag = 0.4
         this.edgeDrag = 1.5;
 
         this.steering = 0.95;
@@ -139,7 +140,11 @@ class SkiPhysics {
         }
     }   
 
-    update(dt, targetSkiAngle) {
+    update(dt, targetSkiAngle, tuck) {
+        let drag = this.drag;
+        if (tuck !== undefined) {
+            drag = this.tuckDrag * tuck + (1 - tuck) * this.drag;
+        }
         while (this.forces.length > 0) {
             let force = this.forces.pop();
             this.velocity.x += force.x * dt;
@@ -218,8 +223,8 @@ class SkiPhysics {
                 y: this.skiUnitVector.y * gravity_dot_ski
             };
             const dragForce = {
-                x: -this.velocity.x * this.drag,
-                y: -this.velocity.y * this.drag
+                x: -this.velocity.x * drag,
+                y: -this.velocity.y * drag
             };
 
             if (this.trails.length == 0) {
@@ -234,6 +239,9 @@ class SkiPhysics {
                 x: -perpendicularVector.x * velDotPerpendicular * this.edgeDrag,
                 y: -perpendicularVector.y * velDotPerpendicular * this.edgeDrag
             };
+
+            this.leanAngle = velDotPerpendicular / 300;
+
             var num_paricles = Math.floor(Math.abs(this.edgeDrag * velDotPerpendicular * this.sprayFactor) * dt);
             for (let i = 0; i < num_paricles; i++) {
                 var emitAngle = this.skiAngle - Math.PI / 2 + (velDotPerpendicular > 0 ? -Math.PI / 2 : + Math.PI / 2) + Math.random() * Math.PI / 2 - Math.PI / 4;

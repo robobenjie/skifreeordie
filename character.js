@@ -2,6 +2,7 @@ import CharacterState from "./skiPhysics.js";
 import SkiPhysics from "./skiPhysics.js";
 import Sword from "./weapons.js";
 import getModifiedSvg from "./svg_utils.js";
+import CharacterModel from "./character_model.js";
 
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick, camera) {
@@ -9,6 +10,7 @@ class Character {
         this.mass = 100;
         this.skiPhysics = new SkiPhysics(x, y, 0, 0, particleEngine, 30, treeManager, this.mass, camera);
         this.skiPhysics.maxTurnRate = 5.0;
+        this.skiPhysics.drag = 0.6;
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
         this.camera = camera;
@@ -42,6 +44,7 @@ class Character {
         this.COR = 0.5;
 
         this.targetSkiAngle = this.skiPhysics.skiAngle;
+        this.tuck = 0;
 
         // Collision damage parameters
         this.speedDamageFactor = 0.01;
@@ -273,13 +276,19 @@ class Character {
 
         if (this.joystick.isActive) {
             this.targetSkiAngle = Math.atan2(this.joystick.currVals.y, this.joystick.currVals.x) + Math.PI / 2;
+            this.targetTuck = Math.max(Math.min((this.joystick.distance - this.joystick.maxRadius) / 200, 0.8), 0);
+        } else {
+            this.targetTuck = 0;
         }
+        
+        this.tuck = this.tuck * Math.pow(0.9, dt * 60) + this.targetTuck * (1 - Math.pow(0.9, dt * 60));
 
         const targetSkiAngle = Math.min(
             Math.max(Math.PI / 2 - this.maxUphillAngle, (this.targetSkiAngle + 2 * Math.PI) % (2 * Math.PI)),
             Math.PI * 1.5 + this.maxUphillAngle
         );
-        this.skiPhysics.update(dt, targetSkiAngle);
+
+        this.skiPhysics.update(dt, targetSkiAngle, this.tuck);
 
         if (this.rightHand) {
             this.rightHand.update(dt, this, this.mobManager);
@@ -355,6 +364,9 @@ class Character {
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
         this.velocity = this.skiPhysics.velocity;
+        this.characterModel = new CharacterModel(this);
+        let leanAngle = Math.min(Math.max(this.skiPhysics.leanAngle, -0.7), 0.7);
+        this.characterModel.calculate(Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle);
     }
 
     drawTrail(ctx) {
@@ -403,19 +415,11 @@ class Character {
         var skiSplay = this.skiPhysics.isJumping() ? 0.05 : 0.0;
 
         ctx.save();
+        ctx.translate(this.x, this.y);
         ctx.translate(0, -this.z * 70);
-        this.skiPhysics.drawSkis(ctx, "blue", skiSplay);
-        ctx.fillStyle = this.color;
-        const imageRatio = this.image_0.width / this.image_0.height;
-        const scale = 3.9;
-        let angles = [0, 45, 90, 135].map(a => a * Math.PI / 180);
-        let closestAngle = angles.reduce((prev, curr) => 
-            Math.abs(curr - (this.skiPhysics.skiAngle - Math.PI)) < Math.abs(prev - (this.skiPhysics.skiAngle - Math.PI)) ? curr : prev
-        );
 
-        let img = this[`image_${closestAngle * 180 / Math.PI}`];
-        ctx.drawImage(img, this.x - this.width * scale / 2 - 2.5, this.y - 45, this.width * scale, this.height * scale * imageRatio);
-        //ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
+        this.characterModel.draw(ctx);
+
         if (this.leftHand) {
             this.leftHand.draw(ctx);
         }

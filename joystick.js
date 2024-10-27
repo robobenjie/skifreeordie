@@ -10,6 +10,7 @@ class VirtualJoystick {
         this.canvas.addEventListener('touchend', this.handleTouchEnd.bind(this), false);
         this.canvas.addEventListener('touchcancel', this.handleTouchEnd.bind(this), false);
         this.touchStartTimestamp = 0;
+        this.distance = 0;
         this.onTap = [];
     }
 
@@ -60,7 +61,7 @@ class VirtualJoystick {
                 dx *= factor;
                 dy *= factor;
             }
-
+            this.distance = distance;
             this.currVals.x = dx;
             this.currVals.y = dy;
         }

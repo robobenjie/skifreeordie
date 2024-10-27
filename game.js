@@ -8,6 +8,8 @@ import MobManager from './mob.js';
 import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
 import { getItemsForSale } from './equipment.js';
+import { Frame, BodySegment, Ball, Polygon, KinematicRenderer } from './kinematic_renderer.js';
+import CharacterModel from './character_model.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -50,6 +52,7 @@ async function initializeGame() {
     let shop = new Shop(character, ctx, canvas, camera);
     const svgObject = document.getElementById('shopSvg');
     svgObject.contentDocument.documentElement.style.display = 'none';
+
 
 
     //character.equipRightHand(sword);
@@ -117,17 +120,20 @@ async function initializeGame() {
 
 
     function update(time) {
+
+
         let dt = (time - lastTime) / 1000.0;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
+        
+        ctx.restore();
         //level1.renderScoreCard(ctx);
 
         // Game Not Paused:
         gameTime += dt;
 
-        if (character.completedLevels >= shop.levelsTillNextShop()) { 
+        if (false &&character.completedLevels >= shop.levelsTillNextShop()) { 
             shop.update(dt);
             shop.draw(ctx);
         } else {
