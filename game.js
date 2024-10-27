@@ -133,7 +133,7 @@ async function initializeGame() {
         // Game Not Paused:
         gameTime += dt;
 
-        if (false &&character.completedLevels >= shop.levelsTillNextShop()) { 
+        if (character.completedLevels >= shop.levelsTillNextShop()) { 
             shop.update(dt);
             shop.draw(ctx);
         } else {

@@ -78,8 +78,6 @@ class Character {
             }
         });
 
-        this.loadImages();
-
     }
 
     spendMedals(medals) {
@@ -119,7 +117,6 @@ class Character {
             equipment.equip(this, this.mobManager);
         }
         console.log(this.getAllEquipment());
-        this.loadImages();
     }
 
     getAllEquipment() {
@@ -281,7 +278,7 @@ class Character {
             this.targetTuck = 0;
         }
         
-        this.tuck = this.tuck * Math.pow(0.9, dt * 60) + this.targetTuck * (1 - Math.pow(0.9, dt * 60));
+        this.tuck = this.tuck * Math.pow(0.8, dt * 60) + this.targetTuck * (1 - Math.pow(0.8, dt * 60));
 
         const targetSkiAngle = Math.min(
             Math.max(Math.PI / 2 - this.maxUphillAngle, (this.targetSkiAngle + 2 * Math.PI) % (2 * Math.PI)),
@@ -412,8 +409,6 @@ class Character {
 
     draw(ctx) {
 
-        var skiSplay = this.skiPhysics.isJumping() ? 0.05 : 0.0;
-
         ctx.save();
         ctx.translate(this.x, this.y);
         ctx.translate(0, -this.z * 70);
@@ -427,80 +422,6 @@ class Character {
             this.rightHand.draw(ctx);
         }
         ctx.restore();
-
-    }
-
-    loadImages() {
-        const allEquipment = this.getAllEquipment();
-        let replaceColors = [];
-        let show = [];
-        let strokeYellow = [];
-        let strokeGreen = [];
-        let ghost = [];
-    
-        for (let slot in allEquipment) {
-            let item = allEquipment[slot];
-            if (item) {
-                replaceColors.push(...item.getColorChanges());
-                if (slot === "left_hand" || slot === "right_hand") {
-                    show.push(...item.getUnhide().map(unhide => `${slot}.${unhide}`));
-                } else {
-                    show.push(...item.getUnhide());
-                }
-            }
-        }
-
-        getModifiedSvg("images/player.svg", "player_0", {
-            replace_colors: replaceColors,
-            hide: [],
-            show: show,
-            stroke_yellow: strokeYellow,
-            stroke_green: strokeGreen,
-            ghost: ghost
-        }).then(img => {
-            this.image_0 = img;
-        }).catch(err => {
-            console.error("Error loading character image:", err);
-        });
-
-        getModifiedSvg("images/player.svg", "player_45", {
-            replace_colors: replaceColors,
-            hide: [],
-            show: show,
-            stroke_yellow: strokeYellow,
-            stroke_green: strokeGreen,
-            ghost: ghost
-        }).then(img => {
-            this.image_45 = img;
-        }).catch(err => {
-            console.error("Error loading character image:", err);
-        });
-
-        getModifiedSvg("images/player.svg", "player_90", {
-            replace_colors: replaceColors,
-            hide: [],
-            show: show,
-            stroke_yellow: strokeYellow,
-            stroke_green: strokeGreen,
-            ghost: ghost
-        }).then(img => {
-            this.image_90 = img;
-        }).catch(err => {
-            console.error("Error loading character image:", err);
-        });
-
-        getModifiedSvg("images/player.svg", "player_135", {
-            replace_colors: replaceColors,
-            hide: [],
-            show: show,
-            stroke_yellow: strokeYellow,
-            stroke_green: strokeGreen,
-            ghost: ghost
-        }).then(img => {
-            this.image_135 = img;
-        }).catch(err => {
-            console.error("Error loading character image:", err);
-        });
 
     }
 
