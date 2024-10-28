@@ -3,7 +3,7 @@ const CAMERA_Y_PER_X = 0.5
 const PIXELS_PER_METER = 10;
 
 // The 3D frame defines x as down the hill, z as up to the sky, and y as across the hill.
-function getXYScreen(point) {
+export function getXYScreen(point) {
     return [
         point.y * PIXELS_PER_METER,
         -point.z * PIXELS_PER_METER + point.x * CAMERA_Y_PER_X * PIXELS_PER_METER

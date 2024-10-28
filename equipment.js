@@ -10,10 +10,10 @@ class Equipment {
         this.weapon = null;
 
         if (data.melee_weapon) {
-            this.weapon = new MeleeWeapon(this.data.melee_weapon);
+            this.weapon = new MeleeWeapon(this);
         }
         if (data.gun) {
-            this.weapon = new Gun(this.data.gun);
+            this.weapon = new Gun(this);
         }
     }
     equip(character, mobManager) {

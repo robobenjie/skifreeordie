@@ -1,4 +1,5 @@
 import randomCentered from "./utils.js";
+import { getXYScreen } from "./kinematic_renderer.js";
 
 export const WeaponType = {
     HAND: "hand",
@@ -36,8 +37,10 @@ const SwordState = {
 }
 
 export class Gun extends Weapon {
-    constructor(gunData) {
+    constructor(equipment) {
         super(WeaponType.HAND);
+        this.equipment = equipment;
+        let gunData = equipment.data.gun;
         this.coolDown = gunData.coolDown * (1 + randomCentered(0.2));
         this.damage = gunData.damage;
         this.knockback = gunData.knockback;
@@ -92,9 +95,12 @@ export class Gun extends Weapon {
         if (this.target) {
             // Draw a light blue line from character to target
 
+            let gunOffset =  this.equipment.data.model.components[0][0].inWorldFrame()[1];
+            let screenOffset = getXYScreen(gunOffset);
+
             ctx.beginPath();
-            ctx.moveTo(this.character.x, this.character.y - 15);
-            ctx.lineTo(this.target.x, this.target.y);
+            ctx.moveTo(this.character.x + screenOffset[0], this.character.y + screenOffset[1]);
+            ctx.lineTo(this.target.x, this.target.y - 15);
             ctx.strokeStyle = 'darkblue';
             ctx.lineWidth = 3;
             ctx.stroke();
@@ -155,8 +161,10 @@ export class LaserGun extends Gun {
 }
     */
 export class MeleeWeapon extends Weapon {
-    constructor(weaponData) {
+    constructor(equipment) {
         super(WeaponType.HAND);
+        let weaponData = equipment.data.melee_weapon;
+        this.equipment = equipment;
         this.coolDown = weaponData.coolDown;
         this.hitAreaHeight = weaponData.hitAreaHeight;
         this.hitAreaWidth = weaponData.hitAreaWidth;
