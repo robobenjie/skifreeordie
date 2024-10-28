@@ -201,14 +201,23 @@ export class MeleeWeapon extends Weapon {
 
     }
 
+    getModelArgs(side) {
+        if (this.state === SwordState.SWING_LEFT) {
+            return {leftArmWing: Math.PI/2, leftElbowAngle: 0.0, leftWeaponX: Math.PI/2}
+        } else if (this.state === SwordState.SWING_RIGHT) {
+            return {rightArmWing: Math.PI/2, rightElbowAngle: 0.0, rightWeaponX: Math.PI/2};
+        }
+        return {};
+    }
+
     draw(ctx) {
         super.draw(ctx);
         if (this.state === SwordState.SWING_LEFT) {
             ctx.fillStyle = "orange";
-            ctx.fillRect(this.character.x - this.hitAreaWidth, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
+            //ctx.fillRect(this.character.x - this.hitAreaWidth, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
         } else if (this.state === SwordState.SWING_RIGHT) {
             ctx.fillStyle = "orange";
-            ctx.fillRect(this.character.x, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
+            //ctx.fillRect(this.character.x, this.character.y - this.hitAreaHeight, this.hitAreaWidth, this.hitAreaHeight * 2);
         }
     }
 }

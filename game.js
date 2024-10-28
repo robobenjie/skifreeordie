@@ -10,6 +10,7 @@ import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoa
 import { getItemsForSale } from './equipment.js';
 import { Frame, BodySegment, Ball, Polygon, KinematicRenderer } from './kinematic_renderer.js';
 import CharacterModel from './character_model.js';
+import { Sword, Sword2 } from './equipment.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -55,7 +56,8 @@ async function initializeGame() {
 
 
 
-    //character.equipRightHand(sword);
+    character.equip(Sword, "left_hand");
+    character.equip(Sword2, "right_hand");
 
     // Fetch the SVG outside the update loop
     (async () => {

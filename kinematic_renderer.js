@@ -108,6 +108,11 @@ class LineSegment {
         this.worldPoints = this.points.map(point => this.frame.toWorld(point));
     }
 
+    setFrame(frame) {
+        this.frame = frame;
+        this.worldPoints = this.points.map(point => frame.toWorld(point));
+    }
+
     // Returns points in the world frame
     inWorldFrame() {
         return this.worldPoints;
@@ -120,6 +125,10 @@ export class Ball {
         this.radius = radius;
         this.frame = frame;
         this.color = color;
+    }
+
+    setFrame(frame) {
+        this.frame = frame;
     }
 
     averageX() {
@@ -153,6 +162,11 @@ export class Polygon {
         this.color = color;
     }
 
+    setFrame(frame) {
+        this.frame = frame;
+        this.points = this.points.map(point => frame.toWorld(point));
+    }
+
     averageX() {
         return this.points.map(point => this.frame.toWorld(point).x).reduce((a, b) => a + b, 0) / this.points.length;
     }   
@@ -182,6 +196,11 @@ export class BodySegment {
         this.first_point = first_point;
         this.second_point = second_point;
         this.color = color;
+    }
+
+    setFrame(frame) {
+        this.segment.frame = frame;
+        this.segment.worldPoints = this.segment.points.map(point => frame.toWorld(point));
     }
 
     averageX() {

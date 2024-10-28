@@ -363,7 +363,16 @@ class Character {
         this.velocity = this.skiPhysics.velocity;
         this.characterModel = new CharacterModel(this);
         let leanAngle = Math.min(Math.max(this.skiPhysics.leanAngle, -0.7), 0.7);
-        this.characterModel.calculate(Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle);
+        let extraArgs = {}
+        if (this.leftHand && this.leftHand.weapon) {
+            extraArgs = this.leftHand.weapon.getModelArgs("left");
+        }
+        if (this.rightHand && this.rightHand.weapon) {
+            extraArgs = this.rightHand.weapon.getModelArgs("right");
+        }
+        this.characterModel.calculate(Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle, 
+            extraArgs
+        );
     }
 
     drawTrail(ctx) {

@@ -73,7 +73,7 @@ export default class CharacterModel {
         }
     }
 
-    calculate(skiAngle, bendDown, sideLean) {
+    calculate(skiAngle, bendDown, sideLean, overrideAngles = {}) {
         const worldFrame = this.kinematicRenderer.frame();
         const baseFrame = worldFrame.rotate_about_z(skiAngle, "baseFrame");
 
@@ -89,14 +89,19 @@ export default class CharacterModel {
         const leftSkiFrame = skiFrame.translate(-sinSkiAngle * STANCE_LEAD, -STANCE_WIDTH / 2, leftSkiHeight).rotate_about_x(sideLean);
         const rightSkiFrame = skiFrame.translate(sinSkiAngle * STANCE_LEAD, STANCE_WIDTH / 2, rightSkiHeight).rotate_about_x(sideLean);
 
-        const leftArmWing = 0.7 - bendDown / 2;
-        const leftArmSwing = -leanAngle + bendDown * 0.5;
-        const leftElbowAngle = Math.PI / 2 + Math.min(sideLean * 4, 0);
+        const getAngleWithDefault = (key, defaultValue) => {
+            return overrideAngles[key] !== undefined ? overrideAngles[key] : defaultValue;
+        };
 
-        const rightArmWing = 0.7 - bendDown / 2;
-        const rightArmSwing = -leanAngle + bendDown * 0.5;
-        const rightElbowAngle = Math.PI / 2 + Math.min(-sideLean * 4, 0);
+        const leftArmWing = getAngleWithDefault('leftArmWing', 0.7 - bendDown / 2);
+        const leftArmSwing = getAngleWithDefault('leftArmSwing', -leanAngle + bendDown * 0.5);
+        const leftElbowAngle = getAngleWithDefault('leftElbowAngle', Math.PI / 2 + Math.min(sideLean * 4, 0));
+        const leftWeaponX = getAngleWithDefault('leftWeaponX', 0);
 
+        const rightArmWing = getAngleWithDefault('rightArmWing', 0.7 - bendDown / 2);
+        const rightArmSwing = getAngleWithDefault('rightArmSwing', -leanAngle + bendDown * 0.5);
+        const rightElbowAngle = getAngleWithDefault('rightElbowAngle', Math.PI / 2 + Math.min(-sideLean * 4, 0));
+        const rightWeaponX = getAngleWithDefault('rightWeaponX', 0);
         
 
         // left ski
@@ -171,18 +176,18 @@ export default class CharacterModel {
             
             const legLength = Math.sqrt(dx*dx + dy*dy + dz*dz);
 
+            let kneeAngle = 0;
+            let thighAngle = 0;
             if (legLength > shinLength + thighLength) {
-                return {
-                    kneeAngle: 0,
-                    thighAngle: 0
-                };
+                kneeAngle = 0;
+                thighAngle = 0;
+            } else {
+                // Use law of cosines to find knee angle
+                kneeAngle = Math.acos((shinLength*shinLength + thighLength*thighLength - legLength*legLength) / (2 * shinLength * thighLength));
+                
+                // Calculate thigh angle (angle from vertical)
+                thighAngle = Math.asin((shinLength * Math.sin(Math.PI - kneeAngle)) / legLength);
             }
-            
-            // Use law of cosines to find knee angle
-            const kneeAngle = Math.acos((shinLength*shinLength + thighLength*thighLength - legLength*legLength) / (2 * shinLength * thighLength));
-            
-            // Calculate thigh angle (angle from vertical)
-            const thighAngle = Math.asin((shinLength * Math.sin(Math.PI - kneeAngle)) / legLength);
             
             // Calculate forward/back angle based on x and z differences
             const forwardAngle = Math.PI / 2 - Math.atan2(dz, dx);
@@ -293,6 +298,7 @@ export default class CharacterModel {
             2,
         );
 
+        console.log("leftElbowAngle", leftElbowAngle);
         let leftForearmFrame = leftBicepFrame.translate(0, 0, -BICEP_LENGTH).rotate_about_y(-leftElbowAngle);
         this.kinematicRenderer.bodySegment(
             {position: { x: 0, y: 0, z: 0 }, radius: ELBOW_RADIUS},
@@ -308,6 +314,14 @@ export default class CharacterModel {
             this.getColor("gloves"),
             2,
         );
+        let leftHandFrame = leftForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(leftArmWing).rotate_about_y(leftWeaponX);
+        if (this.character.leftHand && this.character.leftHand.data.model) {
+            this.character.leftHand.data.model.frame = leftHandFrame;
+            this.character.leftHand.data.model.components[0].forEach(component => {
+                component.setFrame(leftHandFrame);
+                this.kinematicRenderer.addComponent(component, 2);
+            });
+        }
 
         // right arm
         let rightShoulderFrame = torsoFrame.translate(0, 0, JACKET_HEIGHT + TORSO_HEIGHT);
@@ -336,6 +350,15 @@ export default class CharacterModel {
             this.getColor("gloves"),
             2,
         );
+
+        let rightHandFrame = rightForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(-rightArmWing).rotate_about_y(rightWeaponX);
+        if (this.character.rightHand && this.character.rightHand.data.model) {
+            this.character.rightHand.data.model.frame = rightHandFrame;
+            this.character.rightHand.data.model.components[0].forEach(component => {
+                component.setFrame(rightHandFrame);
+                this.kinematicRenderer.addComponent(component, 2);
+            });
+        }
         
         let headFrame = torsoFrame.translate(0, 0, TORSO_HEIGHT + SHOULDER_RADIUS + NECK_LENGTH).rotate_about_y(-leanAngle).translate(0, 0, HELMET_RADIUS);
         this.kinematicRenderer.ball(
