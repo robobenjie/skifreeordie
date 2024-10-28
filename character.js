@@ -14,6 +14,7 @@ class Character {
         this.particleEngine = particleEngine;
         this.treeManager = treeManager;
         this.camera = camera;
+        this.characterModel = new CharacterModel(this);
 
         this.image_0 = null;
         this.image_45 = null;
@@ -361,7 +362,6 @@ class Character {
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
         this.velocity = this.skiPhysics.velocity;
-        this.characterModel = new CharacterModel(this);
         let leanAngle = Math.min(Math.max(this.skiPhysics.leanAngle, -0.7), 0.7);
         let extraArgs = {}
         if (this.leftHand && this.leftHand.weapon) {
@@ -370,7 +370,7 @@ class Character {
         if (this.rightHand && this.rightHand.weapon) {
             extraArgs = this.rightHand.weapon.getModelArgs("right");
         }
-        this.characterModel.calculate(Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle, 
+        this.characterModel.calculate(dt, Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle, 
             extraArgs
         );
     }

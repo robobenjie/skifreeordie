@@ -40,7 +40,7 @@ const HELMET_RADIUS = 0.3;
 export default class CharacterModel {
     constructor(character) {
         this.character = character;
-        this.kinematicRenderer = new KinematicRenderer(6);
+        this.previousValues = {};
     }
 
     getColor(part) {
@@ -73,7 +73,8 @@ export default class CharacterModel {
         }
     }
 
-    calculate(skiAngle, bendDown, sideLean, overrideAngles = {}) {
+    calculate(dt, skiAngle, bendDown, sideLean, overrideAngles = {}) {
+        this.kinematicRenderer = new KinematicRenderer(6);
         const worldFrame = this.kinematicRenderer.frame();
         const baseFrame = worldFrame.rotate_about_z(skiAngle, "baseFrame");
 
@@ -90,7 +91,12 @@ export default class CharacterModel {
         const rightSkiFrame = skiFrame.translate(sinSkiAngle * STANCE_LEAD, STANCE_WIDTH / 2, rightSkiHeight).rotate_about_x(sideLean);
 
         const getAngleWithDefault = (key, defaultValue) => {
-            return overrideAngles[key] !== undefined ? overrideAngles[key] : defaultValue;
+            let newVal = overrideAngles[key] !== undefined ? overrideAngles[key] : defaultValue;
+            if (this.previousValues[key] !== undefined) {
+                newVal = this.previousValues[key] + (newVal - this.previousValues[key]) * dt * 20;
+            }
+            this.previousValues[key] = newVal;
+            return newVal;
         };
 
         const leftArmWing = getAngleWithDefault('leftArmWing', 0.7 - bendDown / 2);

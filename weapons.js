@@ -100,6 +100,10 @@ export class Gun extends Weapon {
             ctx.stroke();
         }
     }
+
+    getModelArgs() {
+        return {};
+    }
 }
 
 
@@ -202,12 +206,15 @@ export class MeleeWeapon extends Weapon {
     }
 
     getModelArgs(side) {
+
+
         if (this.state === SwordState.SWING_LEFT) {
             return {leftArmWing: Math.PI/2, leftElbowAngle: 0.0, leftWeaponX: Math.PI/2}
         } else if (this.state === SwordState.SWING_RIGHT) {
             return {rightArmWing: Math.PI/2, rightElbowAngle: 0.0, rightWeaponX: Math.PI/2};
+        } else {
+            return {};
         }
-        return {};
     }
 
     draw(ctx) {

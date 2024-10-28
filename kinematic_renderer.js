@@ -102,10 +102,12 @@ export class Frame {
 
 // Primitive line segment, defined by two points in a given frame
 class LineSegment {
-    constructor(points, frame) {
+    constructor(points, frame, color, thickness) {
         this.points = points; // Array of points in the local frame of this segment
         this.frame = frame; // Reference frame for the segment
-        this.worldPoints = this.points.map(point => this.frame.toWorld(point));
+        this.worldPoints = this.points.map(point => frame.toWorld(point));
+        this.color = color;
+        this.thickness = thickness;
     }
 
     setFrame(frame) {
@@ -116,6 +118,29 @@ class LineSegment {
     // Returns points in the world frame
     inWorldFrame() {
         return this.worldPoints;
+    }
+
+    averageX() {
+        return (this.worldPoints[0].x + this.worldPoints[1].x) / 2;
+    }
+
+    averageY() {
+        return (this.worldPoints[0].y + this.worldPoints[1].y) / 2;
+    } 
+
+    averageZ() {
+        return (this.worldPoints[0].z + this.worldPoints[1].z) / 2;
+    }
+
+    draw(ctx) {
+        const [x1, y1] = getXYScreen(this.worldPoints[0]);
+        const [x2, y2] = getXYScreen(this.worldPoints[1]);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.thickness * PIXELS_PER_METER;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
     }
 }
 
@@ -192,32 +217,34 @@ export class Polygon {
 
 export class BodySegment {
     constructor(first_point, second_point, frame, color) {
-        this.segment = new LineSegment([first_point.position, second_point.position], frame);
+        this.frame = frame;
+        this.points = [first_point.position, second_point.position];
         this.first_point = first_point;
         this.second_point = second_point;
         this.color = color;
+        this.worldPoints = this.points.map(point => frame.toWorld(point));
     }
 
     setFrame(frame) {
-        this.segment.frame = frame;
-        this.segment.worldPoints = this.segment.points.map(point => frame.toWorld(point));
+        this.frame = frame;      
+        this.worldPoints = this.points.map(point => frame.toWorld(point));
     }
 
     averageX() {
-        return (this.segment.worldPoints[0].x + this.segment.worldPoints[1].x) / 2;
+        return (this.worldPoints[0].x + this.worldPoints[1].x) / 2;
     }
 
     averageY() {
-        return (this.segment.worldPoints[0].y + this.segment.worldPoints[1].y) / 2;
+        return (this.worldPoints[0].y + this.worldPoints[1].y) / 2;
     }
 
     averageZ() {
-        return (this.segment.worldPoints[0].z + this.segment.worldPoints[1].z) / 2;
+        return (this.worldPoints[0].z + this.worldPoints[1].z) / 2;
     }
 
     draw(ctx) {
-        const [x1, y1] = getXYScreen(this.segment.worldPoints[0]);
-        const [x2, y2] = getXYScreen(this.segment.worldPoints[1]);
+        const [x1, y1] = getXYScreen(this.worldPoints[0]);
+        const [x2, y2] = getXYScreen(this.worldPoints[1]);
         
         const r1 = this.first_point.radius * PIXELS_PER_METER;
         const r2 = this.second_point.radius * PIXELS_PER_METER;
@@ -281,6 +308,12 @@ export class KinematicRenderer {
 
     bodySegment(first_point, second_point, frame, color, layer) {
         const segment = new BodySegment(first_point, second_point, frame, color);
+        this.addComponent(segment, layer);
+        return segment;
+    }
+
+    lineSegment(points, frame, color, thickness, layer) {
+        const segment = new LineSegment(points, frame, color, thickness);
         this.addComponent(segment, layer);
         return segment;
     }

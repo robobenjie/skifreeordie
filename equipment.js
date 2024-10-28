@@ -212,6 +212,25 @@ export const Sword2 = new Equipment({
     model: swordModel2
 })
 
+
+const pistolModel = new KinematicRenderer();
+const pistolModelFrame = pistolModel.frame();
+pistolModel.lineSegment(
+    [{x: 0, y: 0, z: 0.15}, {x: 0.50, y: 0, z: .15}],
+    pistolModelFrame,
+    "#666666",
+    0.2,
+    0,
+);
+/*
+pistolModel.bodySegment(
+    {position: { x: 0, y: 0, z: 0.1 }, radius: 0.05},
+    {position: { x: 0.25, y: 0, z: .1 }, radius: 0.05},
+    pistolModelFrame,
+    "#666666",
+    0,
+);*/
+
 export const Pistol = new Equipment({
     id: "pistol",
     layer_group: "pistol",
@@ -233,6 +252,7 @@ export const Pistol = new Equipment({
         hitPercentage: 0.9
     },
     price: 100,
+    model: pistolModel
 })
 
 export const Pistol2 = new Equipment({
@@ -256,6 +276,7 @@ export const Pistol2 = new Equipment({
         hitPercentage: 0.9
     },
     price: 100,
+    model: pistolModel
 })
 
 export function getItemsForSale(character) {
