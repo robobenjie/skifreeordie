@@ -292,46 +292,9 @@ export default class CharacterModel {
             2,
         );
 
-        // left arm
-        let shoulderFrame = torsoFrame.translate(0, 0, JACKET_HEIGHT + TORSO_HEIGHT);
-        let leftBicepFrame = shoulderFrame.translate(0, -SHOULDER_WIDTH / 2 - UPPER_ARM_RADIUS, 0).rotate_about_x(-leftArmWing).rotate_about_y(leftArmSwing);
-
-        this.kinematicRenderer.bodySegment(
-            {position: { x: 0, y: 0, z: 0 }, radius: UPPER_ARM_RADIUS},
-            {position: { x: 0, y: 0, z: -BICEP_LENGTH }, radius: ELBOW_RADIUS},
-            leftBicepFrame,
-            this.getColor("jacket"),
-            2,
-        );
-
-        console.log("leftElbowAngle", leftElbowAngle);
-        let leftForearmFrame = leftBicepFrame.translate(0, 0, -BICEP_LENGTH).rotate_about_y(-leftElbowAngle);
-        this.kinematicRenderer.bodySegment(
-            {position: { x: 0, y: 0, z: 0 }, radius: ELBOW_RADIUS},
-            {position: { x: 0, y: 0, z: -FOREARM_LENGTH }, radius: WRIST_RADIUS, skip: true},
-            leftForearmFrame,
-            this.getColor("jacket"),
-            2,
-        );
-        this.kinematicRenderer.ball(
-            { x: 0, y: 0, z: -FOREARM_LENGTH },
-            GLOVE_RADIUS,
-            leftForearmFrame,
-            this.getColor("gloves"),
-            2,
-        );
-        let leftHandFrame = leftForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(leftArmWing).rotate_about_y(leftWeaponX);
-        if (this.character.leftHand && this.character.leftHand.data.model) {
-            this.character.leftHand.data.model.frame = leftHandFrame;
-            this.character.leftHand.data.model.components[0].forEach(component => {
-                component.setFrame(leftHandFrame);
-                this.kinematicRenderer.addComponent(component, 2);
-            });
-        }
-
         // right arm
-        let rightShoulderFrame = torsoFrame.translate(0, 0, JACKET_HEIGHT + TORSO_HEIGHT);
-        let rightBicepFrame = rightShoulderFrame.translate(0, SHOULDER_WIDTH / 2 + UPPER_ARM_RADIUS, 0).rotate_about_x(rightArmWing).rotate_about_y(rightArmSwing);
+        let shoulderFrame = torsoFrame.translate(0, 0, JACKET_HEIGHT + TORSO_HEIGHT);
+        let rightBicepFrame = shoulderFrame.translate(0, -SHOULDER_WIDTH / 2 - UPPER_ARM_RADIUS, 0).rotate_about_x(-rightArmWing).rotate_about_y(rightArmSwing);
 
         this.kinematicRenderer.bodySegment(
             {position: { x: 0, y: 0, z: 0 }, radius: UPPER_ARM_RADIUS},
@@ -341,6 +304,7 @@ export default class CharacterModel {
             2,
         );
 
+        console.log("rightElbowAngle", rightElbowAngle);
         let rightForearmFrame = rightBicepFrame.translate(0, 0, -BICEP_LENGTH).rotate_about_y(-rightElbowAngle);
         this.kinematicRenderer.bodySegment(
             {position: { x: 0, y: 0, z: 0 }, radius: ELBOW_RADIUS},
@@ -356,12 +320,48 @@ export default class CharacterModel {
             this.getColor("gloves"),
             2,
         );
-
-        let rightHandFrame = rightForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(-rightArmWing).rotate_about_y(rightWeaponX);
+        let rightHandFrame = rightForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(rightArmWing).rotate_about_y(rightWeaponX);
         if (this.character.rightHand && this.character.rightHand.data.model) {
             this.character.rightHand.data.model.frame = rightHandFrame;
             this.character.rightHand.data.model.components[0].forEach(component => {
                 component.setFrame(rightHandFrame);
+                this.kinematicRenderer.addComponent(component, 2);
+            });
+        }
+
+        // left arm
+        let leftShoulderFrame = torsoFrame.translate(0, 0, JACKET_HEIGHT + TORSO_HEIGHT);
+        let leftBicepFrame = leftShoulderFrame.translate(0, SHOULDER_WIDTH / 2 + UPPER_ARM_RADIUS, 0).rotate_about_x(leftArmWing).rotate_about_y(leftArmSwing);
+
+        this.kinematicRenderer.bodySegment(
+            {position: { x: 0, y: 0, z: 0 }, radius: UPPER_ARM_RADIUS},
+            {position: { x: 0, y: 0, z: -BICEP_LENGTH }, radius: ELBOW_RADIUS},
+            leftBicepFrame,
+            this.getColor("jacket"),
+            2,
+        );
+
+        let leftForearmFrame = leftBicepFrame.translate(0, 0, -BICEP_LENGTH).rotate_about_y(-leftElbowAngle);
+        this.kinematicRenderer.bodySegment(
+            {position: { x: 0, y: 0, z: 0 }, radius: ELBOW_RADIUS},
+            {position: { x: 0, y: 0, z: -FOREARM_LENGTH }, radius: WRIST_RADIUS, skip: true},
+            leftForearmFrame,
+            this.getColor("jacket"),
+            2,
+        );
+        this.kinematicRenderer.ball(
+            { x: 0, y: 0, z: -FOREARM_LENGTH },
+            GLOVE_RADIUS,
+            leftForearmFrame,
+            this.getColor("gloves"),
+            2,
+        );
+
+        let leftHandFrame = leftForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(-leftArmWing).rotate_about_y(leftWeaponX);
+        if (this.character.leftHand && this.character.leftHand.data.model) {
+            this.character.leftHand.data.model.frame = leftHandFrame;
+            this.character.leftHand.data.model.components[0].forEach(component => {
+                component.setFrame(leftHandFrame);
                 this.kinematicRenderer.addComponent(component, 2);
             });
         }
