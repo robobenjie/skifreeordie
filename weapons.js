@@ -90,13 +90,14 @@ export class Gun extends Weapon {
     draw(ctx) {
         super.draw(ctx);
         if (this.target) {
-        // Draw a light blue line from character to target
-        ctx.beginPath();
-        ctx.moveTo(this.character.x, this.character.y);
-        ctx.lineTo(this.target.x, this.target.y);
-        ctx.strokeStyle = 'darkblue';
-        ctx.lineWidth = 3;
-        ctx.stroke();
+            // Draw a light blue line from character to target
+
+            ctx.beginPath();
+            ctx.moveTo(this.character.x, this.character.y - 15);
+            ctx.lineTo(this.target.x, this.target.y);
+            ctx.strokeStyle = 'darkblue';
+            ctx.lineWidth = 3;
+            ctx.stroke();
         }
     }
 }

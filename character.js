@@ -410,10 +410,11 @@ class Character {
     draw(ctx) {
 
         ctx.save();
-        ctx.translate(this.x, this.y);
-        ctx.translate(0, -this.z * 70);
 
+        ctx.translate(0, -this.z * 70);
+        ctx.translate(this.x, this.y);
         this.characterModel.draw(ctx);
+        ctx.restore();
 
         if (this.leftHand) {
             this.leftHand.draw(ctx);
@@ -421,7 +422,7 @@ class Character {
         if (this.rightHand) {
             this.rightHand.draw(ctx);
         }
-        ctx.restore();
+
 
     }
 

@@ -91,11 +91,11 @@ export default class CharacterModel {
 
         const leftArmWing = 0.7 - bendDown / 2;
         const leftArmSwing = -leanAngle + bendDown * 0.5;
-        const leftElbowAngle = Math.PI / 2;
+        const leftElbowAngle = Math.PI / 2 + Math.min(sideLean * 4, 0);
 
         const rightArmWing = 0.7 - bendDown / 2;
         const rightArmSwing = -leanAngle + bendDown * 0.5;
-        const rightElbowAngle = Math.PI / 2;
+        const rightElbowAngle = Math.PI / 2 + Math.min(-sideLean * 4, 0);
 
         
 
