@@ -41,7 +41,7 @@ class Character {
         this.hitBoxSizeY =  5;
         this.joystick = joystick;
         this.maxHealth = 100;
-        this.maxUphillAngle = 25 * Math.PI / 180;
+        this.maxUphillAngle = 90 * Math.PI / 180;
         this.COR = 0.5;
 
         this.targetSkiAngle = this.skiPhysics.skiAngle;

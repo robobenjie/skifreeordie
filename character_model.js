@@ -321,6 +321,7 @@ export default class CharacterModel {
             2,
         );
         let rightHandFrame = rightForearmFrame.translate(0, 0, -FOREARM_LENGTH).rotate_about_y(Math.PI / 2).rotate_about_x(rightArmWing).rotate_about_y(rightWeaponX);
+
         if (this.character.rightHand && this.character.rightHand.data.model) {
             this.character.rightHand.data.model.frame = rightHandFrame;
             this.character.rightHand.data.model.components[0].forEach(component => {
@@ -374,6 +375,12 @@ export default class CharacterModel {
             this.getColor("helmet"),
             2,
         );
+
+        let headFrame2 = headFrame.translate(0, 0, 1);
+
+
+
+        
 
 
 

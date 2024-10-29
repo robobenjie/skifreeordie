@@ -10,6 +10,17 @@ export function getXYScreen(point) {
     ]
 }
 
+
+let CAMERA_UNIT_VECTOR = {x: -1, y:0, z: -CAMERA_Y_PER_X};
+const len = Math.sqrt(CAMERA_UNIT_VECTOR.x * CAMERA_UNIT_VECTOR.x + CAMERA_UNIT_VECTOR.y * CAMERA_UNIT_VECTOR.y + CAMERA_UNIT_VECTOR.z * CAMERA_UNIT_VECTOR.z);
+CAMERA_UNIT_VECTOR.x /= len;
+CAMERA_UNIT_VECTOR.y /= len;
+CAMERA_UNIT_VECTOR.z /= len;
+
+function getSortDepth(point) {
+    return point.x + point.z * CAMERA_Y_PER_X;
+}
+
 export class Frame {
     constructor(parent = null) {
         this.parent = parent;
@@ -150,39 +161,115 @@ export class Ball {
         this.radius = radius;
         this.frame = frame;
         this.color = color;
+        this.worldPosition = this.frame.toWorld(this.position);
     }
 
     setFrame(frame) {
         this.frame = frame;
+        this.worldPosition = this.frame.toWorld(this.position);
     }
 
     averageX() {
-        return this.frame.toWorld(this.position).x;
+        return this.worldPosition.x;
     }
 
     averageY() {
-        return this.frame.toWorld(this.position).y;
+        return this.worldPosition.y;
     }
 
     averageZ() {
-        return this.frame.toWorld(this.position).z;
+        return this.worldPosition.z;
     }
 
     draw(ctx) {
-        const worldPosition = this.frame.toWorld(this.position);
-        const [x, y] = getXYScreen(worldPosition);
+        const [x, y] = getXYScreen(this.worldPosition);
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(x, y, this.radius * PIXELS_PER_METER, 0, 2 * Math.PI);
         ctx.fill();
     }
 
+}
 
+class Hemisphere {
+    constructor(radius, liftRadius, frame, color, baseColor) {
+        this.radius = radius;
+        this.liftRadius = liftRadius;
+        this.frame = frame;
+        this.color = color;
+        this.baseColor = baseColor;
+        this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
+    }
+
+    averageX() {
+        return this.positionInWorldFrame.x;
+    }
+
+    averageY() {
+        return this.positionInWorldFrame.y;
+    }
+
+    averageZ() {
+        return this.positionInWorldFrame.z;
+    }
+
+    drawBase(ctx, squash, color) {
+        ctx.save(); {
+            ctx.scale(squash, 1);
+            ctx.beginPath();
+            ctx.fillStyle = color;
+            ctx.arc(0, 0, this.radius * PIXELS_PER_METER, 0, 2 * Math.PI);
+            ctx.fill();
+        } ctx.restore();
+    }
+
+    drawLift(ctx, squash, color) {
+        ctx.save(); {
+            ctx.scale(squash, 1);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius * PIXELS_PER_METER, 3 * Math.PI / 2, Math.PI / 2, );
+            ctx.fill();
+        } ctx.restore();
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.baseColor;
+
+        const center = getXYScreen(this.positionInWorldFrame);
+        const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
+        const topUnit = getXYScreen(topPoint);
+        const unitVector3D = {x: topPoint.x - this.positionInWorldFrame.x, y: topPoint.y - this.positionInWorldFrame.y, z: topPoint.z - this.positionInWorldFrame.z};
+        
+        const crossProduct = {
+            x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
+            y: unitVector3D.z * CAMERA_UNIT_VECTOR.x - unitVector3D.x * CAMERA_UNIT_VECTOR.z, 
+            z: unitVector3D.x * CAMERA_UNIT_VECTOR.y - unitVector3D.y * CAMERA_UNIT_VECTOR.x};
+        const newVectorEndpoint = {x: this.positionInWorldFrame.x + crossProduct.x, y: this.positionInWorldFrame.y + crossProduct.y, z: this.positionInWorldFrame.z + crossProduct.z};
+        const EndPointInPixels = getXYScreen(newVectorEndpoint);
+        const vectorAtExtreme = {x: EndPointInPixels[0] - center[0], y: EndPointInPixels[1] - center[1]};
+        const vectorToTop = {x: topUnit[0] - center[0], y: topUnit[1] - center[1]};
+        const angleFromVertical = Math.atan2(vectorAtExtreme.y, vectorAtExtreme.x) + Math.PI / 2;
+        let squash = 1 - Math.sqrt(vectorToTop.x * vectorToTop.x + vectorToTop.y * vectorToTop.y) / PIXELS_PER_METER;
+
+        ctx.save(); {
+            ctx.translate(center[0], center[1]);
+            ctx.rotate(angleFromVertical);
+            if (getSortDepth(this.positionInWorldFrame) > getSortDepth(topPoint)) {
+                this.drawLift(ctx, this.radius * this.liftRadius, this.color);
+                this.drawBase(ctx, squash, this.baseColor);
+            } else {
+                this.drawLift(ctx, this.radius * this.liftRadius, this.color);
+                this.drawBase(ctx, squash, this.color);
+            }
+
+        } ctx.restore();
+    }
 }
 
 export class Polygon {
     constructor(points, frame, color) {
-        this.points = points;
+        this.points = points.map(point => frame.toWorld(point));
         this.frame = frame;
         this.color = color;
     }
@@ -193,22 +280,22 @@ export class Polygon {
     }
 
     averageX() {
-        return this.points.map(point => this.frame.toWorld(point).x).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.points.map(point => point.x).reduce((a, b) => a + b, 0) / this.points.length;
     }   
 
     averageY() {
-        return this.points.map(point => this.frame.toWorld(point).y).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.points.map(point => point.y).reduce((a, b) => a + b, 0) / this.points.length;
     }
 
     averageZ() {
-        return this.points.map(point => this.frame.toWorld(point).z).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.points.map(point => point.z).reduce((a, b) => a + b, 0) / this.points.length;
     }
 
     draw(ctx) {
         ctx.fillStyle = this.color;
         ctx.beginPath();
         this.points.forEach(point => {
-            const [x, y] = getXYScreen(this.frame.toWorld(point));
+            const [x, y] = getXYScreen(point);
             ctx.lineTo(x, y);
         });
         ctx.fill();
@@ -328,6 +415,12 @@ export class KinematicRenderer {
         const polygon = new Polygon(points, frame, color);
         this.addComponent(polygon, layer);
         return polygon;
+    }
+
+    hemisphere(radius, liftRadius, frame, color, baseColor, layer) {
+        const hemisphere = new Hemisphere(radius, liftRadius, frame, color, baseColor);
+        this.addComponent(hemisphere, layer);
+        return hemisphere;
     }
 
     addComponent(component, layer) {
