@@ -36,7 +36,8 @@ const GLOVE_RADIUS = 0.12;
 const TORSO_HEIGHT = 0.45;
 const NECK_LENGTH = 0.22;
 const HELMET_RADIUS = 0.3;
-
+const FACE_RADIUS = 0.2;
+const FACE_HEIGHT = 0.3;
 export default class CharacterModel {
     constructor(character) {
         this.character = character;
@@ -368,13 +369,26 @@ export default class CharacterModel {
         }
         
         let headFrame = torsoFrame.translate(0, 0, TORSO_HEIGHT + SHOULDER_RADIUS + NECK_LENGTH).rotate_about_y(-leanAngle).translate(0, 0, HELMET_RADIUS);
-        this.kinematicRenderer.ball(
-            { x: 0, y: 0, z: 0 },
+        let helmetFrame = headFrame.rotate_about_y(-.6);
+        this.kinematicRenderer.hemisphere(
             HELMET_RADIUS,
-            headFrame,
+            HELMET_RADIUS,
+            helmetFrame,
+            this.getColor("helmet"),
             this.getColor("helmet"),
             2,
         );
+
+        let faceFrame = helmetFrame.translate(0.02, 0, 0).rotate_about_y(Math.PI);
+        this.kinematicRenderer.hemisphere(
+            FACE_RADIUS,
+            FACE_HEIGHT,
+            faceFrame,
+            this.getColor("face"),
+            this.getColor("face"),
+            2,
+        );
+
 
         let headFrame2 = headFrame.translate(0, 0, 1);
 

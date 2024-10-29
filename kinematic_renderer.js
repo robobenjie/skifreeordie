@@ -256,10 +256,10 @@ class Hemisphere {
             ctx.translate(center[0], center[1]);
             ctx.rotate(angleFromVertical);
             if (getSortDepth(this.positionInWorldFrame) > getSortDepth(topPoint)) {
-                this.drawLift(ctx, this.radius * this.liftRadius, this.color);
+                this.drawLift(ctx, this.liftRadius / this.radius, this.color);
                 this.drawBase(ctx, squash, this.baseColor);
             } else {
-                this.drawLift(ctx, this.radius * this.liftRadius, this.color);
+                this.drawLift(ctx, this.liftRadius / this.radius, this.color);
                 this.drawBase(ctx, squash, this.color);
             }
 
