@@ -290,9 +290,9 @@ export class Tree {
     this.height = 10;
     this.type = "tree";
 
-    this.trunkExtra = 5 + randomCentered(4);
+    this.trunkExtra = 7 + randomCentered(4);
     this.coneHeight = 70 + randomCentered(20);
-    this.coneWidth = 18 + this.coneHeight / 5 + randomCentered(4);
+    this.coneWidth = 28 + this.coneHeight / 5 + randomCentered(4);
   }
 
     draw(ctx) {

@@ -178,7 +178,7 @@ export const Sword = new Equipment({
     slots: ["right_hand", "left_hand"],
     unhide: ["sword"],
     melee_weapon: {
-        coolDown: 0.3,
+        coolDown: 0.25,
         hitAreaHeight: 5,
         hitAreaWidth: 45,
         damage: 3.5,
