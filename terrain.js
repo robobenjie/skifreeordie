@@ -292,25 +292,44 @@ export class Tree {
 
     this.trunkExtra = 7 + randomCentered(4);
     this.coneHeight = 70 + randomCentered(20);
-    this.coneWidth = 28 + this.coneHeight / 5 + randomCentered(4);
+    this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
+    this.numCones = Math.floor(3 + randomCentered(1.0));
   }
 
     draw(ctx) {
-        ctx.save();
+
         ctx.fillStyle = "#8B4513";
         ctx.fillRect(this.x, this.y - this.height * 2, this.width, this.height * 2);
         ctx.fillStyle = "#228B22";
-        ctx.beginPath();
-        ctx.moveTo(this.x + this.width/2, this.y - this.coneHeight - this.height - this.trunkExtra);
-        ctx.lineTo(this.x + this.width/2 + this.coneWidth/2, this.y - this.height - this.trunkExtra);
-        ctx.lineTo(this.x + this.width/2 - this.coneWidth/2, this.y - this.height - this.trunkExtra);
-        ctx.fill();
-        ctx.translate(this.x + this.width/2, this.y - this.height - this.trunkExtra);
-        ctx.scale(1, 0.5);
-        ctx.beginPath();
-        ctx.arc(0, 0, this.coneWidth/2, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.restore();
+        for (let i = 0; i < this.numCones; i++) {
+            const scale = 1 - (i * 0.25);
+            const coneBottom = this.y - this.height - this.trunkExtra - this.coneHeight * i * 0.4;
+             // All cones share same top point
+            
+            ctx.save();
+            ctx.beginPath();
+            
+            // Height decreases by 1/3 for each cone
+            let coneHeight = this.coneHeight * scale;
+            const topPoint = coneBottom - coneHeight;
+            // Width decreases by 1/4 for each cone
+            let coneWidth = this.coneWidth * scale;
+            
+            // Draw from shared top point
+            ctx.moveTo(this.x + this.width/2, topPoint);
+            // Draw to bottom points that get closer together
+            ctx.lineTo(this.x + this.width/2 + coneWidth/2, topPoint + coneHeight);
+            ctx.lineTo(this.x + this.width/2 - coneWidth/2, topPoint + coneHeight);
+            ctx.fill();
+            
+            // Draw semi-circle base
+            ctx.translate(this.x + this.width/2, topPoint + coneHeight);
+            ctx.scale(1, 0.5);
+            ctx.beginPath();
+            ctx.arc(0, 0, coneWidth/2, 0, Math.PI);
+            ctx.fill();
+            ctx.restore();
+        }
     }
 
     drawUnder(ctx) {

@@ -187,10 +187,8 @@ export class MeleeWeapon extends Weapon {
             return;
         }
         if (hand === "left_hand") {
-            console.log("left hand");
             let mobsOnLeft = this.mobManager.mobsInRegion(
                 this.character.x, this.character.y, 0, this.hitAreaWidth, -this.hitAreaHeight, this.hitAreaHeight);
-                console.log("mobs on left")
             if (mobsOnLeft.length > 0) {
                 this.lastAttackTime = performance.now();
                 this.state = SwordState.SWING_LEFT;
@@ -202,10 +200,8 @@ export class MeleeWeapon extends Weapon {
             }
         }
         if (hand === "right_hand") {
-            console.log("right hand");
             let mobsOnRight = this.mobManager.mobsInRegion(
                 this.character.x, this.character.y, -this.hitAreaWidth, 0, -this.hitAreaHeight, this.hitAreaHeight);
-            console.log("mobs on right");
             if (mobsOnRight.length > 0) {
                 this.lastAttackTime = performance.now();
                 this.state = SwordState.SWING_RIGHT;
