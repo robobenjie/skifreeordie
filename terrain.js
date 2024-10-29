@@ -1,4 +1,5 @@
 import { getThreeLevels, LevelDifficulty } from "./level.js";
+import randomCentered from "./utils.js";
 export class TerrainManager {
     constructor(canvas) {
         this.entities = [];
@@ -288,17 +289,37 @@ export class Tree {
     this.width = 5;
     this.height = 10;
     this.type = "tree";
+
+    this.trunkExtra = 5 + randomCentered(4);
+    this.coneHeight = 70 + randomCentered(20);
+    this.coneWidth = 18 + this.coneHeight / 5 + randomCentered(4);
   }
 
     draw(ctx) {
         ctx.save();
         ctx.fillStyle = "#8B4513";
-        ctx.fillRect(this.x, this.y - this.height, this.width, this.height);
+        ctx.fillRect(this.x, this.y - this.height * 2, this.width, this.height * 2);
         ctx.fillStyle = "#228B22";
         ctx.beginPath();
-        ctx.moveTo(this.x + this.width/2, this.y - 50 - this.height);
-        ctx.lineTo(this.x + this.width/2 + 15, this.y - this.height);
-        ctx.lineTo(this.x + this.width/2 - 15, this.y - this.height);
+        ctx.moveTo(this.x + this.width/2, this.y - this.coneHeight - this.height - this.trunkExtra);
+        ctx.lineTo(this.x + this.width/2 + this.coneWidth/2, this.y - this.height - this.trunkExtra);
+        ctx.lineTo(this.x + this.width/2 - this.coneWidth/2, this.y - this.height - this.trunkExtra);
+        ctx.fill();
+        ctx.translate(this.x + this.width/2, this.y - this.height - this.trunkExtra);
+        ctx.scale(1, 0.5);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.coneWidth/2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    drawUnder(ctx) {
+        ctx.save();
+        ctx.fillStyle = "#E8E8F0";
+        ctx.translate(this.x + this.width/2, this.y);
+        ctx.scale(1, 0.5);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.coneWidth * 0.6, 0, 2 * Math.PI);
         ctx.fill();
         ctx.restore();
     }
@@ -525,9 +546,8 @@ export class JumpRamp {
             this.loaded = true;
         }
     }
-
   
-    drawSnow(ctx) {
+    drawUnder(ctx) {
         // draw a rainbow colored jump ramp
         const imageRatio = this.snowImage.width / this.snowImage.height;
         const imageWidth = this.width * 1.75;

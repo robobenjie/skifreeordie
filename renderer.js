@@ -13,8 +13,8 @@ class Renderer {
         this.ctx.save();
         this.camera.applyTransform(this.ctx);
         for (let entity of this.treeManager.entities) {
-            if (entity.drawSnow) {
-                entity.drawSnow(this.ctx);
+            if (entity.drawUnder) {
+                entity.drawUnder(this.ctx);
             }
         }
         this.character.drawTrail(this.ctx);
