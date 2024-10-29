@@ -289,10 +289,10 @@ class Character {
         this.skiPhysics.update(dt, targetSkiAngle, this.tuck);
 
         if (this.rightHand) {
-            this.rightHand.update(dt, this, this.mobManager);
+            this.rightHand.update(dt, "right_hand");
         }
         if (this.leftHand) {
-            this.leftHand.update(dt);
+            this.leftHand.update(dt, "left_hand");
         }
 
         if (this.skiPhysics.isJumping()) {

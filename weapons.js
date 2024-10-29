@@ -52,7 +52,7 @@ export class Gun extends Weapon {
         this.target = null;
     }
 
-    update(dt) {
+    update(dt, hand) {
         super.update(dt);
         this.target = null;
         if (this.character.skiPhysics.isJumping()){
@@ -176,7 +176,7 @@ export class MeleeWeapon extends Weapon {
         this.lastAttackTime = 0;
     }
     
-    update(dt) {
+    update(dt, hand) {
         super.update(dt);
         
         // Early return if last attack more recent than the cooldown
@@ -186,28 +186,35 @@ export class MeleeWeapon extends Weapon {
         if (this.character.skiPhysics.isJumping()){
             return;
         }
-        let mobsOnLeft = this.mobManager.mobsInRegion(
-            this.character.x, this.character.y, -this.hitAreaWidth, 0, -this.hitAreaHeight, this.hitAreaHeight);
-        if (mobsOnLeft.length > 0) {
-            this.lastAttackTime = performance.now();
-            this.state = SwordState.SWING_LEFT;
-            for (let mob of mobsOnLeft) {
-                mob.applyImpulse(-this.knockback, 0);
-                this.damageMob(mob, this.damage);
+        if (hand === "left_hand") {
+            console.log("left hand");
+            let mobsOnLeft = this.mobManager.mobsInRegion(
+                this.character.x, this.character.y, 0, this.hitAreaWidth, -this.hitAreaHeight, this.hitAreaHeight);
+                console.log("mobs on left")
+            if (mobsOnLeft.length > 0) {
+                this.lastAttackTime = performance.now();
+                this.state = SwordState.SWING_LEFT;
+                for (let mob of mobsOnLeft) {
+                    mob.applyImpulse(-this.knockback, 0);
+                    this.damageMob(mob, this.damage);
+                }
+                return;
             }
-            return;
         }
-
-        let mobsOnRight = this.mobManager.mobsInRegion(
-            this.character.x, this.character.y, 0, this.hitAreaWidth, -this.hitAreaHeight, this.hitAreaHeight);
-        if (mobsOnRight.length > 0) {
-            this.lastAttackTime = performance.now();
-            this.state = SwordState.SWING_RIGHT;
-            for (let mob of mobsOnRight) {
-                mob.applyImpulse(this.knockback, 0)
-                this.damageMob(mob, this.damage);
+        if (hand === "right_hand") {
+            console.log("right hand");
+            let mobsOnRight = this.mobManager.mobsInRegion(
+                this.character.x, this.character.y, -this.hitAreaWidth, 0, -this.hitAreaHeight, this.hitAreaHeight);
+            console.log("mobs on right");
+            if (mobsOnRight.length > 0) {
+                this.lastAttackTime = performance.now();
+                this.state = SwordState.SWING_RIGHT;
+                for (let mob of mobsOnRight) {
+                    mob.applyImpulse(this.knockback, 0)
+                    this.damageMob(mob, this.damage);
+                }
+                return;
             }
-            return;
         }
         this.state = SwordState.HELD;
 

@@ -57,7 +57,7 @@ async function initializeGame() {
 
 
     character.equip(Sword, "left_hand");
-    character.equip(Pistol, "right_hand");
+    //character.equip(Pistol, "right_hand");
 
     // Fetch the SVG outside the update loop
     (async () => {

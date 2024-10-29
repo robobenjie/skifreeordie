@@ -67,9 +67,9 @@ class Equipment {
         }
     }
 
-    update(dt) {
+    update(dt, hand) {
         if (this.weapon) {
-            this.weapon.update(dt);
+            this.weapon.update(dt, hand);
         }
     }
 

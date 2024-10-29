@@ -305,7 +305,6 @@ export default class CharacterModel {
             2,
         );
 
-        console.log("rightElbowAngle", rightElbowAngle);
         let rightForearmFrame = rightBicepFrame.translate(0, 0, -BICEP_LENGTH).rotate_about_y(-rightElbowAngle);
         this.kinematicRenderer.bodySegment(
             {position: { x: 0, y: 0, z: 0 }, radius: ELBOW_RADIUS},
