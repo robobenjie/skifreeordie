@@ -304,17 +304,16 @@ export class Tree {
         for (let i = 0; i < this.numCones; i++) {
             const scale = 1 - (i * 0.25);
             const coneBottom = this.y - this.height - this.trunkExtra - this.coneHeight * i * 0.4;
-             // All cones share same top point
-            
-            ctx.save();
-            ctx.beginPath();
+
             
             // Height decreases by 1/3 for each cone
             let coneHeight = this.coneHeight * scale;
             const topPoint = coneBottom - coneHeight;
             // Width decreases by 1/4 for each cone
             let coneWidth = this.coneWidth * scale;
-            
+
+            ctx.save();
+            ctx.beginPath();
             // Draw from shared top point
             ctx.moveTo(this.x + this.width/2, topPoint);
             // Draw to bottom points that get closer together
@@ -326,7 +325,7 @@ export class Tree {
             ctx.translate(this.x + this.width/2, topPoint + coneHeight);
             ctx.scale(1, 0.5);
             ctx.beginPath();
-            ctx.arc(0, 0, coneWidth/2, 0, Math.PI);
+            ctx.arc(0, -1, coneWidth/2, 0, Math.PI);
             ctx.fill();
             ctx.restore();
         }
