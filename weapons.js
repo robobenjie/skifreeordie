@@ -195,7 +195,7 @@ export class MeleeWeapon extends Weapon {
                 this.lastAttackTime = performance.now();
                 this.state = SwordState.SWING_LEFT;
                 for (let mob of mobsOnLeft) {
-                    mob.applyImpulse(-this.knockback, 0);
+                    mob.applyImpulse(this.knockback, 0);
                     this.damageMob(mob, this.damage);
                 }
                 return;
@@ -210,7 +210,7 @@ export class MeleeWeapon extends Weapon {
                 this.lastAttackTime = performance.now();
                 this.state = SwordState.SWING_RIGHT;
                 for (let mob of mobsOnRight) {
-                    mob.applyImpulse(this.knockback, 0)
+                    mob.applyImpulse(-this.knockback, 0)
                     this.damageMob(mob, this.damage);
                 }
                 return;
