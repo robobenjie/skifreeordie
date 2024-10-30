@@ -5,9 +5,9 @@ export class Camera {
         this.CameraDamping = 15;
         this.cameraStiffness = 150;
         this.velocity = { x: 0, y: 0 };
-        this.x = 0;
-        this.y = 0;
-        this.scale = 1;
+        this.x = null;
+        this.y = null;
+        this.scale = 0.1;
         this.targetScale = 1;
         this.startOfGame = true;
 
@@ -36,6 +36,13 @@ export class Camera {
     update(dt) {
         let displayingScore = this.character.level && this.character.level.isComplete();
         let y_offset = displayingScore ? 200 : 0;
+        if (this.x === null) {
+            this.x = this.character.x;
+        }
+        if (this.y === null) {
+            this.y = this.character.y;
+        }
+        
         let cameraForce = {
             x: (this.character.x + 0.15 * this.character.velocity.x - this.x) * this.cameraStiffness - this.velocity.x * this.CameraDamping,
             y: (this.character.y - this.y - y_offset) * this.cameraStiffness - this.velocity.y * this.CameraDamping

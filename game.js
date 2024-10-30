@@ -125,6 +125,7 @@ async function initializeGame() {
 
 
         let dt = (time - lastTime) / 1000.0;
+        dt = Math.min(dt, 0.050);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
