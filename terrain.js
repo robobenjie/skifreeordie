@@ -2,6 +2,8 @@ import { getThreeLevels, LevelDifficulty } from "./level.js";
 import randomCentered from "./utils.js";
 import { setFillColor } from "./utils.js";
 
+const TREE_POOL_SIZE = 200;
+
 export class TerrainManager {
     constructor(canvas) {
         this.entities = [];
@@ -21,6 +23,10 @@ export class TerrainManager {
         this.accumulatedExposedAreaFirstAidY = 0;
 
         this.lastPlacedLevelSelect = 0;
+
+        // Initialize tree pool
+        this.treePool = Array(TREE_POOL_SIZE).fill(null).map(() => new Tree(0, 0));
+        this.nextTreeIndex = 0;
     }
 
     setTreePercentage(percentage) {
@@ -212,7 +218,36 @@ export class TerrainManager {
 
     // Insert a tree in sorted order by position.y
     addTree(x, y) {
-        var tree = new Tree(x, y)
+        // Find next available tree in pool
+        let tree = null;
+        let startIndex = this.nextTreeIndex;
+
+        
+        // Look for an inactive tree or wrap around to the beginning
+        do {
+            if (!this.treePool[this.nextTreeIndex].active) {
+                tree = this.treePool[this.nextTreeIndex];
+                break;
+            }
+            this.nextTreeIndex = (this.nextTreeIndex + 1) % TREE_POOL_SIZE;
+        } while (this.nextTreeIndex !== startIndex);
+
+        // If no inactive tree found, reuse the oldest one
+        if (!tree) {
+            console.log("Reusing tree (too many trees)");
+            tree = this.treePool[this.nextTreeIndex];
+            // Remove the old tree from entities array if it exists
+            const oldIndex = this.entities.indexOf(tree);
+            if (oldIndex !== -1) {
+                this.entities.splice(oldIndex, 1);
+            }
+            this.nextTreeIndex = (this.nextTreeIndex + 1) % TREE_POOL_SIZE;
+        }
+
+        // Reset and position the tree
+        tree.reset(x, y);
+        
+        // Insert into entities array
         const index = this._findInsertIndex(tree.y);
         this.entities.splice(index, 0, tree);
     }
@@ -231,12 +266,15 @@ export class TerrainManager {
 
     removeEntitiesByPosition(threshold) {
         let i = 0;
-        // Iterate from the beginning and remove trees with position.y less than the threshold
         while (i < this.entities.length && this.entities[i].y < threshold) {
+            // Mark trees as inactive when removed
+            if (this.entities[i].type === 'tree') {
+                this.entities[i].active = false;
+            }
             i++;
         }
 
-        // Remove all trees up to index i
+        // Remove all entities up to index i
         this.entities = this.entities.slice(i);
     }
 
@@ -285,18 +323,24 @@ export class TerrainManager {
 }
 
 export class Tree {
-  constructor(x, y) {
-    this.x = x;
-    this.y = y;
-    this.width = 5;
-    this.height = 10;
-    this.type = "tree";
+    constructor(x, y) {
+        this.reset(x, y);
+        this.type = "tree";
+        // Pre-calculate these values once since they don't change
+        this.trunkExtra = 7 + randomCentered(4);
+        this.coneHeight = 50 + randomCentered(20);
+        this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
+        this.numCones = Math.floor(3 + randomCentered(1.0));
+        this.active = false;
+    }
 
-    this.trunkExtra = 7 + randomCentered(4);
-    this.coneHeight = 50 + randomCentered(20);
-    this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
-    this.numCones = Math.floor(3 + randomCentered(1.0));
-  }
+    reset(x, y) {
+        this.x = x;
+        this.y = y;
+        this.width = 5;
+        this.height = 10;
+        this.active = true;
+    }
 
     draw(ctx) {
 
@@ -437,7 +481,6 @@ export class SkiBoundary {
             this.normalX = -dy / this.length;
             this.normalY = dx / this.length;
         }
-        console.log("Normal: ", this.normalX, this.normalY);
     }
 
     isUphillFrom(x, y) {
