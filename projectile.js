@@ -1,3 +1,5 @@
+import { setFillColor } from "./utils.js";
+
 export class Projectile {
     constructor(x, y, damage, velocity, camera) {
         this.x = x;
@@ -47,7 +49,7 @@ export class Projectile {
 
         const shadowColor = "#E0E0E4";
         ctx.beginPath();
-        ctx.fillStyle = shadowColor;
+        setFillColor(ctx, shadowColor);
         ctx.ellipse(this.x, this.y + 2, this.shadowSize, this.shadowSize / 2, 0, 0, 2 * Math.PI);
         ctx.fill();
     }
@@ -55,7 +57,7 @@ export class Projectile {
     draw(ctx) {
         ctx.beginPath();
         ctx.arc(this.x, this.y - this.z, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(50,50, 50)';
+        setFillColor(ctx, 'rgba(50,50, 50)');
         ctx.fill();
         ctx.closePath();
     }

@@ -1,3 +1,5 @@
+import { setFillColor } from "./utils.js";
+
 function sumForces(...forces) {
     let result = { x: 0, y: 0 };
     for (let force of forces) {
@@ -352,7 +354,8 @@ class SkiPhysics {
     drawShadow(ctx) {
 
         const shadowColor = "#E0E0E4";
-        ctx.fillStyle = shadowColor;
+        setFillColor(ctx, shadowColor);
+
         // draw a circle for the shadow
         ctx.beginPath();
         ctx.ellipse(this.x, this.y + 2, 8, 4, 0, 0, 2 * Math.PI);
@@ -445,7 +448,7 @@ class Trail{
             ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
         }
         ctx.closePath();
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
         ctx.fill();
         ctx.strokeStyle = this.color;
         ctx.lineWidth = this.skiWidth/2;
@@ -465,7 +468,7 @@ class Trail{
             ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
         }
         ctx.closePath();
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
         ctx.fill();
         ctx.strokeStyle = this.color;
         ctx.lineWidth = this.skiWidth/2;

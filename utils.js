@@ -1,4 +1,13 @@
 
+let lastColor = "";
+
+export function setFillColor(ctx, color) {
+    if (color !== lastColor) {
+        lastColor = color;
+        ctx.fillStyle = color;
+    }
+}
+
 export function roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
     // Start path
     ctx.beginPath();

@@ -1,5 +1,5 @@
-
-const CAMERA_Y_PER_X = 0.5
+import { setFillColor } from "./utils.js";
+const CAMERA_Y_PER_X = 0.5;
 const PIXELS_PER_METER = 10;
 
 // The 3D frame defines x as down the hill, z as up to the sky, and y as across the hill.
@@ -183,7 +183,7 @@ export class Ball {
 
     draw(ctx) {
         const [x, y] = getXYScreen(this.worldPosition);
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
         ctx.beginPath();
         ctx.arc(x, y, this.radius * PIXELS_PER_METER, 0, 2 * Math.PI);
         ctx.fill();
@@ -217,7 +217,7 @@ class Hemisphere {
         ctx.save(); {
             ctx.scale(squash, 1);
             ctx.beginPath();
-            ctx.fillStyle = color;
+            setFillColor(ctx, color);
             ctx.arc(0, 0, this.radius * PIXELS_PER_METER, 0, 2 * Math.PI);
             ctx.fill();
         } ctx.restore();
@@ -226,7 +226,7 @@ class Hemisphere {
     drawLift(ctx, squash, color) {
         ctx.save(); {
             ctx.scale(squash, 1);
-            ctx.fillStyle = color;
+            setFillColor(ctx, color);
             ctx.beginPath();
             ctx.arc(0, 0, this.radius * PIXELS_PER_METER, 3 * Math.PI / 2, Math.PI / 2, );
             ctx.fill();
@@ -234,7 +234,7 @@ class Hemisphere {
     }
 
     draw(ctx) {
-        ctx.fillStyle = this.baseColor;
+        setFillColor(ctx, this.baseColor);
 
         const center = getXYScreen(this.positionInWorldFrame);
         const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
@@ -292,7 +292,7 @@ export class Polygon {
     }
 
     draw(ctx) {
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
         ctx.beginPath();
         this.points.forEach(point => {
             const [x, y] = getXYScreen(point);
@@ -347,7 +347,7 @@ export class BodySegment {
         const perpX = dy / norm;
         const perpY = -dx / norm;
         
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
 
         
         // Draw the first circle

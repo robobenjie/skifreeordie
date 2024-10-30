@@ -1,5 +1,7 @@
 import { getThreeLevels, LevelDifficulty } from "./level.js";
 import randomCentered from "./utils.js";
+import { setFillColor } from "./utils.js";
+
 export class TerrainManager {
     constructor(canvas) {
         this.entities = [];
@@ -298,22 +300,13 @@ export class Tree {
 
     draw(ctx) {
 
-        ctx.fillStyle = "#8B4513";
+        setFillColor(ctx, "#8B4513");
         ctx.fillRect(this.x, this.y - this.height * 2, this.width, this.height * 2);
-        ctx.fillStyle = "#228B22";
         function drawCone(ctx, color, x, y, height, ratio) {
             const width = height * ratio;
             
             ctx.save();
-            ctx.fillStyle = color;
-            //ctx.beginPath();
-            // Draw triangle
-            //ctx.moveTo(x, y);
-            //ctx.lineTo(x + width/2, y + height); 
-            //ctx.lineTo(x - width/2, y + height);
-            //ctx.fill();
-            
-            // Draw semi-circle base
+            setFillColor(ctx, color);
             ctx.translate(x, y + height);
             ctx.scale(1, 0.5);
             ctx.beginPath();

@@ -1,3 +1,5 @@
+import { setFillColor } from "./utils.js";
+
 class Particle {
     constructor(x, y, velocity, lifetime) {
         this.position = { x, y };
@@ -35,7 +37,7 @@ class Particle {
         // Example of drawing a simple circle for the particle
         ctx.beginPath();
         ctx.arc(this.position.x, this.position.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        setFillColor(ctx, 'rgba(255, 255, 255, 0.7)');
         ctx.fill();
         ctx.closePath();
     }
@@ -105,7 +107,7 @@ class ColoredParticle extends Particle {
         let size = 3 * (1 - this.age / this.lifetime);
         ctx.beginPath();
         ctx.arc(this.position.x, this.position.y, size, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
+        setFillColor(ctx, this.color);
         ctx.fill();
         ctx.closePath();
     }
