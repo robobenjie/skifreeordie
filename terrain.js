@@ -306,18 +306,20 @@ export class Tree {
             
             ctx.save();
             ctx.fillStyle = color;
-            ctx.beginPath();
+            //ctx.beginPath();
             // Draw triangle
-            ctx.moveTo(x, y);
-            ctx.lineTo(x + width/2, y + height); 
-            ctx.lineTo(x - width/2, y + height);
-            ctx.fill();
+            //ctx.moveTo(x, y);
+            //ctx.lineTo(x + width/2, y + height); 
+            //ctx.lineTo(x - width/2, y + height);
+            //ctx.fill();
             
             // Draw semi-circle base
             ctx.translate(x, y + height);
             ctx.scale(1, 0.5);
             ctx.beginPath();
             ctx.arc(0, -1, width/2, 0, Math.PI);
+            ctx.lineTo(0, -height * 2);  // still in the scaled context
+            ctx.closePath();
             ctx.fill();
             ctx.restore();
         }
