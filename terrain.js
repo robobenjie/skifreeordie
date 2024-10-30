@@ -291,7 +291,7 @@ export class Tree {
     this.type = "tree";
 
     this.trunkExtra = 7 + randomCentered(4);
-    this.coneHeight = 70 + randomCentered(20);
+    this.coneHeight = 50 + randomCentered(20);
     this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
     this.numCones = Math.floor(3 + randomCentered(1.0));
   }
@@ -301,33 +301,59 @@ export class Tree {
         ctx.fillStyle = "#8B4513";
         ctx.fillRect(this.x, this.y - this.height * 2, this.width, this.height * 2);
         ctx.fillStyle = "#228B22";
-        for (let i = 0; i < this.numCones; i++) {
-            const scale = 1 - (i * 0.25);
-            const coneBottom = this.y - this.height - this.trunkExtra - this.coneHeight * i * 0.4;
-
+        function drawCone(ctx, color, x, y, height, ratio) {
+            const width = height * ratio;
             
-            // Height decreases by 1/3 for each cone
-            let coneHeight = this.coneHeight * scale;
-            const topPoint = coneBottom - coneHeight;
-            // Width decreases by 1/4 for each cone
-            let coneWidth = this.coneWidth * scale;
-
             ctx.save();
+            ctx.fillStyle = color;
             ctx.beginPath();
-            // Draw from shared top point
-            ctx.moveTo(this.x + this.width/2, topPoint);
-            // Draw to bottom points that get closer together
-            ctx.lineTo(this.x + this.width/2 + coneWidth/2, topPoint + coneHeight);
-            ctx.lineTo(this.x + this.width/2 - coneWidth/2, topPoint + coneHeight);
+            // Draw triangle
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + width/2, y + height); 
+            ctx.lineTo(x - width/2, y + height);
             ctx.fill();
             
             // Draw semi-circle base
-            ctx.translate(this.x + this.width/2, topPoint + coneHeight);
+            ctx.translate(x, y + height);
             ctx.scale(1, 0.5);
             ctx.beginPath();
-            ctx.arc(0, -1, coneWidth/2, 0, Math.PI);
+            ctx.arc(0, -1, width/2, 0, Math.PI);
             ctx.fill();
             ctx.restore();
+        }
+
+        const ratio = this.coneWidth / this.coneHeight;
+        let prevConeHeight = 0;
+        let prevConeBottom = 0;
+        for (let i = 0; i < this.numCones; i++) {
+            const scale = 1 - (i * 0.25);
+            const coneBottom = this.y - this.height - this.trunkExtra - this.coneHeight * i * 0.4;
+            const coneHeight = this.coneHeight * scale;
+            if (i > 0) {
+                const SHADOW_SIZE = 5;
+                const shadowBottom = coneBottom + SHADOW_SIZE;
+                const prevTop = prevConeBottom - prevConeHeight;
+                const shadowHeight = -(prevTop - coneBottom) + SHADOW_SIZE;
+
+                drawCone(ctx,
+                    "#267126", // Darker green for shadow
+                    this.x + this.width/2,
+                    shadowBottom - shadowHeight,
+                    shadowHeight,
+                    ratio
+                );
+            }
+            
+            prevConeHeight = coneHeight;
+            prevConeBottom = coneBottom;
+            drawCone(
+                ctx,
+                "#228B22",
+                this.x + this.width/2,
+                coneBottom - coneHeight,
+                coneHeight,
+                ratio
+            );
         }
     }
 
