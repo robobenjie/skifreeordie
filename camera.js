@@ -150,8 +150,8 @@ export class Camera {
         return (this.canvasWidth / 2) * this.scale + this.x;
     }
 
-    isOnScreen(x, y) {
-        return x > this.leftOfScreen() && x < this.rightOfScreen() && y > this.topOfScreen() && y < this.bottomOfScreen();
+    isOnScreen(x, y, buffer = 0) {
+        return x > this.leftOfScreen() - buffer && x < this.rightOfScreen() + buffer && y > this.topOfScreen() - buffer && y < this.bottomOfScreen() + buffer;
     }
 
 
@@ -190,7 +190,7 @@ export class Camera {
      * @returns {{x: number, y: number}} The spawn point coordinates.
      */
     offBottomOfScreen() {
-        const offset = 35 * this.scale; // Convert pixel offset to world coordinates
+        const offset = 120 * this.scale; // Convert pixel offset to world coordinates
         const visibleWidth = this.canvasWidth * this.scale;
         const visibleHeight = this.canvasHeight * this.scale;
 

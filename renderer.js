@@ -80,7 +80,9 @@ class Renderer {
     
         // Draw all entities in the merged array
         for (let entity of entitiesToDraw) {
-            entity.draw(this.ctx);
+            if (this.camera.isOnScreen(entity.x, entity.y, 100)) {
+                entity.draw(this.ctx);
+            }
         }
     
         // Draw particle effects last
