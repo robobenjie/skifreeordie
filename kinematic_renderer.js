@@ -234,8 +234,6 @@ class Hemisphere {
     }
 
     draw(ctx) {
-        setFillColor(ctx, this.baseColor);
-
         const center = getXYScreen(this.positionInWorldFrame);
         const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
         const topUnit = getXYScreen(topPoint);
@@ -352,30 +350,25 @@ export class BodySegment {
         
         // Draw the first circle
         
+        ctx.beginPath();
         if (this.first_point.skip !== true) {
-            ctx.beginPath();
+            ctx.moveTo(x1, y1);
             ctx.arc(x1, y1, r1, 0, 2 * Math.PI);
-            ctx.closePath();
-            ctx.fill();
         }
         
         // Draw the trapezoid
-        ctx.beginPath();
         ctx.moveTo(x1 + r1 * perpX, y1 + r1 * perpY);
         ctx.lineTo(x2 + r2 * perpX, y2 + r2 * perpY);
         ctx.lineTo(x2 - r2 * perpX, y2 - r2 * perpY);
         ctx.lineTo(x1 - r1 * perpX, y1 - r1 * perpY);
-        ctx.closePath();
-        ctx.fill();
 
         
         // Draw the second circle
-        if (this.second_point.skip !== true) {  
-            ctx.beginPath();
+        if (this.second_point.skip !== true) { 
+            ctx.moveTo(x2, y2);
             ctx.arc(x2, y2, r2, 0, 2 * Math.PI);
-            ctx.closePath();
-            ctx.fill();
         }
+        ctx.fill();
     }
 
 }
