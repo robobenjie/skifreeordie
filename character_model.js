@@ -25,6 +25,8 @@ const JACKET_BOTTOM_RADIUS = 0.12;
 const JACKET_HEIGHT = 0.25;
 const SHOULDER_WIDTH = 0.40;
 const SHOULDER_RADIUS = 0.20;
+const BIG_STRIPE_WIDTH = 0.2;
+const BIG_STRIPE_HEIGHT = 0.2;
 
 const UPPER_ARM_RADIUS = 0.18;
 const BICEP_LENGTH = 0.45;
@@ -38,10 +40,16 @@ const NECK_LENGTH = 0.22;
 const HELMET_RADIUS = 0.3;
 const FACE_RADIUS = 0.2;
 const FACE_HEIGHT = 0.3;
+
+
+
 export default class CharacterModel {
     constructor(character) {
         this.character = character;
-        this.previousValues = {};
+        this.previousValues = {
+            skiAngle: 0,
+            hipRotation: 0,
+        };
     }
 
     getColor(part) {
@@ -62,6 +70,9 @@ export default class CharacterModel {
         }
         if (part == "jacket") {
             return "#ff6600";
+        }
+        if (part == "jacket_big_stripe") {
+            return "#28a8ff";
         }
         if (part == "helmet") {
             return "#008080";
@@ -91,14 +102,20 @@ export default class CharacterModel {
         const leftSkiFrame = skiFrame.translate(-sinSkiAngle * STANCE_LEAD, -STANCE_WIDTH / 2, leftSkiHeight).rotate_about_x(sideLean);
         const rightSkiFrame = skiFrame.translate(sinSkiAngle * STANCE_LEAD, STANCE_WIDTH / 2, rightSkiHeight).rotate_about_x(sideLean);
 
-        const getAngleWithDefault = (key, defaultValue) => {
+        const getAngleWithDefault = (key, defaultValue, speed = 20) => {
             let newVal = overrideAngles[key] !== undefined ? overrideAngles[key] : defaultValue;
             if (this.previousValues[key] !== undefined) {
-                newVal = this.previousValues[key] + (newVal - this.previousValues[key]) * dt * 20;
+                newVal = this.previousValues[key] + (newVal - this.previousValues[key]) * dt * speed;
             }
             this.previousValues[key] = newVal;
             return newVal;
         };
+
+        const angleDelta = skiAngle - this.previousValues.skiAngle;
+        this.previousValues.hipRotation -= angleDelta;
+        this.previousValues.skiAngle = skiAngle;
+
+        const hipRotation = getAngleWithDefault('hipRotation', 0, 5.0);
 
         const leftArmWing = getAngleWithDefault('leftArmWing', 0.7 - bendDown / 2);
         const leftArmSwing = getAngleWithDefault('leftArmSwing', -leanAngle + bendDown * 0.5);
@@ -160,7 +177,7 @@ export default class CharacterModel {
             1,
         );
         
-        const hipFrame = baseFrame.rotate_about_x(sideLean).translate(0, 0, hipHeight);
+        const hipFrame = baseFrame.rotate_about_x(sideLean).translate(0, 0, hipHeight).rotate_about_z(hipRotation);
 
         // hips
         this.kinematicRenderer.bodySegment(
@@ -280,6 +297,19 @@ export default class CharacterModel {
             this.getColor("jacket"),
             2,
         );
+        // big stripe
+       /*  this.kinematicRenderer.polygon(
+            [
+                {x: SHOULDER_RADIUS, y: -SHOULDER_WIDTH / 2 - SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS / 2},
+                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, z: JACKET_HEIGHT + BIG_STRIPE_HEIGHT + SHOULDER_RADIUS / 2},
+                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, z: JACKET_HEIGHT},
+                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 - SHOULDER_RADIUS - BIG_STRIPE_WIDTH, z: JACKET_HEIGHT},
+                {x: SHOULDER_RADIUS, y: -SHOULDER_WIDTH / 2 - SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT - BIG_STRIPE_HEIGHT + SHOULDER_RADIUS / 2},
+            ],
+            torsoFrame,
+            this.getColor("jacket_big_stripe"),
+            2,
+        ); */
         // center fill:
         this.kinematicRenderer.polygon(
             [
