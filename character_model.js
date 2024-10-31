@@ -421,6 +421,21 @@ export default class CharacterModel {
 
         let headFrame2 = headFrame.translate(0, 0, 1);
 
+        this.kinematicRenderer.cylinderProjection(
+            1,
+            2,
+            [...Array(21)].map((_, i) => ({
+                x: i * Math.PI/10,
+                y: Math.sin(i * Math.PI/10) + 0.3
+            })).concat([...Array(21)].map((_, i) => ({
+                x: i * Math.PI/10,
+                y: Math.sin(i * Math.PI/10)
+            })).reverse()),
+            headFrame2,
+            this.getColor("jacket"),
+            2,
+        );
+
 
 
         
