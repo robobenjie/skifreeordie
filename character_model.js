@@ -37,10 +37,12 @@ const GLOVE_RADIUS = 0.12;
 
 const TORSO_HEIGHT = 0.45;
 const NECK_LENGTH = 0.22;
-const HELMET_RADIUS = 0.3;
+const HELMET_RADIUS = 0.24;
 const FACE_RADIUS = 0.2;
 const FACE_HEIGHT = 0.3;
 
+const GOGGLE_RADIUS = 0.23;
+const GOGGLE_HEIGHT = 0.2;
 
 
 export default class CharacterModel {
@@ -82,6 +84,9 @@ export default class CharacterModel {
         }
         if (part == "gloves") {
             return "#333332";
+        }
+        if (part == "goggles") {
+            return "#2c7ea0";
         }
     }
 
@@ -398,12 +403,31 @@ export default class CharacterModel {
         }
         
         let headFrame = torsoFrame.translate(0, 0, TORSO_HEIGHT + SHOULDER_RADIUS + NECK_LENGTH).rotate_about_y(-leanAngle).translate(0, 0, HELMET_RADIUS);
-        let helmetFrame = headFrame.rotate_about_y(-.6);
+        let helmetFrame = headFrame.rotate_about_y(-.2);
         this.kinematicRenderer.hemisphere(
             HELMET_RADIUS,
             HELMET_RADIUS,
             helmetFrame,
             this.getColor("helmet"),
+            this.getColor("helmet"),
+            2,
+        );
+        const num_steps = 7;
+        const width = 5.0
+        this.kinematicRenderer.cylinderProjection(
+            HELMET_RADIUS - 0.07, HELMET_RADIUS - 0.07, HELMET_RADIUS + 0.04, HELMET_RADIUS + 0.04,
+            -0.3,
+            [
+                ...Array(num_steps).fill(0).map((_, i) => ({
+                    x: Math.PI - width / 2 + i * width / num_steps,
+                    y: 0.1,
+                })),
+                ...Array(num_steps-1).fill(0).map((_, i) => ({
+                    x: Math.PI + width / 2 - (i + 1) * width / num_steps,
+                    y: 1.0,
+                })),
+            ],
+            helmetFrame.rotate_about_z(Math.PI).translate(0, 0, 0.16),
             this.getColor("helmet"),
             2,
         );
@@ -422,19 +446,34 @@ export default class CharacterModel {
         let headFrame2 = headFrame.translate(0, 0, 1);
 
         this.kinematicRenderer.cylinderProjection(
-            1,
-            2,
-            [...Array(21)].map((_, i) => ({
-                x: i * Math.PI/10,
-                y: Math.sin(i * Math.PI/10) + 0.3
-            })).concat([...Array(21)].map((_, i) => ({
-                x: i * Math.PI/10,
-                y: Math.sin(i * Math.PI/10)
-            })).reverse()),
-            headFrame2,
-            this.getColor("jacket"),
-            2,
+            GOGGLE_RADIUS,GOGGLE_RADIUS, GOGGLE_RADIUS, GOGGLE_RADIUS,
+            GOGGLE_HEIGHT,
+            [
+                {'x': 2.356, 'y': 1.0},
+                {'x': 2.553, 'y': 1.0},
+                {'x': 2.749, 'y': 1.0},
+                {'x': 2.945, 'y': 1.0},
+                {'x': 3.142, 'y': 1.0},
+                {'x': 3.338, 'y': 1.0},
+                {'x': 3.534, 'y': 1.0},
+                {'x': 3.731, 'y': 1.0},
+                {'x': 3.927, 'y': 1.0},
+                {'x': 3.927, 'y': 1.0},
+                {'x': 3.731, 'y': 0.6},
+                {'x': 3.534, 'y': 0.55},
+                {'x': 3.338, 'y': 0.6},
+                {'x': 3.142, 'y': 0.8},
+                {'x': 2.945, 'y': 0.6},
+                {'x': 2.749, 'y': 0.55},
+                {'x': 2.553, 'y': 0.6},
+                {'x': 2.356, 'y': 1.0},
+            ],
+            headFrame.translate(0, 0, -GOGGLE_HEIGHT),
+            this.getColor("goggles"),
+            3,
         );
+
+      
 
 
 

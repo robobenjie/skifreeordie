@@ -8,6 +8,78 @@ export function setFillColor(ctx, color) {
     }
 }
 
+export function clipPath(path, xmin, xmax) {
+    let clippedPath = clipAgainstBoundary(path, xmin, 'xmin');
+    clippedPath = clipAgainstBoundary(clippedPath, xmax, 'xmax');
+    return clippedPath;
+}
+
+function clipAgainstBoundary(path, xbound, boundType) {
+    if (path.length == 0) {
+        return [];
+    }
+    const outputList = [];
+    const len = path.length;
+    let S = path[len - 1]; // Start with the last point for closed path
+    let insideS = isInside(S.x, xbound, boundType);
+
+    for (let i = 0; i < len; i++) {
+        const E = path[i];
+        const insideE = isInside(E.x, xbound, boundType);
+
+        if (insideE) {
+            if (insideS) {
+                // Case 1: Both S and E are inside; output E
+                outputList.push(E);
+            } else {
+                // Case 2: S is outside, E is inside; output intersection and E
+                const intersection = getIntersection(S, E, xbound);
+                if (intersection) outputList.push(intersection);
+                outputList.push(E);
+            }
+        } else {
+            if (insideS) {
+                // Case 3: S is inside, E is outside; output intersection
+                const intersection = getIntersection(S, E, xbound);
+                if (intersection) outputList.push(intersection);
+            }
+            // Case 4: Both S and E are outside; do nothing
+        }
+
+        S = E;
+        insideS = insideE;
+    }
+
+    return outputList;
+}
+
+function isInside(x, xbound, boundType) {
+    if (boundType === 'xmin') {
+        return x >= xbound;
+    } else { // 'xmax'
+        return x <= xbound;
+    }
+}
+
+function getIntersection(S, E, xbound) {
+    const x1 = S.x, y1 = S.y;
+    const x2 = E.x, y2 = E.y;
+
+    if (x1 === x2) {
+        // Line is vertical; no intersection with vertical boundary unless on the boundary
+        return null;
+    }
+
+    const t = (xbound - x1) / (x2 - x1);
+    if (t < 0 || t > 1) {
+        // Intersection not within the segment
+        return null;
+    }
+
+    const y = y1 + t * (y2 - y1);
+    return { x: xbound, y: y };
+}
+
 export function roundedParallelogram(ctx, x, y, width, height, skew, cornerRadius) {
     // Start path
     ctx.beginPath();

@@ -1,4 +1,4 @@
-import { setFillColor } from "./utils.js";
+import { setFillColor, clipPath } from "./utils.js";
 const CAMERA_Y_PER_X = 0.5;
 const PIXELS_PER_METER = 10;
 
@@ -323,8 +323,11 @@ export class Circle {
 }
 
 export class CylinderProjection {
-    constructor(radius, height, points, frame, color) {
-        this.radius = radius;
+    constructor(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color) {
+        this.topRadiusX = topRadiusX;
+        this.topRadiusY = topRadiusY;
+        this.bottomRadiusX = bottomRadiusX;
+        this.bottomRadiusY = bottomRadiusY;
         this.height = height;
         this.frame = frame;
         this.color = color;
@@ -348,81 +351,22 @@ export class CylinderProjection {
         
         if (endAngle <= 2 * Math.PI) {
             // Simple case - no wrap around
-            let filteredPoints = [];
-            for (const pt of this.points) {
-                let angle = pt.x % (2 * Math.PI);
-                if (angle < 0) {
-                    angle += 2 * Math.PI;
-                }
-                if (angle >= angleOfTerminus && angle <= endAngle) {
-                    filteredPoints.push(pt);
-                }
-            }
-            shapes.push(filteredPoints);
+            shapes.push( clipPath(this.points, angleOfTerminus, endAngle));
         } else {
-            // Wrap around case - can have multiple shapes
-            let currentPoints = [];
-            let currentType = null; // 'beforeEnd' or 'afterStart'
-            
-            for (const pt of this.points) {
-                let angle = pt.x % (2 * Math.PI);
-                if (angle < 0) {
-                    angle += 2 * Math.PI;
-                }
-                
-                let isBeforeEnd = angle <= (endAngle % (2 * Math.PI));
-                let isAfterStart = angle >= angleOfTerminus;
-                
-                // Determine which type this point belongs to
-                let pointType = null;
-                if (isBeforeEnd && !isAfterStart) {
-                    pointType = 'beforeEnd';
-                } else if (isAfterStart && !isBeforeEnd) {
-                    pointType = 'afterStart'; 
-                } else if (isBeforeEnd && isAfterStart) {
-                    // Point is in both ranges - use current type or default to afterStart
-                    pointType = currentType || 'afterStart';
-                }
-                
-                // If point type changed, start a new shape
-                if (pointType !== currentType && pointType !== null) {
-                    if (currentPoints.length > 0) {
-                        shapes.push(currentPoints);
-                        currentPoints = [];
-                    }
-                    currentType = pointType;
-                }
-                
-                // Add point to current shape if it belongs to a type
-                if (pointType !== null) {
-                    currentPoints.push(pt);
-                }
-            }
-            
-            // Add final shape if any points remain
-            if (currentPoints.length > 0) {
-                shapes.push(currentPoints);
-            }
-
-            // Reverse all shapes in wrap-around case
-            shapes = shapes.map(shape => shape.reverse());
+            // Wrap around case - need to keep points connected
+            shapes.push(clipPath(this.points, angleOfTerminus, 2 * Math.PI));
+            shapes.push(clipPath(this.points, 0, endAngle % (2 * Math.PI)));
         }
         return shapes;
     }
 
     cylinderProjection(points) {
-
-        return points.map(point => {
-            const x = point.x * this.radius;
-            const y = 0;
-            const z = point.y * this.height;
-            return {x, y, z};
-        });
-
         return points.map(point => {
             const theta = point.x;
-            const x = -this.radius * Math.cos(theta);
-            const y = -this.radius * Math.sin(theta); 
+            const radiusX = this.topRadiusX + (this.bottomRadiusX - this.topRadiusX) * (1 - point.y);
+            const radiusY = this.topRadiusY + (this.bottomRadiusY - this.topRadiusY) * (1 - point.y);
+            const x = -radiusX * Math.cos(theta);
+            const y = -radiusY * Math.sin(theta); 
             const z = point.y * this.height;
             return {x, y, z};
         });
@@ -446,10 +390,10 @@ export class CylinderProjection {
         const seamPoint = this.frame.toWorld({x: -1, y: 0, z: 0});
         const seamPointInPixels = getXYScreen(seamPoint);
         const angleToSeam = Math.atan2(seamPointInPixels[1] - center[1], seamPointInPixels[0] - center[0]);
-        let angleOfTerminus = angleToLargeRadius - angleToSeam;
+        let angleOfTerminus = -(angleToLargeRadius - angleToSeam) + Math.PI / 2;
         
         // For debugging set angle of terminus to time in seconds
-        angleOfTerminus = (new Date().getTime() / 1000) % (2 * Math.PI);
+        //angleOfTerminus = (new Date().getTime() / 1000) % (2 * Math.PI);
         //angleOfTerminus = 0;
         ctx.fillStyle = this.color;
         let clippedPoints = this.clipPoints(angleOfTerminus);
@@ -458,6 +402,7 @@ export class CylinderProjection {
         for (const shape of clippedPoints) {
             const cylinderProjectionPoints = this.cylinderProjection(shape);
             const worldPoints = cylinderProjectionPoints.map(point => this.frame.toWorld(point));
+            this.sortDepth = Math.min(this.sortDepth, worldPoints.map(point => getSortDepth(point)).reduce((a, b) => Math.min(a, b), Infinity));
             const points2D = worldPoints.map(point => getXYScreen(point));
             ctx.beginPath();
             if (points2D.length > 0) {
@@ -466,7 +411,7 @@ export class CylinderProjection {
                     const [x, y] = point;
                     ctx.lineTo(x, y); 
                 }
-                ctx.fill();  
+                ctx.fill();
             }
         }
 
@@ -639,8 +584,8 @@ export class KinematicRenderer {
         return hemisphere;
     }
 
-    cylinderProjection(radius, height, points, frame, color, layer) {
-        const cylinderProjection = new CylinderProjection(radius, height, points, frame, color);
+    cylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color, layer) {
+        const cylinderProjection = new CylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color);
         this.addComponent(cylinderProjection, layer);
         return cylinderProjection;
     }
