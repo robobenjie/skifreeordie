@@ -1,3 +1,4 @@
+import { augmentCtx } from './utils.js';
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import { Camera } from './camera.js';
@@ -35,6 +36,7 @@ async function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
     let camera = new Camera(canvas);
     let ctx = canvas.getContext('2d');
+    //augmentCtx(ctx);
     let lastTime = 0; // For delta time calculation
     let gameTime = 0; // Total time elapsed since start
 

@@ -1,11 +1,35 @@
 
-let lastColor = "";
+let lastColor = {};
+let ctxStackDepth = 0;
 
 export function setFillColor(ctx, color) {
-    if (color !== lastColor) {
-        lastColor = color;
-        ctx.fillStyle = color;
-    }
+    ctx.fillStyle = color;
+    //if (lastColor[ctxStackDepth] !== color) {
+    //    lastColor[ctxStackDepth] = color;
+    //    
+    // }
+}
+
+
+export function augmentCtx(ctx) {
+        // Initialize a counter
+    // Override the save and restore methods
+    const originalSave = ctx.save.bind(ctx);
+    const originalRestore = ctx.restore.bind(ctx);
+
+    ctx.save = function() {
+        ctxStackDepth++;
+        originalSave();
+    };
+
+    ctx.restore = function() {
+        if (ctxStackDepth > 0) {
+            ctxStackDepth--;
+        } else {
+            console.warn("ctx.restore() called more times than ctx.save()");
+        }
+        originalRestore();
+    };
 }
 
 export function clipPath(path, xmin, xmax) {

@@ -624,28 +624,29 @@ export class JumpRamp {
         this.width = 80;
         this.height = 7;
         this.loaded = false;
+        this.imageRatio = 1 
+        this.imageWidth = 1;
+        this.imageHeight = 1;
         this.image.onload = () => {
             this.loaded = true;
+            this.imageRatio = this.image.width / this.image.height;
+            this.imageWidth = this.width * 1.75;
+            this.imageHeight = this.imageWidth / this.imageRatio;
         }
     }
   
     drawUnder(ctx) {
         // draw a rainbow colored jump ramp
-        const imageRatio = this.snowImage.width / this.snowImage.height;
-        const imageWidth = this.width * 1.75;
-        const imageHeight = imageWidth / imageRatio;
+
         const rampLevel = 32;
-        ctx.drawImage(this.snowImage, this.x - imageWidth / 2, this.y - imageHeight + rampLevel, imageWidth, imageHeight);
+        ctx.drawImage(this.snowImage, this.x - this.imageWidth / 2, this.y - this.imageHeight + rampLevel, this.imageWidth, this.imageHeight);
         
     }
 
     draw(ctx) {
         // draw a rainbow colored jump ramp
-        const imageRatio = this.image.width / this.image.height;
-        const imageWidth = this.width * 1.75;
-        const imageHeight = imageWidth / imageRatio;
         const rampLevel = 37;
-        ctx.drawImage(this.image, this.x - imageWidth / 2, this.y - imageHeight + rampLevel, imageWidth, imageHeight);
+        ctx.drawImage(this.image, this.x - this.imageWidth / 2, this.y - this.imageHeight + rampLevel, this.imageWidth, this.imageHeight);
         
     }
 }
