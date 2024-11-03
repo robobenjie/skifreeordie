@@ -116,7 +116,14 @@ class LineSegment {
     constructor(points, frame, color, thickness) {
         this.points = points; // Array of points in the local frame of this segment
         this.frame = frame; // Reference frame for the segment
-        this.worldPoints = this.points.map(point => frame.toWorld(point));
+        this.worldPoints = [];
+        for (const point of this.points) {
+            if (point.frame) {
+                this.worldPoints.push(point.frame.toWorld(point));
+            } else {
+                this.worldPoints.push(this.frame.toWorld(point));
+            }
+        }
         this.color = color;
         this.thickness = thickness;
         this.sortDepth = getSortDepth(
@@ -334,6 +341,8 @@ export class CylinderProjection {
         this.points = points;
         this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
+        this.worldPoints = [];
+        this.calculate();
     }
 
     clipPoints(angleOfTerminus) {
@@ -372,7 +381,7 @@ export class CylinderProjection {
         });
     }
 
-    draw(ctx) {
+    calculate() {
         const center = getXYScreen(this.positionInWorldFrame);
         const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
         const topUnit = getXYScreen(topPoint);
@@ -386,23 +395,26 @@ export class CylinderProjection {
         const vectorAtExtreme = {x: EndPointInPixels[0] - center[0], y: EndPointInPixels[1] - center[1]};
         const vectorToTop = {x: topUnit[0] - center[0], y: topUnit[1] - center[1]};
         const angleToLargeRadius = Math.atan2(vectorAtExtreme.y, vectorAtExtreme.x) + Math.PI / 2;
-        let squash = 1 - Math.sqrt(vectorToTop.x * vectorToTop.x + vectorToTop.y * vectorToTop.y) / PIXELS_PER_METER;
         const seamPoint = this.frame.toWorld({x: -1, y: 0, z: 0});
         const seamPointInPixels = getXYScreen(seamPoint);
         const angleToSeam = Math.atan2(seamPointInPixels[1] - center[1], seamPointInPixels[0] - center[0]);
         let angleOfTerminus = -(angleToLargeRadius - angleToSeam) + Math.PI / 2;
         
-        // For debugging set angle of terminus to time in seconds
-        //angleOfTerminus = (new Date().getTime() / 1000) % (2 * Math.PI);
-        //angleOfTerminus = 0;
-        ctx.fillStyle = this.color;
+        
         let clippedPoints = this.clipPoints(angleOfTerminus);
-        //clippedPoints = [this.points];
 
         for (const shape of clippedPoints) {
             const cylinderProjectionPoints = this.cylinderProjection(shape);
-            const worldPoints = cylinderProjectionPoints.map(point => this.frame.toWorld(point));
-            this.sortDepth = Math.min(this.sortDepth, worldPoints.map(point => getSortDepth(point)).reduce((a, b) => Math.min(a, b), Infinity));
+            this.worldPoints.push(cylinderProjectionPoints.map(point => this.frame.toWorld(point)));
+            this.sortDepth = this.worldPoints.map(points => 
+                points.length > 0 ? points.map(point => getSortDepth(point)).reduce((a, b) => Math.max(a, b)) : -Infinity
+            ).reduce((a, b) => Math.max(a, b));
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        for (const worldPoints of this.worldPoints) {
             const points2D = worldPoints.map(point => getXYScreen(point));
             ctx.beginPath();
             if (points2D.length > 0) {
@@ -411,10 +423,10 @@ export class CylinderProjection {
                     const [x, y] = point;
                     ctx.lineTo(x, y); 
                 }
-                ctx.fill();
+                ctx.closePath();
             }
         }
-
+        ctx.fill();
     }
 }
 

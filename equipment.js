@@ -94,6 +94,11 @@ export const SpeedJacket = new Equipment({
         armor: 1
     },
     slots: ["jacket"],
+    colors: {
+        jacket_base: "#545E75",
+        jacket_big_stripe: "#28a8ff",
+        jacket_trim: "#fff200",
+    },
     color_changes: [
             [JACKET_BASE, "#545E75"],
             ["#d45500", "#00aaaa"]

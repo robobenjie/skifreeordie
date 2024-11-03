@@ -71,10 +71,22 @@ export default class CharacterModel {
             return "#ff0000";
         }
         if (part == "jacket") {
+            if (this.character.jacket) {
+                return this.character.jacket.data.colors.jacket_base;
+            }
             return "#ff6600";
         }
         if (part == "jacket_big_stripe") {
+            if (this.character.jacket) {
+                return this.character.jacket.data.colors.jacket_big_stripe;
+            }
             return "#28a8ff";
+        }
+        if (part == "jacket_trim") {
+            if (this.character.jacket) {
+                return this.character.jacket.data.colors.jacket_trim;
+            }
+            return "#fff200";
         }
         if (part == "helmet") {
             return "#008080";
@@ -91,6 +103,9 @@ export default class CharacterModel {
     }
 
     calculate(dt, skiAngle, bendDown, sideLean, overrideAngles = {}) {
+
+        let jacket_big_stripe = this.character.jacket && this.character.jacket.data.colors.jacket_big_stripe;
+        let jacket_trim = this.character.jacket && this.character.jacket.data.colors.jacket_trim;
         this.kinematicRenderer = new KinematicRenderer(6);
         const worldFrame = this.kinematicRenderer.frame();
         const baseFrame = worldFrame.rotate_about_z(skiAngle, "baseFrame");
@@ -302,20 +317,7 @@ export default class CharacterModel {
             this.getColor("jacket"),
             2,
         );
-        // big stripe
-       /*  this.kinematicRenderer.polygon(
-            [
-                {x: SHOULDER_RADIUS, y: -SHOULDER_WIDTH / 2 - SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS / 2},
-                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, z: JACKET_HEIGHT + BIG_STRIPE_HEIGHT + SHOULDER_RADIUS / 2},
-                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, z: JACKET_HEIGHT},
-                {x: JACKET_BOTTOM_RADIUS, y: SHOULDER_WIDTH / 2 - SHOULDER_RADIUS - BIG_STRIPE_WIDTH, z: JACKET_HEIGHT},
-                {x: SHOULDER_RADIUS, y: -SHOULDER_WIDTH / 2 - SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT - BIG_STRIPE_HEIGHT + SHOULDER_RADIUS / 2},
-            ],
-            torsoFrame,
-            this.getColor("jacket_big_stripe"),
-            2,
-        ); */
-        // center fill:
+
         this.kinematicRenderer.polygon(
             [
                 {x: 0, y: -SHOULDER_WIDTH / 2, z: JACKET_HEIGHT},
@@ -401,6 +403,81 @@ export default class CharacterModel {
                 this.kinematicRenderer.addComponent(component, 2);
             });
         }
+
+        if (jacket_trim){
+            this.kinematicRenderer.lineSegment(
+                [
+                    {x: .2, y: -SHOULDER_WIDTH / 2 - SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS + 0.1}, 
+                    {x: .2, y: SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, z: JACKET_HEIGHT + 0.1}
+                ],
+                torsoFrame,
+                this.getColor("jacket_trim"),
+                0.1,
+                2,
+            );
+            this.kinematicRenderer.lineSegment(
+                [
+                    {x: 0, y: -SHOULDER_WIDTH / 2 - 2 * SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS}, 
+                    {x: 0, y: 0, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS}
+                ],
+                torsoFrame,
+                this.getColor("jacket_trim"),
+                0.1,
+                2,
+            );
+            this.kinematicRenderer.lineSegment(
+                [
+                    {x: 0, y: 0, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS}, 
+                    {x: 0, y: SHOULDER_WIDTH / 2 + 2 * SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS}
+                ],
+                torsoFrame,
+                this.getColor("jacket_trim"),
+                0.1,
+                2,
+            );
+            this.kinematicRenderer.lineSegment(
+                [
+                    {x: 0, y: -SHOULDER_WIDTH / 2 - 2 * SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS, frame: torsoFrame}, 
+                    {x: 0, y: -ELBOW_RADIUS, z: 0, frame: rightForearmFrame}
+                ],
+                torsoFrame,
+                this.getColor("jacket_trim"),
+                0.1,
+                2,
+            );
+            this.kinematicRenderer.lineSegment(
+                [
+                    {x: 0, y: SHOULDER_WIDTH / 2 + 2 * SHOULDER_RADIUS, z: JACKET_HEIGHT + TORSO_HEIGHT + SHOULDER_RADIUS, frame: torsoFrame}, 
+                    {x: 0, y: ELBOW_RADIUS, z: 0, frame: leftForearmFrame}
+                ],
+                torsoFrame,
+                this.getColor("jacket_trim"),
+                0.1,
+                2,
+            );
+        }
+
+        if (jacket_big_stripe) {
+            const stripe_steps = 5;
+            const stripe_width = 2.0
+            this.kinematicRenderer.cylinderProjection(
+                SHOULDER_RADIUS, SHOULDER_WIDTH + SHOULDER_RADIUS / 2, SHOULDER_RADIUS, SHOULDER_WIDTH + SHOULDER_RADIUS / 2,
+                TORSO_HEIGHT + SHOULDER_RADIUS,
+                [
+                    ...Array(stripe_steps).fill(0).map((_, i) => ({
+                        x: Math.PI - stripe_width / 2 + i * stripe_width / stripe_steps,
+                        y: (1 - i / stripe_steps) + BIG_STRIPE_HEIGHT / 2,
+                    })),
+                    ...Array(stripe_steps-1).fill(0).map((_, i) => ({
+                        x: Math.PI + stripe_width / 2 - (i + 1) * stripe_width / stripe_steps,
+                        y: i /stripe_steps - BIG_STRIPE_HEIGHT / 2,
+                    })),
+                ],
+                torsoFrame.translate(0, 0, JACKET_HEIGHT),
+                this.getColor("jacket_big_stripe"),
+                2,
+            );
+        }
         
         let headFrame = torsoFrame.translate(0, 0, TORSO_HEIGHT + SHOULDER_RADIUS + NECK_LENGTH).rotate_about_y(-leanAngle).translate(0, 0, HELMET_RADIUS);
         let helmetFrame = headFrame.rotate_about_y(-.2);
@@ -413,9 +490,9 @@ export default class CharacterModel {
             2,
         );
         const num_steps = 7;
-        const width = 5.0
+        const width = 4.0
         this.kinematicRenderer.cylinderProjection(
-            HELMET_RADIUS - 0.07, HELMET_RADIUS - 0.07, HELMET_RADIUS + 0.04, HELMET_RADIUS + 0.04,
+            HELMET_RADIUS, HELMET_RADIUS, HELMET_RADIUS, HELMET_RADIUS,
             -0.3,
             [
                 ...Array(num_steps).fill(0).map((_, i) => ({
