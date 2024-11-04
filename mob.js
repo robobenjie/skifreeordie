@@ -2,6 +2,7 @@ import SkiPhysics from "./skiPhysics.js";
 import {randomCentered} from "./utils.js";
 import Projectile from "./projectile.js";
 import { MobDeathParticleEffect } from "./particle_engine.js";
+import OrkModel from "./ork_model.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles, camera
@@ -483,6 +484,7 @@ class SpearOrc extends Mob {
         } else {
             this.targetAngle = Math.PI / 2;
         }
+        this.model = new OrkModel();
     }
 
     onCollideWithCharacter(character) {
@@ -556,6 +558,8 @@ class SpearOrc extends Mob {
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
+        let crouchAmount = Math.min(Math.abs(this.skiPhysics.velocity.y) / 400, 1);
+        this.model.calculate(dt, this.skiPhysics.skiAngle, crouchAmount, crouchAmount * Math.PI *0.6);
     }
 
     drawShadow(ctx) {
@@ -568,13 +572,11 @@ class SpearOrc extends Mob {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(0, -this.skiPhysics.z * 70);
+        ctx.translate(this.x, this.y -this.skiPhysics.z * 70);
 
-        this.skiPhysics.drawSkis(ctx, "blue", 0);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
-        ctx.restore();
+        this.model.draw(ctx);
         super.draw(ctx);
+        ctx.restore();
     }
 }
 

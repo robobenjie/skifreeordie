@@ -12,6 +12,7 @@ import { getItemsForSale } from './equipment.js';
 import { Frame, BodySegment, Ball, Polygon, KinematicRenderer } from './kinematic_renderer.js';
 import CharacterModel from './character_model.js';
 import { Sword, Sword2, Pistol, SpeedJacket } from './equipment.js';
+import OrkModel from './ork_model.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -45,6 +46,7 @@ async function initializeGame() {
     let treeManager = new TerrainManager(canvas);
     let character = new Character(100, 100, particleEngine, treeManager, joystick, camera);
     camera.setCharacter(character);
+    let orkModel = new OrkModel();
 
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
@@ -123,6 +125,9 @@ async function initializeGame() {
 
     let level = undefined;
 
+    character.level = level1;
+    level1.start();
+
 
     function update(time) {
 
@@ -133,8 +138,18 @@ async function initializeGame() {
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        ctx.restore();
         //level1.renderScoreCard(ctx);
+
+        /*ctx.save();
+
+        const bendAmount = (Math.sin(time / 100) + 1) / 2;
+
+        const spearAngle = (Math.sin(time / 300) + 1) / 2 * 1.57;
+
+        orkModel.calculate(time / 1000, bendAmount, spearAngle);
+        ctx.translate(character.x + 50, character.y + 50);
+        orkModel.draw(ctx);
+        ctx.restore();*/
 
         // Game Not Paused:
         gameTime += dt;

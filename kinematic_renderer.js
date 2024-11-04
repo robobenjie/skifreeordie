@@ -167,13 +167,19 @@ class LineSegment {
 
 
     draw(ctx) {
-        const [x1, y1] = getXYScreen(this.worldPoints[0]);
-        const [x2, y2] = getXYScreen(this.worldPoints[1]);
+        ctx.miterLimit = 1;
         ctx.strokeStyle = this.color;
         ctx.lineWidth = this.thickness * PIXELS_PER_METER;
         ctx.beginPath();
-        ctx.moveTo(x1, y1);
-        ctx.lineTo(x2, y2);
+        
+        const [firstX, firstY] = getXYScreen(this.worldPoints[0]);
+        ctx.moveTo(firstX, firstY);
+        
+        for (let i = 1; i < this.worldPoints.length; i++) {
+            const [x, y] = getXYScreen(this.worldPoints[i]);
+            ctx.lineTo(x, y);
+        }
+        
         ctx.stroke();
     }
 }
