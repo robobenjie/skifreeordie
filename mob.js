@@ -522,6 +522,8 @@ class SpearOrc extends Mob {
         this.skiPhysics.maxTurnRate = 1.5;
         this.skiPhysics.maxInAirTurnRate = 12;
 
+        let angleToTarget = Math.atan2(dx, -dy);
+
        
         if (dy > 0 || this.shouldBackOff) {
              // Below character
@@ -544,7 +546,7 @@ class SpearOrc extends Mob {
         } else {
             // Above character
             this.skiPhysics.drag = 0.4;
-            this.targetAngle = Math.atan2(dx, -dy);
+            this.targetAngle = angleToTarget;
 
             if (Math.abs(this.targetAngle - this.skiPhysics.skiAngle) > 0.2 && Math.abs(this.skiPhysics.velocity.y) < 50) {
                 this.skiPhysics.jump(5);
@@ -558,8 +560,21 @@ class SpearOrc extends Mob {
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
-        let crouchAmount = Math.min(Math.abs(this.skiPhysics.velocity.y) / 400, 1);
-        this.model.calculate(dt, this.skiPhysics.skiAngle, crouchAmount, crouchAmount * Math.PI *0.6);
+        let spearDownAmount = Math.min(Math.abs(this.skiPhysics.velocity.y) / 400, 1);
+
+        // periodic crouch
+        let randomCrouchAmount = Math.max((Math.sin(this.timeSinceDamagedCharacter * 3) - 0.5), 0) * 1.6;
+        let crouchAmount = Math.max(spearDownAmount, randomCrouchAmount);
+        let torsoTurn = angleToTarget - this.skiPhysics.skiAngle;
+        while (torsoTurn > Math.PI) {
+            torsoTurn -= Math.PI * 2;
+        }
+        while (torsoTurn < -Math.PI) {
+            torsoTurn += Math.PI * 2;
+        }
+        torsoTurn = Math.max(Math.min(torsoTurn, Math.PI / 2), -Math.PI / 2);
+
+        this.model.calculate(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount * Math.PI *0.6, torsoTurn);
     }
 
     drawShadow(ctx) {

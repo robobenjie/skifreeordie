@@ -40,7 +40,7 @@ export default class OrkModel {
 
     }
 
-    calculate(dt, skiAngle, crouchAngle, spearAngle) {
+    calculate(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {
         this.model = new KinematicRenderer(4);
         let worldFrame = this.model.frame();
         let baseFrame = worldFrame.rotate_about_z(-skiAngle, "baseFrame");
@@ -101,7 +101,7 @@ export default class OrkModel {
             this.legColor,
             1,
         );
-        const torsoFrame = hipFrame;
+        const torsoFrame = hipFrame.rotate_about_z(-torsoTurn);
         this.model.ball(
             {x: 0.2, y: 0, z: BELLY_RADIUS},
             BELLY_RADIUS,
