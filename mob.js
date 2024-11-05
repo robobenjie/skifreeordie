@@ -477,7 +477,7 @@ class SpearOrc extends Mob {
         super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
         this.terrain = terrain;
         this.snowParticles = snowParticles;
-        this.colors = ["black", "green"];
+        this.colors = ["#252422", "#83BCA9","#252422", "#83BCA9","#CC444B"];
         this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass, camera);
         if (x < character.x) {
             this.targetAngle = -Math.PI / 2;
@@ -575,8 +575,8 @@ class SpearOrc extends Mob {
         ctx.translate(this.x, this.y -this.skiPhysics.z * 70);
 
         this.model.draw(ctx);
-        super.draw(ctx);
         ctx.restore();
+        super.draw(ctx);
     }
 }
 

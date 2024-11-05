@@ -371,8 +371,8 @@ class Character {
             extraArgs = this.rightHand.weapon.getModelArgs("right");
         }
         this.characterModel.calculate(dt, Math.PI - this.skiPhysics.skiAngle, this.tuck, leanAngle, 
-            extraArgs
-        );
+            extraArgs);
+
     }
 
     drawTrail(ctx) {

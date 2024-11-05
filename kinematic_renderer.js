@@ -2,6 +2,12 @@ import { setFillColor, clipPath } from "./utils.js";
 const CAMERA_Y_PER_X = 0.5;
 const PIXELS_PER_METER = 10;
 
+const IDENTITY_MATRIX = [
+    [1, 0, 0],
+    [0, 1, 0], 
+    [0, 0, 1]
+];
+
 // The 3D frame defines x as down the hill, z as up to the sky, and y as across the hill.
 export function getXYScreen(point) {
     return [
@@ -25,87 +31,231 @@ export class Frame {
     constructor(parent = null) {
         this.parent = parent;
         this.translation = { x: 0, y: 0, z: 0 };
-        this.rotation = { x: 0, y: 0, z: 0 }; // Store rotations in radians
-        this.sinRotation = { x: 0, y: 0, z: 0 }; // Store sin of rotations
-        this.cosRotation = { x: 1, y: 1, z: 1 }; // Store cos of rotations
+        // Store single 3x3 rotation matrix, initialized as identity matrix
+        this.rotationMatrix = IDENTITY_MATRIX;
         this.name = null;
+        this.staticCachedTransformTo = null;
+        this.dynamicCachedTransformTo = null;
+        this.dynamic = false;
+        this.update_callback = null;
+    }
+
+    reset() {
+        this.dynamicCachedTransformTo = null;
+    }
+
+    calculateStaticCachedTransformTo() {
+    }
+
+    getRotationAboutX(rad) {
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        return [
+            [1, 0, 0],
+            [0, cos, -sin],
+            [0, sin, cos]
+        ];
+    }
+
+    getRotationAboutY(rad) {
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        return [
+            [cos, 0, sin],
+            [0, 1, 0],
+            [-sin, 0, cos]
+        ];
+    }
+
+    getRotationAboutZ(rad) {
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
+        return [
+            [cos, -sin, 0],
+            [sin, cos, 0],
+            [0, 0, 1]
+        ];
     }
 
     // Rotate about X-axis by a specified radians
-    rotate_about_x(rad, name = null) {
+    rotate_about_x(rad, name = null, dynamic = false) {
         const newFrame = new Frame(this);
-        newFrame.rotation.x = rad;
-        newFrame.sinRotation.x = Math.sin(rad);
-        newFrame.cosRotation.x = Math.cos(rad);
+        newFrame.rotationMatrix = this.getRotationAboutX(rad);
         newFrame.name = name;
+        newFrame.dynamic = dynamic;
+        if (dynamic) {
+            newFrame.update_callback = (rad) => {
+                newFrame.rotationMatrix = this.getRotationAboutX(rad);
+            }
+        }
         return newFrame;
     }
 
-    // Rotate about Y-axis by a specified radians
-    rotate_about_y(rad, name = null) {
+    // Rotate about Y-axis by a specified radians 
+    rotate_about_y(rad, name = null, dynamic = false) {
         const newFrame = new Frame(this);
-        newFrame.rotation.y = rad;
-        newFrame.sinRotation.y = Math.sin(rad);
-        newFrame.cosRotation.y = Math.cos(rad);
+        newFrame.rotationMatrix = this.getRotationAboutY(rad);
         newFrame.name = name;
+        newFrame.dynamic = dynamic;
+        if (dynamic) {
+            newFrame.update_callback = (rad) => {
+                newFrame.rotationMatrix = this.getRotationAboutY(rad);
+            }
+        }
         return newFrame;
     }
 
-    // Rotate about Z-axis by a specified radians
-    rotate_about_z(rad, name = null) {
+    rotate_about_z(rad, name = null, dynamic = false) {
         const newFrame = new Frame(this);
-        newFrame.rotation.z = rad;
-        newFrame.sinRotation.z = Math.sin(rad);
-        newFrame.cosRotation.z = Math.cos(rad);
+        newFrame.rotationMatrix = this.getRotationAboutZ(rad);
         newFrame.name = name;
+        newFrame.dynamic = dynamic;
+        if (dynamic) {
+            newFrame.update_callback = (rad) => {
+                newFrame.rotationMatrix = this.getRotationAboutZ(rad);
+            }
+        }
         return newFrame;
     }
 
     // Translate in 3D space by specified x, y, z
-    translate(x, y, z, name = null) {
+    translate(x, y, z, name = null, dynamic = false) {
         const newFrame = new Frame(this);
         newFrame.translation = { x, y, z };
         newFrame.name = name;
+        newFrame.dynamic = dynamic;
+        if (dynamic) {
+            newFrame.update_callback = (x, y, z) => {
+                newFrame.translation = { x, y, z };
+            }
+        }
         return newFrame;
     }
 
-    // Helper function to apply rotation matrix
-    applyRotation(point, rotation, sinRotation, cosRotation) {
-        const { x, y, z } = point;
+    // Matrix multiplication helper function
+    static matrixMultiply(A, B) {
+        const result = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+        // Row 0
+        result[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0] + A[0][2] * B[2][0];
+        result[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1] + A[0][2] * B[2][1];
+        result[0][2] = A[0][0] * B[0][2] + A[0][1] * B[1][2] + A[0][2] * B[2][2];
 
-        // Rotate about X-axis
-        const xRot = { x, y: y * cosRotation.x - z * sinRotation.x, z: y * sinRotation.x + z * cosRotation.x };
+        // Row 1 
+        result[1][0] = A[1][0] * B[0][0] + A[1][1] * B[1][0] + A[1][2] * B[2][0];
+        result[1][1] = A[1][0] * B[0][1] + A[1][1] * B[1][1] + A[1][2] * B[2][1];
+        result[1][2] = A[1][0] * B[0][2] + A[1][1] * B[1][2] + A[1][2] * B[2][2];
 
-        // Rotate about Y-axis
-        const yRot = { x: xRot.x * cosRotation.y + xRot.z * sinRotation.y, y: xRot.y, z: -xRot.x * sinRotation.y + xRot.z * cosRotation.y };
+        // Row 2
+        result[2][0] = A[2][0] * B[0][0] + A[2][1] * B[1][0] + A[2][2] * B[2][0];
+        result[2][1] = A[2][0] * B[0][1] + A[2][1] * B[1][1] + A[2][2] * B[2][1];
+        result[2][2] = A[2][0] * B[0][2] + A[2][1] * B[1][2] + A[2][2] * B[2][2];
 
-        // Rotate about Z-axis
-        return { x: yRot.x * cosRotation.z - yRot.y * sinRotation.z, y: yRot.x * sinRotation.z + yRot.y * cosRotation.z, z: yRot.z };
+        return result;
     }
 
-    // Calculates the world frame position of a local point by chaining transformations
-    toWorld(point, targetFrame = null) {
-        let transformedPoint = { ...point };
+    // Applies a rotation matrix to a point
+    static applyRotationMatrix(point, rotationMatrix) {
+        const { x, y, z } = point;
+        return {
+            x: rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z,
+            y: rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z,
+            z: rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z
+        };
+    }
 
-        // Chain transformations from this frame to the root
-        let currentFrame = this;
-        while (currentFrame) {
-            // Apply translation first
-            transformedPoint = {
-                x: transformedPoint.x + currentFrame.translation.x,
-                y: transformedPoint.y + currentFrame.translation.y,
-                z: transformedPoint.z + currentFrame.translation.z
+    // Recursive method to get the composite transformation to the target frame
+    // Target frame can be null, which means the world frame, a string, which is
+    // a frame name, or a Frame object
+    getTransformTo(targetFrame = null) {
+        if (targetFrame !== null) {
+            //debugger;
+        }
+        // First check dynamic cache for transform to world
+        if (targetFrame === null && this.dynamicCachedTransformTo) {
+            return this.dynamicCachedTransformTo;
+        }
+
+        // For static transforms, check if we have cached transform to next dynamic parent
+        if (targetFrame === null && this.staticCachedTransformTo) {
+            const nextDynamicFrame = this.staticCachedTransformTo.frame;
+
+            // If no dynamic parent, return cached transform
+            if (nextDynamicFrame === null) {
+                return this.staticCachedTransformTo.transform;
+            }
+            
+            const parentTransform = nextDynamicFrame.getTransformTo(targetFrame);
+            const cachedTransform = this.staticCachedTransformTo.transform;
+
+            // Combine the cached transform with parent transform
+            const combinedRotationMatrix = Frame.matrixMultiply(
+                parentTransform.rotationMatrix, 
+                cachedTransform.rotationMatrix
+            );
+            const rotatedTranslation = Frame.applyRotationMatrix(
+                cachedTransform.translation,
+                parentTransform.rotationMatrix
+            );
+            const combinedTranslation = {
+                x: parentTransform.translation.x + rotatedTranslation.x,
+                y: parentTransform.translation.y + rotatedTranslation.y,
+                z: parentTransform.translation.z + rotatedTranslation.z
             };
 
-            // Then apply rotation
-            transformedPoint = currentFrame.applyRotation(transformedPoint, currentFrame.rotation, currentFrame.sinRotation, currentFrame.cosRotation);
+            const compositeTransform = {
+                rotationMatrix: combinedRotationMatrix,
+                translation: combinedTranslation
+            };
 
-            // Move up the chain to parent frame
-            currentFrame = currentFrame.parent;
-            if (targetFrame && currentFrame.name === targetFrame) {
-                break;
+            // Cache the world transform if this is a transform to world
+            if (targetFrame === null) {
+                this.dynamicCachedTransformTo = compositeTransform;
             }
+
+            return compositeTransform;
         }
+
+        // Calculate new transform
+        if ((this.name && this.name === targetFrame) || this.parent === null || targetFrame === this) {
+            return {
+                rotationMatrix: IDENTITY_MATRIX,
+                translation: {x: 0, y: 0, z: 0}
+            };
+        } else {
+            const parentTransform = this.parent.getTransformTo(targetFrame);
+            const combinedRotationMatrix = Frame.matrixMultiply(
+                parentTransform.rotationMatrix,
+                this.rotationMatrix
+            );
+            const rotatedTranslation = Frame.applyRotationMatrix(
+                this.translation,
+                parentTransform.rotationMatrix
+            );
+            const combinedTranslation = {
+                x: parentTransform.translation.x + rotatedTranslation.x,
+                y: parentTransform.translation.y + rotatedTranslation.y,
+                z: parentTransform.translation.z + rotatedTranslation.z
+            };
+            return {
+                rotationMatrix: combinedRotationMatrix,
+                translation: combinedTranslation
+            };
+        }
+    }
+
+    // Transforms a point to the world frame or a target frame
+    toWorld(point, targetFrame = null) {
+        const compositeTransform = this.getTransformTo(targetFrame);
+
+        // Apply the composite rotation to the point
+        const rotatedPoint = Frame.applyRotationMatrix(point, compositeTransform.rotationMatrix);
+
+        // Apply the composite translation
+        const transformedPoint = {
+            x: rotatedPoint.x + compositeTransform.translation.x,
+            y: rotatedPoint.y + compositeTransform.translation.y,
+            z: rotatedPoint.z + compositeTransform.translation.z
+        };
 
         return transformedPoint;
     }
