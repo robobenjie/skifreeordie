@@ -103,10 +103,10 @@ export default class CharacterModel {
     }
 
     calculate(dt, skiAngle, bendDown, sideLean, overrideAngles = {}) {
-
         let jacket_big_stripe = this.character.jacket && this.character.jacket.data.colors.jacket_big_stripe;
         let jacket_trim = this.character.jacket && this.character.jacket.data.colors.jacket_trim;
         this.kinematicRenderer = new KinematicRenderer(6);
+
         const worldFrame = this.kinematicRenderer.frame();
         const baseFrame = worldFrame.rotate_about_z(skiAngle, "baseFrame");
 

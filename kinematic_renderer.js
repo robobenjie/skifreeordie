@@ -45,6 +45,22 @@ export class Frame {
     }
 
     calculateStaticCachedTransformTo() {
+        // First find the next dynamic parent
+        let nextDynamicParent = this.parent;
+        while (nextDynamicParent !== null && !nextDynamicParent.dynamic) {
+            nextDynamicParent = nextDynamicParent.parent;
+        }
+        
+        // Calculate transform from this frame to the next dynamic parent
+        const transform = this.parent ? this.getTransformTo(nextDynamicParent) : {
+            rotationMatrix: IDENTITY_MATRIX,
+            translation: {x: 0, y: 0, z: 0}
+        };
+
+        this.staticCachedTransformTo = {
+            frame: nextDynamicParent,
+            transform: transform
+        };
     }
 
     getRotationAboutX(rad) {
@@ -83,6 +99,7 @@ export class Frame {
         newFrame.rotationMatrix = this.getRotationAboutX(rad);
         newFrame.name = name;
         newFrame.dynamic = dynamic;
+        newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
             newFrame.update_callback = (rad) => {
                 newFrame.rotationMatrix = this.getRotationAboutX(rad);
@@ -97,6 +114,7 @@ export class Frame {
         newFrame.rotationMatrix = this.getRotationAboutY(rad);
         newFrame.name = name;
         newFrame.dynamic = dynamic;
+        newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
             newFrame.update_callback = (rad) => {
                 newFrame.rotationMatrix = this.getRotationAboutY(rad);
@@ -110,6 +128,7 @@ export class Frame {
         newFrame.rotationMatrix = this.getRotationAboutZ(rad);
         newFrame.name = name;
         newFrame.dynamic = dynamic;
+        newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
             newFrame.update_callback = (rad) => {
                 newFrame.rotationMatrix = this.getRotationAboutZ(rad);
@@ -124,6 +143,7 @@ export class Frame {
         newFrame.translation = { x, y, z };
         newFrame.name = name;
         newFrame.dynamic = dynamic;
+        newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
             newFrame.update_callback = (x, y, z) => {
                 newFrame.translation = { x, y, z };
