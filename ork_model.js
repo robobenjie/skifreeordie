@@ -26,6 +26,18 @@ const SPEAR_WIDTH = 0.2;
 const TIP_LENGTH = 0.6;
 const TIP_WIDTH = 0.3;
 export default class OrkModel {
+
+    update(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {
+        this.model.update(dt, {
+            neg_ski_angle: -skiAngle,
+            crouch_angle: crouchAngle,
+            spear_angle: spearAngle,
+            neg_torso_turn: -torsoTurn,
+            neg_2_crouch_angle: -2 * crouchAngle,
+            hill_angle: HILL_SLOPE * Math.PI / 180 * Math.cos(skiAngle),
+        });
+    }
+
     constructor() {
 
         this.skiColor = "#252422"; // eerie black
@@ -37,15 +49,15 @@ export default class OrkModel {
         this.lightBrown = "#dda15e"; // light brown
         this.red = "#CC444B"; // red
         this.stanceWidth = 0.45;
-
-    }
-
-    calculate(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {
+        let skiAngle = 0;
+        let crouchAngle = 0;
+        let spearAngle = 0;
+        let torsoTurn = 0;
         this.model = new KinematicRenderer(4);
         let worldFrame = this.model.frame();
-        let baseFrame = worldFrame.rotate_about_z(-skiAngle, "baseFrame");
+        let baseFrame = worldFrame.rotate_about_z(-skiAngle, "neg_ski_angle", true);
         const hillAngle = HILL_SLOPE * Math.PI / 180 * Math.cos(skiAngle);
-        const skiFrame = baseFrame.rotate_about_y(hillAngle);
+        const skiFrame = baseFrame.rotate_about_y(hillAngle, "hill_angle", true);
         
         this.model.lineSegment(
             [{x: -SKI_LENGTH / 2, y: -STANCE_WIDTH / 2, z: 0}, {x: SKI_LENGTH / 2, y: -STANCE_WIDTH / 2, z: 0}],
@@ -62,7 +74,7 @@ export default class OrkModel {
             SKI_WIDTH,
             0,
         );
-        const shinFrame = skiFrame.rotate_about_y(crouchAngle);
+        const shinFrame = skiFrame.rotate_about_y(crouchAngle, "crouch_angle", true);
         this.model.lineSegment(
             [{x: 0, y: STANCE_WIDTH / 2, z: 0}, {x: 0, y: STANCE_WIDTH / 2, z: LEG_SEGMENT_LENGTH}],
             shinFrame,
@@ -78,7 +90,7 @@ export default class OrkModel {
             1,
         );
 
-        const thighFrame = shinFrame.translate(0, 0, LEG_SEGMENT_LENGTH).rotate_about_y(-2*crouchAngle);
+        const thighFrame = shinFrame.translate(0, 0, LEG_SEGMENT_LENGTH).rotate_about_y(-2*crouchAngle, "neg_2_crouch_angle", true);
         this.model.lineSegment(
             [{x: 0, y: STANCE_WIDTH / 2, z: 0}, {x: 0, y: STANCE_WIDTH / 2, z: LEG_SEGMENT_LENGTH}],
             thighFrame,
@@ -93,7 +105,7 @@ export default class OrkModel {
             LEG_WIDTH,
             1,
         );
-        const hipFrame = thighFrame.translate(0, 0, LEG_SEGMENT_LENGTH).rotate_about_y(crouchAngle);
+        const hipFrame = thighFrame.translate(0, 0, LEG_SEGMENT_LENGTH).rotate_about_y(crouchAngle, "crouch_angle", true);
         this.model.bodySegment(
             {position: {x: 0, y: -HIP_WIDTH/2, z: 0}, radius: HIP_RADIUS},
             {position: {x: 0, y: HIP_WIDTH/2, z: 0}, radius: HIP_RADIUS},
@@ -101,7 +113,7 @@ export default class OrkModel {
             this.legColor,
             1,
         );
-        const torsoFrame = hipFrame.rotate_about_z(-torsoTurn);
+        const torsoFrame = hipFrame.rotate_about_z(-torsoTurn, "neg_torso_turn", true);
         this.model.ball(
             {x: 0.2, y: 0, z: BELLY_RADIUS},
             BELLY_RADIUS,
@@ -149,7 +161,7 @@ export default class OrkModel {
         );
 
         let rightShoulderFrame = torsoFrame.translate(0.2, SHOULDER_WIDTH / 2 + SHOULDER_RADIUS, 2 * BELLY_RADIUS);
-        rightShoulderFrame = rightShoulderFrame.rotate_about_y(spearAngle).rotate_about_x(WING_ANGLE); 
+        rightShoulderFrame = rightShoulderFrame.rotate_about_y(spearAngle, "spear_angle", true).rotate_about_x(WING_ANGLE); 
         this.model.lineSegment(
             [{x: 0, y: 0, z: 0},
              {x: 0, y: 0, z: -ARM_SEGMENT_LENGTH},
@@ -201,10 +213,6 @@ export default class OrkModel {
             this.red,
             1,
         );
-
-
-
-
     }
 
     draw(ctx) {

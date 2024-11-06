@@ -196,7 +196,7 @@ export class Frame {
         }
 
         // For static transforms, check if we have cached transform to next dynamic parent
-        if (targetFrame === null && this.staticCachedTransformTo) {
+        if (targetFrame === null && this.staticCachedTransformTo && !this.dynamic) {
             const nextDynamicFrame = this.staticCachedTransformTo.frame;
 
             // If no dynamic parent, return cached transform
@@ -747,10 +747,16 @@ export class KinematicRenderer {
             this.components.push([]);
         }
         this.frames = [];
+        this.dynamicFrames = [];
     }
 
-    update(dt) {
+    update(dt, data) {
         this.reset();
+        for (let frame of this.dynamicFrames) {
+            if (frame.name && data[frame.name]) {
+                frame.update_callback(data[frame.name]);
+            }
+        }
         this.calculate();
     }
 
@@ -772,64 +778,62 @@ export class KinematicRenderer {
         return new Frame();
     }
 
-    bodySegment(first_point, second_point, frame, color, layer) {
+    addFrame(frame) {
         if (!this.frames.includes(frame)) {
             this.frames.push(frame);
         }
+        if (frame.dynamic && !this.dynamicFrames.includes(frame)) {
+            this.dynamicFrames.push(frame);
+        }
+        if (frame.parent) {
+            this.addFrame(frame.parent);
+        }
+    }
+
+    bodySegment(first_point, second_point, frame, color, layer) {
+        this.addFrame(frame);
         const segment = new BodySegment(first_point, second_point, frame, color);
         this.addComponent(segment, layer);
         return segment;
     }
 
     lineSegment(points, frame, color, thickness, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const segment = new LineSegment(points, frame, color, thickness);
         this.addComponent(segment, layer);
         return segment;
     }
 
     ball(position, radius, frame, color, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const ball = new Ball(position, radius, frame, color);
         this.addComponent(ball, layer);
         return ball;
     }
 
     polygon(points, frame, color, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const polygon = new Polygon(points, frame, color);
         this.addComponent(polygon, layer);
         return polygon;
     }
 
     circle(radius, frame, color, startAngle = 0, endAngle = 2 * Math.PI, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const circle = new Circle(radius, frame, color, startAngle, endAngle);
         this.addComponent(circle, layer);
         return circle;
     }
 
     hemisphere(radius, liftRadius, frame, color, baseColor, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const hemisphere = new Hemisphere(radius, liftRadius, frame, color, baseColor);
         this.addComponent(hemisphere, layer);
         return hemisphere;
     }
 
     cylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color, layer) {
-        if (!this.frames.includes(frame)) {
-            this.frames.push(frame);
-        }
+        this.addFrame(frame);
         const cylinderProjection = new CylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color);
         this.addComponent(cylinderProjection, layer);
         return cylinderProjection;

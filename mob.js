@@ -574,7 +574,7 @@ class SpearOrc extends Mob {
         }
         torsoTurn = Math.max(Math.min(torsoTurn, Math.PI / 2), -Math.PI / 2);
 
-        this.model.calculate(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount * Math.PI *0.6, torsoTurn);
+        this.model.update(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount * Math.PI *0.6, torsoTurn);
     }
 
     drawShadow(ctx) {
