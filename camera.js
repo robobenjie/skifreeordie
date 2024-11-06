@@ -59,7 +59,7 @@ export class Camera {
             if (!this.startOfGame || this.character.velocity.y > 1) {
                 this.startOfGame = false;
                 this.targetScale = 1.5;
-                this.targetScale = 0.5;
+                //this.targetScale = 0.5;
             } else {
                 this.targetScale = 0.5;
 

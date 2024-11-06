@@ -125,8 +125,8 @@ async function initializeGame() {
 
     let level = undefined;
 
-    character.level = level1;
-    level1.start();
+    //character.level = level1;
+    //level1.start();
 
 
     function update(time) {
