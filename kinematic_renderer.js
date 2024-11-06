@@ -405,8 +405,9 @@ class Hemisphere {
 
     calculate() {
         this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
-        this.sortDepth = getSortDepth(this.positionInWorldFrame);
+
         this.topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
+        this.sortDepth = (getSortDepth(this.positionInWorldFrame) + getSortDepth(this.topPoint)) / 2;
     }
 
     averageX() {
@@ -450,10 +451,15 @@ class Hemisphere {
             x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
             y: unitVector3D.z * CAMERA_UNIT_VECTOR.x - unitVector3D.x * CAMERA_UNIT_VECTOR.z, 
             z: unitVector3D.x * CAMERA_UNIT_VECTOR.y - unitVector3D.y * CAMERA_UNIT_VECTOR.x};
+
+        //const unitInPixels = getXYScreen(unitVector3D);
+        //const angleFromVertical = Math.atan2(unitInPixels[1], unitInPixels[0]) + Math.PI / 2;
+        
         const newVectorEndpoint = {x: this.positionInWorldFrame.x + crossProduct.x, y: this.positionInWorldFrame.y + crossProduct.y, z: this.positionInWorldFrame.z + crossProduct.z};
         const EndPointInPixels = getXYScreen(newVectorEndpoint);
         const vectorAtExtreme = {x: EndPointInPixels[0] - center[0], y: EndPointInPixels[1] - center[1]};
         const vectorToTop = {x: topUnit[0] - center[0], y: topUnit[1] - center[1]};
+
         const angleFromVertical = Math.atan2(vectorAtExtreme.y, vectorAtExtreme.x) + Math.PI / 2;
         let squash = 1 - Math.sqrt(vectorToTop.x * vectorToTop.x + vectorToTop.y * vectorToTop.y) / PIXELS_PER_METER;
 

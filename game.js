@@ -9,10 +9,9 @@ import MobManager from './mob.js';
 import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
 import { getItemsForSale } from './equipment.js';
-import { Frame, BodySegment, Ball, Polygon, KinematicRenderer } from './kinematic_renderer.js';
-import CharacterModel from './character_model.js';
 import { Sword, Sword2, Pistol, SpeedJacket } from './equipment.js';
 import OrkModel from './ork_model.js';
+import GoblinModel from './goblin_model.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -47,6 +46,7 @@ async function initializeGame() {
     let character = new Character(100, 100, particleEngine, treeManager, joystick, camera);
     camera.setCharacter(character);
     let orkModel = new OrkModel();
+    let goblinModel = new GoblinModel();
 
     treeManager.setCamera(camera);
     let mobManager = new MobManager(character, treeManager, particleEngine, camera);
@@ -140,16 +140,17 @@ async function initializeGame() {
         
         //level1.renderScoreCard(ctx);
 
-        /*ctx.save();
-
-        const bendAmount = (Math.sin(time / 100) + 1) / 2;
-
-        const spearAngle = (Math.sin(time / 300) + 1) / 2 * 1.57;
-
-        orkModel.calculate(time / 1000, bendAmount, spearAngle);
+        ctx.save();
+        goblinModel.update(dt, 
+            time / 1000,
+            0.2,
+            time / 300
+        );
         ctx.translate(character.x + 50, character.y + 50);
-        orkModel.draw(ctx);
-        ctx.restore();*/
+        goblinModel.draw(ctx);
+        ctx.restore();
+        requestAnimationFrame(update);
+        return;
 
         // Game Not Paused:
         gameTime += dt;
