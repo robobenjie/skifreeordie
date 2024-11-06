@@ -286,6 +286,12 @@ class LineSegment {
     constructor(points, frame, color, thickness) {
         this.points = points; // Array of points in the local frame of this segment
         this.frame = frame; // Reference frame for the segment
+        this.color = color;
+        this.thickness = thickness;
+        this.calculate();
+    }
+
+    calculate() {
         this.worldPoints = [];
         for (const point of this.points) {
             if (point.frame) {
@@ -294,8 +300,7 @@ class LineSegment {
                 this.worldPoints.push(this.frame.toWorld(point));
             }
         }
-        this.color = color;
-        this.thickness = thickness;
+
         this.sortDepth = getSortDepth(
             {
                 x: (this.worldPoints[0].x + this.worldPoints[1].x) / 2, 
@@ -307,14 +312,7 @@ class LineSegment {
 
     setFrame(frame) {
         this.frame = frame;
-        this.worldPoints = this.points.map(point => frame.toWorld(point));
-        this.sortDepth = getSortDepth(
-            {
-                x: (this.worldPoints[0].x + this.worldPoints[1].x) / 2, 
-                y: (this.worldPoints[0].y + this.worldPoints[1].y) / 2,
-                z: (this.worldPoints[0].z + this.worldPoints[1].z) / 2
-            }
-        );
+        this.calculate();
     }
 
     // Returns points in the world frame
@@ -360,13 +358,17 @@ export class Ball {
         this.radius = radius;
         this.frame = frame;
         this.color = color;
+        this.calculate();
+    }
+
+    calculate() {
         this.worldPosition = this.frame.toWorld(this.position);
         this.sortDepth = getSortDepth(this.worldPosition);
     }
 
     setFrame(frame) {
         this.frame = frame;
-        this.worldPosition = this.frame.toWorld(this.position);
+        this.calculate();
     }
 
     averageX() {
@@ -398,8 +400,13 @@ class Hemisphere {
         this.frame = frame;
         this.color = color;
         this.baseColor = baseColor;
+        this.calculate();
+    }
+
+    calculate() {
         this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
+        this.topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
     }
 
     averageX() {
@@ -436,9 +443,8 @@ class Hemisphere {
 
     draw(ctx) {
         const center = getXYScreen(this.positionInWorldFrame);
-        const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
-        const topUnit = getXYScreen(topPoint);
-        const unitVector3D = {x: topPoint.x - this.positionInWorldFrame.x, y: topPoint.y - this.positionInWorldFrame.y, z: topPoint.z - this.positionInWorldFrame.z};
+        const topUnit = getXYScreen(this.topPoint);
+        const unitVector3D = {x: this.topPoint.x - this.positionInWorldFrame.x, y: this.topPoint.y - this.positionInWorldFrame.y, z: this.topPoint.z - this.positionInWorldFrame.z};
         
         const crossProduct = {
             x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
@@ -454,7 +460,7 @@ class Hemisphere {
         ctx.save(); {
             ctx.translate(center[0], center[1]);
             ctx.rotate(angleFromVertical);
-            if (getSortDepth(this.positionInWorldFrame) > getSortDepth(topPoint)) {
+            if (getSortDepth(this.positionInWorldFrame) > getSortDepth(this.topPoint)) {
                 this.drawLift(ctx, this.liftRadius / this.radius, this.color);
                 this.drawBase(ctx, squash, this.baseColor);
             } else {
@@ -473,15 +479,20 @@ export class Circle {
         this.color = color;
         this.startAngle = startAngle;
         this.endAngle = endAngle;
+        this.calculate();
+    }
+
+    calculate() {
         this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
+        this.topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
     }
 
     draw(ctx) {
         const center = getXYScreen(this.positionInWorldFrame);
-        const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
-        const topUnit = getXYScreen(topPoint);
-        const unitVector3D = {x: topPoint.x - this.positionInWorldFrame.x, y: topPoint.y - this.positionInWorldFrame.y, z: topPoint.z - this.positionInWorldFrame.z};
+
+        const topUnit = getXYScreen(this.topPoint);
+        const unitVector3D = {x: this.topPoint.x - this.positionInWorldFrame.x, y: this.topPoint.y - this.positionInWorldFrame.y, z: this.topPoint.z - this.positionInWorldFrame.z};
         const crossProduct = {
             x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
             y: unitVector3D.z * CAMERA_UNIT_VECTOR.x - unitVector3D.x * CAMERA_UNIT_VECTOR.z, 
@@ -515,9 +526,6 @@ export class CylinderProjection {
         this.frame = frame;
         this.color = color;
         this.points = points;
-        this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
-        this.sortDepth = getSortDepth(this.positionInWorldFrame);
-        this.worldPoints = [];
         this.calculate();
     }
 
@@ -558,10 +566,13 @@ export class CylinderProjection {
     }
 
     calculate() {
+        this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
+        this.sortDepth = getSortDepth(this.positionInWorldFrame);
+        this.worldPoints = [];
         const center = getXYScreen(this.positionInWorldFrame);
-        const topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
-        const topUnit = getXYScreen(topPoint);
-        const unitVector3D = {x: topPoint.x - this.positionInWorldFrame.x, y: topPoint.y - this.positionInWorldFrame.y, z: topPoint.z - this.positionInWorldFrame.z};
+        this.topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
+        const topUnit = getXYScreen(this.topPoint);
+        const unitVector3D = {x: this.topPoint.x - this.positionInWorldFrame.x, y: this.topPoint.y - this.positionInWorldFrame.y, z: this.topPoint.z - this.positionInWorldFrame.z};
         const crossProduct = {
             x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
             y: unitVector3D.z * CAMERA_UNIT_VECTOR.x - unitVector3D.x * CAMERA_UNIT_VECTOR.z, 
@@ -569,7 +580,6 @@ export class CylinderProjection {
         const newVectorEndpoint = {x: this.positionInWorldFrame.x + crossProduct.x, y: this.positionInWorldFrame.y + crossProduct.y, z: this.positionInWorldFrame.z + crossProduct.z};
         const EndPointInPixels = getXYScreen(newVectorEndpoint);
         const vectorAtExtreme = {x: EndPointInPixels[0] - center[0], y: EndPointInPixels[1] - center[1]};
-        const vectorToTop = {x: topUnit[0] - center[0], y: topUnit[1] - center[1]};
         const angleToLargeRadius = Math.atan2(vectorAtExtreme.y, vectorAtExtreme.x) + Math.PI / 2;
         const seamPoint = this.frame.toWorld({x: -1, y: 0, z: 0});
         const seamPointInPixels = getXYScreen(seamPoint);
@@ -608,9 +618,14 @@ export class CylinderProjection {
 
 export class Polygon {
     constructor(points, frame, color) {
-        this.points = points.map(point => frame.toWorld(point));
+        this.points = points;
         this.frame = frame;
         this.color = color;
+        this.calculate();
+    }
+
+    calculate() {
+        this.pointsInWorldFrame = this.points.map(point => this.frame.toWorld(point));
         this.sortDepth = getSortDepth(
             {x: this.averageX(), y: this.averageY(), z: this.averageZ()}
         );
@@ -618,25 +633,25 @@ export class Polygon {
 
     setFrame(frame) {
         this.frame = frame;
-        this.points = this.points.map(point => frame.toWorld(point));
+        this.calculate();
     }
 
     averageX() {
-        return this.points.map(point => point.x).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.pointsInWorldFrame.map(point => point.x).reduce((a, b) => a + b, 0) / this.points.length;
     }   
 
     averageY() {
-        return this.points.map(point => point.y).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.pointsInWorldFrame.map(point => point.y).reduce((a, b) => a + b, 0) / this.points.length;
     }
 
     averageZ() {
-        return this.points.map(point => point.z).reduce((a, b) => a + b, 0) / this.points.length;
+        return this.pointsInWorldFrame.map(point => point.z).reduce((a, b) => a + b, 0) / this.points.length;
     }
 
     draw(ctx) {
         setFillColor(ctx, this.color);
         ctx.beginPath();
-        this.points.forEach(point => {
+        this.pointsInWorldFrame.forEach(point => {
             const [x, y] = getXYScreen(point);
             ctx.lineTo(x, y);
         });
@@ -651,7 +666,11 @@ export class BodySegment {
         this.first_point = first_point;
         this.second_point = second_point;
         this.color = color;
-        this.worldPoints = this.points.map(point => frame.toWorld(point));
+        this.calculate();
+    }
+
+    calculate() {
+        this.worldPoints = this.points.map(point => this.frame.toWorld(point));
         this.sortDepth = getSortDepth(
             {x: this.averageX(), y: this.averageY(), z: this.averageZ()}
         );
@@ -659,10 +678,7 @@ export class BodySegment {
 
     setFrame(frame) {
         this.frame = frame;      
-        this.worldPoints = this.points.map(point => frame.toWorld(point));
-        this.sortDepth = getSortDepth(
-            {x: this.averageX(), y: this.averageY(), z: this.averageZ()}
-        );
+        this.calculate();
     }
 
     averageX() {
@@ -730,6 +746,26 @@ export class KinematicRenderer {
         for (let i = 0; i < num_layers; i++) {
             this.components.push([]);
         }
+        this.frames = [];
+    }
+
+    update(dt) {
+        this.reset();
+        this.calculate();
+    }
+
+    calculate() {
+        for (let layer of this.components) {
+            for (let component of layer) {
+                component.calculate();
+            }
+        }
+    }
+
+    reset() {
+        for (let frame of this.frames) {
+            frame.reset();
+        }
     }
 
     frame() {
@@ -737,42 +773,63 @@ export class KinematicRenderer {
     }
 
     bodySegment(first_point, second_point, frame, color, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const segment = new BodySegment(first_point, second_point, frame, color);
         this.addComponent(segment, layer);
         return segment;
     }
 
     lineSegment(points, frame, color, thickness, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const segment = new LineSegment(points, frame, color, thickness);
         this.addComponent(segment, layer);
         return segment;
     }
 
     ball(position, radius, frame, color, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const ball = new Ball(position, radius, frame, color);
         this.addComponent(ball, layer);
         return ball;
     }
 
     polygon(points, frame, color, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const polygon = new Polygon(points, frame, color);
         this.addComponent(polygon, layer);
         return polygon;
     }
 
     circle(radius, frame, color, startAngle = 0, endAngle = 2 * Math.PI, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const circle = new Circle(radius, frame, color, startAngle, endAngle);
         this.addComponent(circle, layer);
         return circle;
     }
 
     hemisphere(radius, liftRadius, frame, color, baseColor, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const hemisphere = new Hemisphere(radius, liftRadius, frame, color, baseColor);
         this.addComponent(hemisphere, layer);
         return hemisphere;
     }
 
     cylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color, layer) {
+        if (!this.frames.includes(frame)) {
+            this.frames.push(frame);
+        }
         const cylinderProjection = new CylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color);
         this.addComponent(cylinderProjection, layer);
         return cylinderProjection;
