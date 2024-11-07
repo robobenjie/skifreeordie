@@ -29,6 +29,21 @@ export class TerrainManager {
         this.nextTreeIndex = 0;
     }
 
+    rotateAbout(x, y, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        for (let i = 0; i < this.entities.length; i++) {
+            let entity = this.entities[i];
+            let dx = entity.x - x;
+            let dy = entity.y - y;
+            entity.x = x + dx * cos - dy * sin;
+            entity.y = y + dx * sin + dy * cos;
+            if (entity.type === 'skiRunSign') {
+                entity.angle += angle;
+            }
+        }
+    }
+
     setTreePercentage(percentage) {
         this.accumulatedExposedAreaX = 0;
         this.accumulatedExposedAreaY = 0;
@@ -141,10 +156,16 @@ export class TerrainManager {
         const y = this.camera.offBottomOfScreen().y + 400;
         const centerX = this.camera.character.x;
         const spacing = 180; // Adjust this value to change the spacing between signs
+        const angle1 = 30 * Math.PI / 180;
+        const angle2 = 0;
+        const angle3 = -30 * Math.PI / 180;
 
-        this.addSkiRunSign(centerX - spacing, y, level1);
-        this.addSkiRunSign(centerX, y, level2);
-        this.addSkiRunSign(centerX + spacing, y, level3);
+        this.addSkiRunSign(centerX - spacing, y - 50, level1, angle1);
+        level1.setGoalAngle(angle1);
+        this.addSkiRunSign(centerX, y, level2, angle2);
+        level2.setGoalAngle(angle2);
+        this.addSkiRunSign(centerX + spacing, y - 50, level3, angle3);
+        level3.setGoalAngle(angle3);
         this.addTreeLine(centerX - spacing * 1.5, y, centerX - spacing * 3.5, y + 400, 90, .04);
         this.addTreeLine(centerX - spacing * 0.5, y, centerX - spacing * 1.5, y + 600, 120, .02);
         this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 90, .04);
@@ -210,8 +231,8 @@ export class TerrainManager {
         }
     }
 
-    addSkiRunSign(x, y, level) {
-        var sign = new SkiRunSign(x, y, level);
+    addSkiRunSign(x, y, level, angle) {
+        var sign = new SkiRunSign(x, y, level, angle);
         const index = this._findInsertIndex(sign.y);
         this.entities.splice(index, 0, sign);
     }
@@ -409,7 +430,7 @@ export class Tree {
 }
 
 export class SkiRunSign {
-    constructor(x, y, level) {
+    constructor(x, y, level, angle) {
         this.x = x;
         this.y = y;
         this.level = level;
@@ -417,11 +438,15 @@ export class SkiRunSign {
         this.width = 175;
         this.height = 20;
         this.type = "skiRunSign";
+        this.angle = angle;
 
         // Fractional text to avoid anti-aliasing issues
         this.signTextX = 64.01;
         this.signTextY = 20.01;
         this.rightBuffer = 8;
+        
+        // Measure the text width
+        this.textWidth = null;
     }
 
     draw(ctx) {
@@ -429,29 +454,36 @@ export class SkiRunSign {
         const scaleFactor = 175 / this.image.width;
         const scaledHeight = this.image.height * scaleFactor;
 
-        // Draw the scaled image
-        ctx.drawImage(this.image, this.x - this.width / 2, this.y - scaledHeight, this.width, scaledHeight);
-
-
-        // Draw the level name
         ctx.save();
-        ctx.translate(this.x + this.signTextX - this.width / 2, (this.y - scaledHeight) + this.signTextY);
-        ctx.font = "16px 'Roboto Condensed'";
-        ctx.fillStyle = "white";
-        ctx.textAlign = "left";
-        
-        // Measure the text width
-        let textWidth = ctx.measureText(this.level.name).width;
-        
-        // Calculate the scale factor to fit the text
-        let maxWidth = this.width - this.signTextX - this.rightBuffer;
-        let textScaleFactor = Math.min(1, maxWidth / textWidth);
-        
-        // Apply the scaling
-        ctx.scale(textScaleFactor, textScaleFactor);
-        
-        // Draw the text
-        ctx.fillText(this.level.name, 0, 0)
+        ctx.translate(this.x, this.y - scaledHeight + 18);
+        ctx.transform(Math.cos(this.angle), this.angle, 0, 1, 0, 0);
+
+            // Draw the scaled image
+            ctx.drawImage(this.image, -this.width / 2, 0, this.width, scaledHeight);
+
+
+            // Draw the level name
+            ctx.save();
+            ctx.translate(this.signTextX - this.width / 2, this.signTextY);
+                ctx.font = "16px 'Roboto Condensed'";
+                ctx.fillStyle = "white";
+                ctx.textAlign = "left";
+
+                // Measure the text width
+                if (this.textWidth === null) {
+                    this.textWidth = ctx.measureText(this.level.name).width;
+                }
+
+                // Calculate the scale factor to fit the text
+                let maxWidth = this.width - this.signTextX - this.rightBuffer;
+                let textScaleFactor = Math.min(1, maxWidth / this.textWidth);
+
+                // Apply the scaling
+                ctx.scale(textScaleFactor, textScaleFactor);
+
+                // Draw the text
+                ctx.fillText(this.level.name, 0, 0)
+            ctx.restore();
         ctx.restore();
     }
 }

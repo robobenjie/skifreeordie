@@ -63,6 +63,25 @@ class MobManager {
         this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
     }
 
+    rotateAbout(x, y, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        for (let mob of this.mobs) {
+            let dx = mob.x - x;
+            let dy = mob.y - y;
+            mob.x = x + dx * cos - dy * sin;
+            mob.y = y + dx * sin + dy * cos;
+            if (mob.skiPhysics) {
+                mob.skiPhysics.rotateAbout(x, y, angle);
+                mob.skiPhysics.x = mob.x;
+                mob.skiPhysics.y = mob.y;
+            }
+        }
+        for (let trail of this.deadMobTrails) {
+            trail.rotateAbout(x, y, angle);
+        }
+    }
+
     update(dt) {
 
         this.deathEffect.update(dt);

@@ -127,6 +127,12 @@ class SkiPhysics {
         this.forces.push(force);
     }
 
+    rotateAbout(x, y, angle) {
+        for (let trail of this.trails) {
+            trail.rotateAbout(x, y, angle);
+        }
+    }
+
 
     leftSkiCenter() {
         return { x: this.x + this.skiSpacing * 0.3 - this.skiWidth / 2, y: this.y};
@@ -405,6 +411,21 @@ class Trail{
         this.isSnowboard = isSnowboard;
         this.skiWidth = 1;
     }
+
+    rotateAbout(x, y, angle) {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        for (let trail of [this.leftFrontTrail, this.rightFrontTrail, this.leftRearTrail, this.rightRearTrail]) {
+            for (let i = 0; i < trail.length; i++) {
+                let point = trail[i];
+            let dx = point.x - x;
+                let dy = point.y - y;
+                point.x = x + dx * cos - dy * sin;
+                point.y = y + dx * sin + dy * cos;
+            }
+        }
+    }
+
     update(character){
         const leftSkiCenter = character.leftSkiCenter();
         this.skiWidth = character.skiWidth;

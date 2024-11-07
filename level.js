@@ -126,6 +126,8 @@ export class Level {
         this.cashTransferEndTime = -1;
         this.totalTransferEndTime = -1;
         this.cashMoveRate = 200;
+
+        this.goalAngle = 0;
     }
 
     start() {
@@ -154,7 +156,22 @@ export class Level {
         }
     }
 
+    setGoalAngle(angle) {
+        this.goalAngle = angle;
+    }
+
     update(dt) {
+        if (this.goalAngle != 0) {
+            let rotation = 0.2 * dt * Math.sign(this.goalAngle);    
+            this.terrainManager.rotateAbout(this.character.x, this.character.y, -rotation);
+            this.mobManager.rotateAbout(this.character.x, this.character.y, -rotation);
+            this.character.skiPhysics.rotateAbout(this.character.x, this.character.y, -rotation);
+            if (Math.abs(rotation) > Math.abs(this.goalAngle)) {
+                this.goalAngle = 0;
+            } else {
+                this.goalAngle -= rotation;
+            }
+        }
         if (!this.isComplete()) {
             this.time += dt;
         } else {

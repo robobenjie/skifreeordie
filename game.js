@@ -127,8 +127,10 @@ async function initializeGame() {
 
     let level = undefined;
 
-    character.level = level2;
-    character.level.start();
+    //character.level = level2;
+    //character.level.start();
+
+    treeManager.addLevelSelect(level1, level2, level3);
 
     
 
