@@ -162,11 +162,21 @@ export class Level {
 
     update(dt) {
         if (this.goalAngle != 0) {
-            let rotation = 0.2 * dt * Math.sign(this.goalAngle);    
+            console.log("ROtatinG!")
+            // Calculate progress through rotation (0 to 1)
+            const progress = 1 - (Math.abs(this.goalAngle) / (30 * Math.PI / 180));
+            
+            // Ease in/out curve using sine
+            const ease = Math.min(1, (1 - Math.cos(progress * Math.PI)) / 2);
+            
+            // Max rotation speed of 0.2, scaled by ease factor
+            let rotation = 0.2 * dt * Math.sign(this.goalAngle) * (1 - ease);
+            
             this.terrainManager.rotateAbout(this.character.x, this.character.y, -rotation);
             this.mobManager.rotateAbout(this.character.x, this.character.y, -rotation);
             this.character.skiPhysics.rotateAbout(this.character.x, this.character.y, -rotation);
-            if (Math.abs(rotation) > Math.abs(this.goalAngle)) {
+            
+            if (Math.abs(rotation) + 0.2 > Math.abs(this.goalAngle)) {
                 this.goalAngle = 0;
             } else {
                 this.goalAngle -= rotation;
