@@ -32,6 +32,23 @@ export function augmentCtx(ctx) {
     };
 }
 
+export class LowPassFilter {
+    constructor(initialVal, timeConstant, minVal = -Infinity, maxVal = Infinity) {
+        this.value = initialVal;
+        this.timeConstant = timeConstant;
+        this.minVal = minVal;
+        this.maxVal = maxVal;
+    }
+
+    runFilter(dt, newVal) {
+        const alpha = dt / (this.timeConstant + dt);
+        this.value = this.value + alpha * (newVal - this.value);
+        this.value = Math.min(Math.max(this.value, this.minVal), this.maxVal);
+        return this.value;
+    }
+}
+
+
 export function clipPath(path, xmin, xmax) {
     let clippedPath = clipAgainstBoundary(path, xmin, 'xmin');
     clippedPath = clipAgainstBoundary(clippedPath, xmax, 'xmax');

@@ -3,6 +3,8 @@ import {randomCentered} from "./utils.js";
 import Projectile from "./projectile.js";
 import { MobDeathParticleEffect } from "./particle_engine.js";
 import OrkModel from "./ork_model.js";
+import GoblinModel from "./goblin_model.js";
+import TrollModel from "./troll_model.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles, camera
@@ -371,6 +373,7 @@ class AxeBoarderOrc extends Mob {
         this.t = 0;
 
         this.timeSinceAxeThrown = 0;
+        this.model = new TrollModel();
     }
 
     onCollideWithCharacter(character) {
@@ -450,6 +453,12 @@ class AxeBoarderOrc extends Mob {
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
+        let leanAngle = Math.min(Math.max(this.skiPhysics.leanAngle, -0.7), 0.7);
+        const throwPrepFraction = 1 - this.timeSinceAxeThrown / this.AxeThrowInterval;
+
+        const angleToTarget = Math.atan2(this.character.y - this.y, this.character.x - this.x) + Math.PI / 2;
+
+        this.model.update(dt, this.skiPhysics.skiAngle, -leanAngle, angleToTarget, throwPrepFraction);
     }
 
     drawShadow(ctx) {
@@ -462,11 +471,8 @@ class AxeBoarderOrc extends Mob {
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(0, -this.skiPhysics.z * 70);
-
-        this.skiPhysics.drawSkis(ctx, "blue", 0);
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
+            ctx.translate(this.x, this.y - this.skiPhysics.z * 70);
+            this.model.draw(ctx);
         ctx.restore();
         super.draw(ctx);
     }
@@ -602,7 +608,7 @@ class Goblin extends Mob {
         this.maxHealth = 3;
         this.health = 3;
         this.camera = camera;
-        this.colors = ["purple", "brown"]
+        this.colors = ["#D7FFAB", "#9FC2CC", "#9FC2CC", "#1B5299"]
 
         this.terrain = terrain;
         this.snowParticles = snowParticles;
@@ -621,6 +627,11 @@ class Goblin extends Mob {
         this.skiSplay = 0.2;
 
         this.gameTime = 0;
+        this.model = new GoblinModel();
+        this.leftArmAngle = 0;
+        this.rightArmAngle = 0;
+        this.leftArmSpeed = 0.1;
+        this.rightArmSpeed = 0.1;
     }
 
     update(dt) {
@@ -637,6 +648,25 @@ class Goblin extends Mob {
             this.health = 0;
         }
 
+        this.leftArmSpeed += randomCentered(100) * dt;
+        this.rightArmSpeed += randomCentered(100) * dt;
+
+        this.leftArmSpeed *= 0.999;
+        this.rightArmSpeed *= 0.999;
+
+        this.leftArmAngle += this.leftArmSpeed * dt;
+        this.rightArmAngle += this.rightArmSpeed * dt;
+
+        if (this.camera.isOnScreen(this.x, this.y)) {
+            this.model.update(dt, 
+                this.skiPhysics.skiAngle,
+                0.2,
+                this.leftArmAngle,
+                this.rightArmAngle
+            );
+        }
+
+
     }
 
 
@@ -649,16 +679,10 @@ class Goblin extends Mob {
     }
 
     draw(ctx) {
-        this.skiPhysics.drawSkis(ctx, "red", this.skiSplay);
-        ctx.fillStyle = "brown";
-        ctx.fillRect(this.x - this.width / 2, this.y - this.height, this.width, this.height);
-        //Draw green head
-        ctx.fillStyle = 'purple';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y - 2 - this.height, 8, 0, Math.PI * 2);
-        ctx.fill();
-        // draw ears
-        ctx.fillStyle = 'green';
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        this.model.draw(ctx);
+        ctx.restore();
         super.draw(ctx);
     }
 }

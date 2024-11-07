@@ -671,15 +671,26 @@ export class BodySegment {
         this.points = [first_point.position, second_point.position];
         this.first_point = first_point;
         this.second_point = second_point;
+        this.points_for_sort = [];
+        if (first_point.use_for_sort) {
+            this.points_for_sort.push(0);
+        } else if (second_point.use_for_sort) {
+            this.points_for_sort.push(1);
+        } else {
+            this.points_for_sort.push(0);
+            this.points_for_sort.push(1);
+        }
         this.color = color;
         this.calculate();
     }
 
     calculate() {
         this.worldPoints = this.points.map(point => this.frame.toWorld(point));
-        this.sortDepth = getSortDepth(
-            {x: this.averageX(), y: this.averageY(), z: this.averageZ()}
-        );
+        if (this.points_for_sort.length == 1) {
+            this.sortDepth = getSortDepth(this.worldPoints[this.points_for_sort[0]]);
+        } else {
+            this.sortDepth = (getSortDepth(this.worldPoints[this.points_for_sort[0]]) + getSortDepth(this.worldPoints[this.points_for_sort[1]])) / 2;
+        }
     }
 
     setFrame(frame) {

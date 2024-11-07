@@ -12,7 +12,7 @@ const ARM_LENGTH = 0.5;
 const TORSO_LENGTH = 0.5;
 const BELLY_RADIUS = 0.35;
 const SHOULDER_RADIUS = 0.3;
-const HEAD_RADIUS = 0.6;
+const HEAD_RADIUS = 0.75;
 const FACE_RADIUS = 0.2;
 const NOSE_LENGTH = 0.3;
 
@@ -22,9 +22,9 @@ export default class GoblinModel {
 
         this.skiColor = "#1B5299"; // blue
         this.cloakDark = "#331832";
-        this.cloakLight = "#694D75";
+        this.cloakLight = "#9FC2CC"; //"#694D75";
         this.tan = "#F1ECCE"
-        this.lightBlue = "#9FC2CC";
+        this.lightBlue = "#D7FFAB";//"#E9AFA3";
 
         this.model = new KinematicRenderer(4);
         let worldFrame = this.model.frame();
@@ -105,13 +105,13 @@ export default class GoblinModel {
         );
     }
 
-    update(dt, skiAngle, pizzaAngle, armPinwheelAngle) {
+    update(dt, skiAngle, pizzaAngle, armPinwheelAngle1, armPinwheelAngle2) {
         this.model.update(dt, {
             neg_ski_angle: -skiAngle,
             left_ski_angle: -pizzaAngle,
             right_ski_angle: pizzaAngle,
-            left_arm_angle: armPinwheelAngle,
-            right_arm_angle: armPinwheelAngle,
+            left_arm_angle: armPinwheelAngle1,
+            right_arm_angle: armPinwheelAngle2,
         });
     }
 
