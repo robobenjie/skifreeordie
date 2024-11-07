@@ -728,7 +728,14 @@ export class BodySegment {
         const perpX = dy / norm;
         const perpY = -dx / norm;
         
-        setFillColor(ctx, this.color);
+        if (this.first_point.color || this.second_point.color) {
+            const gradient = ctx.createLinearGradient(x1, y1, x2, y2);
+            gradient.addColorStop(0, this.first_point.color || this.color);
+            gradient.addColorStop(1, this.second_point.color || this.color);
+            setFillColor(ctx, gradient);
+        } else {
+            setFillColor(ctx, this.color);
+        }
 
         
         // Draw the first circle
@@ -751,6 +758,7 @@ export class BodySegment {
             ctx.moveTo(x2, y2);
             ctx.arc(x2, y2, r2, 0, 2 * Math.PI);
         }
+        
         ctx.fill();
     }
 

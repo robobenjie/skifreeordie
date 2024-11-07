@@ -63,8 +63,7 @@ async function initializeGame() {
 
 
     character.equip(Sword, "left_hand");
-
-    //character.equip(Pistol, "right_hand");
+    character.equip(Pistol, "right_hand");
 
     // Fetch the SVG outside the update loop
     (async () => {
@@ -141,8 +140,6 @@ async function initializeGame() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        
 
         // Game Not Paused:
         gameTime += dt;

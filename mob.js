@@ -337,7 +337,6 @@ class Mob {
 class AxeBoarderOrc extends Mob {
     constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 5, 8, 25, 'orange', character, deathEffect);
-        this.colors = ["orange", "yellow", "green"]
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 25, terrain, this.mass, camera);
@@ -374,6 +373,7 @@ class AxeBoarderOrc extends Mob {
 
         this.timeSinceAxeThrown = 0;
         this.model = new TrollModel();
+        this.colors = this.model.getColors();
     }
 
     onCollideWithCharacter(character) {
@@ -472,6 +472,7 @@ class AxeBoarderOrc extends Mob {
     draw(ctx) {
         ctx.save();
             ctx.translate(this.x, this.y - this.skiPhysics.z * 70);
+            ctx.scale(0.8, 0.8);
             this.model.draw(ctx);
         ctx.restore();
         super.draw(ctx);
