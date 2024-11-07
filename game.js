@@ -7,7 +7,7 @@ import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import Shop from './shop.js';
-import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks } from './level.js';
+import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks, BlackDiamond} from './level.js';
 import { getItemsForSale } from './equipment.js';
 import { Sword, Sword2, Pistol, SpeedJacket } from './equipment.js';
 import OrkModel from './ork_model.js';
@@ -111,6 +111,7 @@ async function initializeGame() {
     let level1 = new BlueSquareSpearOrks(treeManager, mobManager, camera, character);
     let level2 = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
     let level3 = new DoubleBlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
+    let level4 = new BlackDiamond(treeManager, mobManager, camera, character);
     character.update(0.01, ctx);
     camera.update(0.01);
 
@@ -126,7 +127,7 @@ async function initializeGame() {
 
     let level = undefined;
 
-    character.level = level2;
+    character.level = level4;
     character.level.start();
 
     
