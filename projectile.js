@@ -1,4 +1,5 @@
 import { setFillColor } from "./utils.js";
+import { AxeModel } from "./troll_model.js";
 
 export class Projectile {
     constructor(x, y, damage, velocity, camera) {
@@ -60,6 +61,26 @@ export class Projectile {
         setFillColor(ctx, 'rgba(50,50, 50)');
         ctx.fill();
         ctx.closePath();
+    }
+}
+
+export class AxeProjectile extends Projectile {
+    constructor(x, y, damage, velocity, camera) {
+        super(x, y, damage, velocity, camera);
+        this.heading = Math.atan2(velocity.y, velocity.x);
+        this.model = new AxeModel(this.heading);
+    }
+
+    update(dt) {
+        super.update(dt);
+        this.model.update(dt);
+    }
+
+    draw(ctx) {
+        ctx.save();
+            ctx.translate(this.x, this.y - this.z * 0.5);
+            this.model.draw(ctx);
+        ctx.restore();
     }
 }
 

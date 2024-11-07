@@ -26,6 +26,7 @@ const SPEAR_BELOW = 0.25;
 const SPEAR_WIDTH = 0.2;
 const TIP_LENGTH = 0.6;
 const TIP_WIDTH = 0.3;
+
 export default class OrkModel {
 
     update(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {

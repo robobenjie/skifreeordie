@@ -1,6 +1,6 @@
 import SkiPhysics from "./skiPhysics.js";
 import {randomCentered} from "./utils.js";
-import Projectile from "./projectile.js";
+import {Projectile, AxeProjectile} from "./projectile.js";
 import { MobDeathParticleEffect } from "./particle_engine.js";
 import OrkModel from "./ork_model.js";
 import GoblinModel from "./goblin_model.js";
@@ -395,7 +395,7 @@ class AxeBoarderOrc extends Mob {
             console.log("Throwing axe");
             this.timeSinceAxeThrown = 0;
             let angle = Math.atan2(this.character.y - this.y, this.character.x - this.x);
-            let projectile = new Projectile(
+            let projectile = new AxeProjectile(
                 this.x, 
                 this.y, 
                 5,
