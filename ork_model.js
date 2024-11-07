@@ -1,4 +1,5 @@
 import { KinematicRenderer } from './kinematic_renderer.js';
+import { LowPassFilter } from './utils.js';
 
 const STANCE_WIDTH = 0.45;
 const SKI_LENGTH = 3.0;
@@ -28,6 +29,8 @@ const TIP_WIDTH = 0.3;
 export default class OrkModel {
 
     update(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {
+        torsoTurn = this.torsoFilter.runFilter(dt, torsoTurn);
+        spearAngle = this.spearFilter.runFilter(dt, spearAngle);
         this.model.update(dt, {
             neg_ski_angle: -skiAngle,
             crouch_angle: crouchAngle,
@@ -39,6 +42,9 @@ export default class OrkModel {
     }
 
     constructor() {
+
+        this.torsoFilter = new LowPassFilter(0, 0.2, -1.4, 1.4);
+        this.spearFilter = new LowPassFilter(0, 0.5);
 
         this.skiColor = "#252422"; // eerie black
         this.shirtColor = "#252422"; // eerie black
