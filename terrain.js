@@ -456,46 +456,52 @@ export class SkiRunSign {
         this.signTextX = 64.01;
         this.signTextY = 20.01;
         this.rightBuffer = 8;
+
+        // Create offscreen canvas for prerendering
+        this.offscreenCanvas = document.createElement('canvas');
         
-        // Measure the text width
-        this.textWidth = null;
+        // Wait for image to load before rendering
+        this.image.onload = () => {
+            const scaleFactor = 175 / this.image.width;
+            const scaledHeight = this.image.height * scaleFactor;
+            
+            this.offscreenCanvas.width = this.width;
+            this.offscreenCanvas.height = scaledHeight;
+            const offCtx = this.offscreenCanvas.getContext('2d');
+
+            // Draw the scaled image
+            offCtx.drawImage(this.image, 0, 0, this.width, scaledHeight);
+
+            // Draw the level name
+            offCtx.save();
+            offCtx.translate(this.signTextX, this.signTextY);
+            offCtx.font = "16px 'Roboto Condensed'";
+            offCtx.fillStyle = "white";
+            offCtx.textAlign = "left";
+
+            // Measure and scale text
+            const textWidth = offCtx.measureText(this.level.name).width;
+            const maxWidth = this.width - this.signTextX - this.rightBuffer;
+            const textScaleFactor = Math.min(1, maxWidth / textWidth);
+
+            // Apply the scaling and draw text
+            offCtx.scale(textScaleFactor, textScaleFactor);
+            offCtx.fillText(this.level.name, 0, 0);
+            offCtx.restore();
+        };
     }
 
     draw(ctx) {
-        // Calculate the scale factor to maintain aspect ratio
         const scaleFactor = 175 / this.image.width;
         const scaledHeight = this.image.height * scaleFactor;
 
         ctx.save();
         ctx.translate(this.x, this.y - scaledHeight + 18);
         ctx.transform(Math.cos(this.angle), this.angle, 0, 1, 0, 0);
-
-            // Draw the scaled image
-            ctx.drawImage(this.image, -this.width / 2, 0, this.width, scaledHeight);
-
-
-            // Draw the level name
-            ctx.save();
-            ctx.translate(this.signTextX - this.width / 2, this.signTextY);
-                ctx.font = "16px 'Roboto Condensed'";
-                ctx.fillStyle = "white";
-                ctx.textAlign = "left";
-
-                // Measure the text width
-                if (this.textWidth === null) {
-                    this.textWidth = ctx.measureText(this.level.name).width;
-                }
-
-                // Calculate the scale factor to fit the text
-                let maxWidth = this.width - this.signTextX - this.rightBuffer;
-                let textScaleFactor = Math.min(1, maxWidth / this.textWidth);
-
-                // Apply the scaling
-                ctx.scale(textScaleFactor, textScaleFactor);
-
-                // Draw the text
-                ctx.fillText(this.level.name, 0, 0)
-            ctx.restore();
+        
+        // Draw the prerendered canvas
+        ctx.drawImage(this.offscreenCanvas, -this.width / 2, 0);
+        
         ctx.restore();
     }
 }
