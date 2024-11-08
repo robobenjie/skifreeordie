@@ -149,7 +149,6 @@ export class TerrainManager {
     }
 
     drawUnder(ctx) {
-        ctx.fillStyle = "#E8E8F0";
         for (let entity of this.entities) {
             if (entity.drawUnder) {
                 entity.drawUnder(ctx);
@@ -430,14 +429,26 @@ export class Tree {
     }
 
     drawUnder(ctx) {
-        // We set the fill style out of the loop because it is surprisingly expensive
-        ctx.save();
-        ctx.translate(this.x + this.width/2, this.y);
-        ctx.scale(1, 0.5);
-        ctx.beginPath();
-        ctx.arc(0, 0, this.coneWidth * 0.6, 0, 2 * Math.PI);
-        ctx.fill();
-        ctx.restore();
+        if (!this._underCanvas) {
+            // Create and setup the offscreen canvas
+            this._underCanvas = document.createElement('canvas');
+            const size = this.coneWidth * 1.2; // Account for the 0.6 scale and some padding
+            this._underCanvas.width = size;
+            this._underCanvas.height = size / 2; // Account for 0.5 vertical scale
+            
+            const offCtx = this._underCanvas.getContext('2d');
+            offCtx.scale(1.0, 0.5);
+            offCtx.fillStyle = "#E8E8F0";
+            offCtx.beginPath();
+            offCtx.arc(size/2, size/2, this.coneWidth * 0.4, 0, 2 * Math.PI);
+            offCtx.fill();
+        }
+        
+        ctx.drawImage(
+            this._underCanvas, 
+            this.x + this.width/2 - this._underCanvas.width/2,
+            this.y - this._underCanvas.height/2
+        );
     }
 }
 
