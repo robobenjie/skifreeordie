@@ -62,8 +62,8 @@ async function initializeGame() {
 
 
 
-    character.equip(Sword, "left_hand");
-    character.equip(Pistol, "right_hand");
+    //character.equip(Sword, "left_hand");
+    //character.equip(Pistol, "right_hand");
 
     // Fetch the SVG outside the update loop
     (async () => {
@@ -110,7 +110,7 @@ async function initializeGame() {
 
     let level1 = new BlueSquareSpearOrks(treeManager, mobManager, camera, character);
     let level2 = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
-    let level3 = new DoubleBlackDiamondSnowBoarder(treeManager, mobManager, camera, character);
+    let level3 = new GreenCircle(treeManager, mobManager, camera, character);
     let level4 = new BlackDiamond(treeManager, mobManager, camera, character);
     character.update(0.01, ctx);
     camera.update(0.01);

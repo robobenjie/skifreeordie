@@ -455,44 +455,56 @@ class Trail{
     }
 
     draw(ctx){
+        setFillColor(ctx, this.color);
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = this.skiWidth/2;
         // Draw the left trail:
         if (this.leftFrontTrail.length < 2) {
             return;
         }
         ctx.beginPath();
-        ctx.moveTo(this.leftFrontTrail[0].x, this.leftFrontTrail[0].y);
-        for (let i = 1; i < this.leftFrontTrail.length; i++) {
-            ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+        let firstPoint = false;
+        let onScreenPoints = [];
+        for (let i = 0; i < this.leftFrontTrail.length; i++) {
+            if (this.camera.isOnScreen(this.leftFrontTrail[i].x, this.leftFrontTrail[i].y, 60)) {
+                onScreenPoints.push(i);
+                if (!firstPoint) {
+                    ctx.moveTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+                    firstPoint = true;
+                } else {
+                    ctx.lineTo(this.leftFrontTrail[i].x + 1, this.leftFrontTrail[i].y);
+                }
+            }
         }
         // backwards on leftBackTrail
-        for (let i = this.leftRearTrail.length - 1; i >= 0; i--) {
-            ctx.lineTo(this.leftRearTrail[i].x - 1, this.leftRearTrail[i].y);
+        for (let i = onScreenPoints.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.leftRearTrail[onScreenPoints[i]].x - 1, this.leftRearTrail[onScreenPoints[i]].y);
         }
-        ctx.closePath();
-        setFillColor(ctx, this.color);
-        ctx.fill();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = this.skiWidth/2;
-        ctx.stroke();
+
         if (this.isSnowboard) {
+            ctx.fill();
+            ctx.stroke();
             return
         }
 
         // Draw the right trail:
-        ctx.beginPath();
-        ctx.moveTo(this.rightFrontTrail[0].x, this.rightFrontTrail[0].y);
-        for (let i = 1; i < this.rightFrontTrail.length; i++) {
-            ctx.lineTo(this.rightFrontTrail[i].x + 1, this.rightFrontTrail[i].y);
+
+
+
+        firstPoint = false;
+        for (let i = 0; i < onScreenPoints.length; i++) {
+            if (!firstPoint) {
+                ctx.moveTo(this.rightFrontTrail[onScreenPoints[i]].x + 1, this.rightFrontTrail[onScreenPoints[i]].y);
+                firstPoint = true;
+            } else {
+                ctx.lineTo(this.rightFrontTrail[onScreenPoints[i]].x + 1, this.rightFrontTrail[onScreenPoints[i]].y);
+            }
         }
         // backwards on rightBackTrail
-        for (let i = this.rightRearTrail.length - 2; i >= 0; i--) {
-            ctx.lineTo(this.rightRearTrail[i].x -1, this.rightRearTrail[i].y);
+        for (let i = onScreenPoints.length - 1; i >= 0; i--) {
+            ctx.lineTo(this.rightRearTrail[onScreenPoints[i]].x - 1, this.rightRearTrail[onScreenPoints[i]].y);
         }
-        ctx.closePath();
-        setFillColor(ctx, this.color);
         ctx.fill();
-        ctx.strokeStyle = this.color;
-        ctx.lineWidth = this.skiWidth/2;
         ctx.stroke();
     }
 

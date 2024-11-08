@@ -13,6 +13,10 @@ export class Camera {
 
         this.canvasWidth = 0;
         this.canvasHeight = 0;
+        this._topOfScreen = 0;
+        this._bottomOfScreen = 0;
+        this._leftOfScreen = 0;
+        this._rightOfScreen = 0;
 
     }
 
@@ -66,6 +70,10 @@ export class Camera {
             }
         }
         this.scale += (this.targetScale - this.scale) * 1.3 * dt;
+        this._topOfScreen = (0 - this.canvasHeight * this.characterFraction) * this.scale + this.y;
+        this._bottomOfScreen = (this.canvasHeight - this.canvasHeight * this.characterFraction) * this.scale + this.y;
+        this._leftOfScreen = (-this.canvasWidth / 2) * this.scale + this.x;
+        this._rightOfScreen = (this.canvasWidth / 2) * this.scale + this.x;
     }
 
 
@@ -135,23 +143,23 @@ export class Camera {
     }
 
     topOfScreen() {
-        return (0 - this.canvasHeight * this.characterFraction) * this.scale + this.y;
+        return this._topOfScreen;
     }
 
     bottomOfScreen() {
-        return (this.canvasHeight - this.canvasHeight * this.characterFraction) * this.scale + this.y;
+        return this._bottomOfScreen;
     }
 
     leftOfScreen() {
-        return (-this.canvasWidth / 2) * this.scale + this.x;
+        return this._leftOfScreen;
     }
 
     rightOfScreen() {
-        return (this.canvasWidth / 2) * this.scale + this.x;
+        return this._rightOfScreen;
     }
 
     isOnScreen(x, y, buffer = 0) {
-        return x > this.leftOfScreen() - buffer && x < this.rightOfScreen() + buffer && y > this.topOfScreen() - buffer && y < this.bottomOfScreen() + buffer;
+        return x > this._leftOfScreen - buffer && x < this._rightOfScreen + buffer && y > this._topOfScreen - buffer && y < this._bottomOfScreen + buffer;
     }
 
 

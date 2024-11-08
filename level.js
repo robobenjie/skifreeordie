@@ -162,15 +162,15 @@ export class Level {
 
     update(dt) {
         if (this.goalAngle != 0) {
-            console.log("ROtatinG!")
             // Calculate progress through rotation (0 to 1)
             const progress = 1 - (Math.abs(this.goalAngle) / (30 * Math.PI / 180));
             
             // Ease in/out curve using sine
             const ease = Math.min(1, (1 - Math.cos(progress * Math.PI)) / 2);
+            const easeInOut = Math.sin(ease * Math.PI / 2);
             
             // Max rotation speed of 0.2, scaled by ease factor
-            let rotation = 0.2 * dt * Math.sign(this.goalAngle) * (1 - ease);
+            let rotation = 0.3 * dt * Math.sign(this.goalAngle) * (1 - easeInOut);
             
             this.terrainManager.rotateAbout(this.character.x, this.character.y, -rotation);
             this.mobManager.rotateAbout(this.character.x, this.character.y, -rotation);

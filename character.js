@@ -58,7 +58,7 @@ class Character {
 
         // set up state vars
         this.health = this.maxHealth;
-        this.medals = 526;
+        this.medals = 0;
         this.completedLevels = 0;
 
         this.joystick.addTapListener(() => {
@@ -398,22 +398,21 @@ class Character {
         ctx.fillRect(padding_x, padding_y + 2, healthWidth, 4);
 
         // Draw medals
-        if (this.medals > 0) {
-            const medalEmoji = '🏅';
-            const medalText = `${medalEmoji}${Math.round(this.medals)}`;
-            const medalY = padding_y + height + 10;
-            
-            ctx.font = '300 18px Oswald'    
-            ctx.textBaseline = 'top';
-            ctx.textAlign = 'right';
-            
-            const medalX = this.camera.getCanvasWidth() - padding_x;
-            
-            ctx.fillStyle = 'black';
-            ctx.fillText(medalText, medalX, medalY);
-            ctx.textBaseline = 'alphabetic';
-            ctx.textAlign = 'left';
-        }
+        const medalEmoji = '🏅';
+        const medalText = `${medalEmoji}${Math.round(this.medals)}`;
+        const medalY = padding_y + height + 10;
+        
+        ctx.font = '300 18px Oswald'    
+        ctx.textBaseline = 'top';
+        ctx.textAlign = 'right';
+        
+        const medalX = this.camera.getCanvasWidth() - padding_x;
+        
+        ctx.fillStyle = 'black';
+        ctx.fillText(medalText, medalX, medalY);
+        ctx.textBaseline = 'alphabetic';
+        ctx.textAlign = 'left';
+
     }
 
     draw(ctx) {
