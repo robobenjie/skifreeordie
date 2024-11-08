@@ -364,6 +364,19 @@ export class Tree {
         this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
         this.numCones = Math.floor(3 + randomCentered(1.0));
         this.active = false;
+
+        // Create and setup the offscreen canvas
+        this._underCanvas = document.createElement('canvas');
+        const size = this.coneWidth * 1.2; // Account for the 0.6 scale and some padding
+        this._underCanvas.width = size;
+        this._underCanvas.height = size / 2; // Account for 0.5 vertical scale
+        
+        const offCtx = this._underCanvas.getContext('2d');
+        offCtx.scale(1.0, 0.5);
+        offCtx.fillStyle = "#E8E8F0";
+        offCtx.beginPath();
+        offCtx.arc(size/2, size/2, this.coneWidth * 0.4, 0, 2 * Math.PI);
+        offCtx.fill();
     }
 
     reset(x, y) {
@@ -429,21 +442,6 @@ export class Tree {
     }
 
     drawUnder(ctx) {
-        if (!this._underCanvas) {
-            // Create and setup the offscreen canvas
-            this._underCanvas = document.createElement('canvas');
-            const size = this.coneWidth * 1.2; // Account for the 0.6 scale and some padding
-            this._underCanvas.width = size;
-            this._underCanvas.height = size / 2; // Account for 0.5 vertical scale
-            
-            const offCtx = this._underCanvas.getContext('2d');
-            offCtx.scale(1.0, 0.5);
-            offCtx.fillStyle = "#E8E8F0";
-            offCtx.beginPath();
-            offCtx.arc(size/2, size/2, this.coneWidth * 0.4, 0, 2 * Math.PI);
-            offCtx.fill();
-        }
-        
         ctx.drawImage(
             this._underCanvas, 
             this.x + this.width/2 - this._underCanvas.width/2,

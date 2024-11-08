@@ -689,8 +689,9 @@ export class BodySegment {
         if (this.points_for_sort.length == 1) {
             this.sortDepth = getSortDepth(this.worldPoints[this.points_for_sort[0]]);
         } else {
-            this.sortDepth = (getSortDepth(this.worldPoints[this.points_for_sort[0]]) + getSortDepth(this.worldPoints[this.points_for_sort[1]])) / 2;
+            this.sortDepth = getSortDepth(this.averageX(), this.averageY(), this.averageZ());
         }
+        
     }
 
     setFrame(frame) {
