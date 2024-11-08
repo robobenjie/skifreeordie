@@ -315,10 +315,18 @@ class Character {
                 if (entity.type == "tree") {
                     const damage = Math.max((Math.abs(this.velocity.y) - 100) * 0.01, 0);
                     this.damage(damage);
-                    this.skiPhysics.setVelocity({
-                        x: this.skiPhysics.skiUnitVector.x * 10,
-                        y: this.skiPhysics.skiUnitVector.y * 10
-                    });
+   
+                    // Get vector from character to tree
+                    const treeVector = {
+                        x: entity.x - this.x,
+                        y: entity.y - this.y
+                    };
+                    // Get dot product of velocity and tree vector
+                    const dotProduct = this.velocity.x * treeVector.x + this.velocity.y * treeVector.y;
+                    // If moving toward tree, limit speed
+                    if (dotProduct > 0) {
+                        this.skiPhysics.limitSpeed(0.5);
+                    }
                 }
                 if (entity.type == "jumpRamp") {
                     this.skiPhysics.rampJump()

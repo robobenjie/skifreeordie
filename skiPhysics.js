@@ -108,6 +108,15 @@ class SkiPhysics {
         this.velocity = velocity;
     }
 
+    limitSpeed(maxSpeed) {
+        const speed = Math.sqrt(this.velocity.x * this.velocity.x + this.velocity.y * this.velocity.y);
+        const scale = maxSpeed / speed;
+        if (scale < 1) {
+            this.velocity.x *= scale;
+            this.velocity.y *= scale;
+        }
+    }
+
     rampJump() {
         this.jump(this.rampJumpFactor * this.velocity.y);
     }

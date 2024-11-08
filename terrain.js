@@ -148,6 +148,16 @@ export class TerrainManager {
         this.removeEntitiesByPosition(removalThresholdY);
     }
 
+    drawUnder(ctx) {
+        ctx.fillStyle = "#E8E8F0";
+        for (let entity of this.entities) {
+            if (entity.drawUnder) {
+                entity.drawUnder(ctx);
+            }
+        }
+        ctx.fill();
+    }
+
     setGetLevelsCallback(callback) {
         this.getLevelsCallback = callback;
     }
@@ -161,15 +171,17 @@ export class TerrainManager {
         const angle3 = -30 * Math.PI / 180;
 
         this.addSkiRunSign(centerX - spacing, y - 50, level1, angle1);
-        level1.setGoalAngle(angle1);
+        level1.setGoalAngle(angle1 * 1.5);
         this.addSkiRunSign(centerX, y, level2, angle2);
         level2.setGoalAngle(angle2);
         this.addSkiRunSign(centerX + spacing, y - 50, level3, angle3);
-        level3.setGoalAngle(angle3);
-        this.addTreeLine(centerX - spacing * 1.5, y, centerX - spacing * 3.5, y + 400, 90, .04);
+        level3.setGoalAngle(angle3 * 1.5);
+        this.addTreeLine(centerX - spacing * 1.5, y - 150, centerX - spacing * 4.5, y + 400, 150, .03);
+        this.addTreeLine(centerX + spacing * 1.5, y - 150, centerX + spacing * 4.5, y + 400, 150, .03);
+
         this.addTreeLine(centerX - spacing * 0.5, y, centerX - spacing * 1.5, y + 600, 120, .02);
-        this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 90, .04);
-        this.addTreeLine(centerX + spacing * 1.5, y, centerX + spacing * 4.5, y + 400, 120, .02);
+        this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 120, .02);
+
 
     }
 
@@ -418,8 +430,8 @@ export class Tree {
     }
 
     drawUnder(ctx) {
+        // We set the fill style out of the loop because it is surprisingly expensive
         ctx.save();
-        ctx.fillStyle = "#E8E8F0";
         ctx.translate(this.x + this.width/2, this.y);
         ctx.scale(1, 0.5);
         ctx.beginPath();

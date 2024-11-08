@@ -12,11 +12,7 @@ class Renderer {
         // Draw ground effects first
         this.ctx.save();
         this.camera.applyTransform(this.ctx);
-        for (let entity of this.treeManager.entities) {
-            if (entity.drawUnder) {
-                entity.drawUnder(this.ctx);
-            }
-        }
+        this.treeManager.drawUnder(this.ctx);
         this.character.drawTrail(this.ctx);
         this.character.drawShadow(this.ctx);
         this.mobManager.drawUnderMob(this.ctx);
