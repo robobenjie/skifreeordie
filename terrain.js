@@ -387,6 +387,33 @@ export class Tree {
         this.active = true;
     }
 
+    // Who knows. AI did this for me.
+    calculateTheta(r1, r2, h1, d) {
+        // Calculate phi
+        const phi = Math.atan(h1 / r1);
+      
+        // Compute the numerator and denominator for the arcsine argument
+        const numerator = -(h1 - d) * r1;
+        const denominator = r2 * Math.sqrt(r1 * r1 + h1 * h1);
+      
+        // Calculate the ratio for the arcsine function
+        const ratio = numerator / denominator;
+      
+        // Ensure the ratio is within the valid domain of asin [-1, 1]
+        if (ratio < -1 || ratio > 1) {
+          throw new Error("Invalid input: The value inside arcsin is out of the valid range [-1, 1].");
+        }
+      
+        // Calculate the arcsine part
+        const arcsinPart = Math.asin(ratio);
+      
+        // Compute theta
+        const theta = phi + arcsinPart;
+      
+        // Return theta in radians
+        return theta;
+      }
+
     draw(ctx) {
 
         setFillColor(ctx, "#8B4513");

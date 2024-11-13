@@ -36,7 +36,7 @@ window.addEventListener('load', function () {
 async function initializeGame() {
     let canvas = document.getElementById('gameCanvas');
     let camera = new Camera(canvas);
-    let ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext("2d", { alpha: false});
     //augmentCtx(ctx);
     let lastTime = 0; // For delta time calculation
     let gameTime = 0; // Total time elapsed since start
@@ -140,7 +140,6 @@ async function initializeGame() {
 
         let dt = (time - lastTime) / 1000.0;
         dt = Math.min(dt, 0.050);
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "#F4F4F8"
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
