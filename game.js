@@ -132,6 +132,14 @@ async function initializeGame() {
 
     treeManager.addLevelSelect(level1, level2, level3);
 
+    const rs = [80, 100, 150];
+    for (let r of rs) {
+        let theta = Math.random() * 2 * Math.PI;
+        let x = character.x + r * Math.cos(theta);
+        let y = character.y + r * Math.sin(theta);
+        treeManager.addTree(x, y);
+    }
+
     
 
 

@@ -519,9 +519,6 @@ export default class CharacterModel {
             2,
         );
 
-
-        let headFrame2 = headFrame.translate(0, 0, 1);
-
         this.kinematicRenderer.cylinderProjection(
             GOGGLE_RADIUS,GOGGLE_RADIUS, GOGGLE_RADIUS, GOGGLE_RADIUS,
             GOGGLE_HEIGHT,
