@@ -89,7 +89,40 @@ class ParticleEngineBase {
     }
 }
 
-class ParticleEngine extends ParticleEngineBase {
+class SkiSnowParticle extends Particle {
+    constructor(x, y, velocity, lifetime) {
+        super(x, y, velocity, lifetime);
+        this.color = 'rgba(255, 255, 255, 0.7)';
+    }
+
+    draw(ctx) {
+        if (!this.active) return;
+        ctx.moveTo(this.position.x, this.position.y + 3);
+        ctx.arc(this.position.x, this.position.y, 3, 0, Math.PI * 2);
+    }
+
+
+}
+
+export class SkiSnowParticleEffect extends ParticleEngineBase {
+    constructor(maxParticles) {
+        super(maxParticles, SkiSnowParticle);
+    }
+
+    // Draw all active particles
+    draw(ctx) {
+        setFillColor(ctx, 'rgba(255, 255, 255, 0.7)');
+        ctx.beginPath();
+        for (let particle of this.particles) {
+            if (particle.active) {
+                particle.draw(ctx);
+            }
+        }
+        ctx.fill();
+    }
+}
+
+export class ParticleEngine extends ParticleEngineBase {
     constructor(maxParticles) {
         super(maxParticles, Particle);
     }

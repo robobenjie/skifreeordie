@@ -2,7 +2,7 @@ import { augmentCtx } from './utils.js';
 import VirtualJoystick from './joystick.js';
 import Character from './character.js';
 import { Camera } from './camera.js';
-import ParticleEngine from './particle_engine.js';
+import { ParticleEngine, SkiSnowParticleEffect } from './particle_engine.js';
 import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
@@ -42,7 +42,7 @@ async function initializeGame() {
     let gameTime = 0; // Total time elapsed since start
 
     let joystick = new VirtualJoystick(canvas);
-    let particleEngine = new ParticleEngine(1000);
+    let particleEngine = new SkiSnowParticleEffect(1000);
     let treeManager = new TerrainManager(canvas);
     let character = new Character(100, 100, particleEngine, treeManager, joystick, camera);
     camera.setCharacter(character);
@@ -132,9 +132,9 @@ async function initializeGame() {
 
     treeManager.addLevelSelect(level1, level2, level3);
 
-    const rs = [80, 100, 150];
+    const rs = [80, 100];
     for (let r of rs) {
-        let theta = Math.random() * 2 * Math.PI;
+        let theta = Math.random() * Math.PI;
         let x = character.x + r * Math.cos(theta);
         let y = character.y + r * Math.sin(theta);
         treeManager.addTree(x, y);
