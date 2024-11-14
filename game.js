@@ -102,6 +102,7 @@ async function initializeGame() {
         character.x = rect.width / 2;
         character.y = rect.height / 4;
     }
+    resizeCanvas();
 
     // resetOnFocus
     window.onfocus = function() {

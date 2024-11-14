@@ -128,6 +128,13 @@ export class Level {
         this.cashMoveRate = 200;
 
         this.goalAngle = 0;
+
+        // Create offscreen canvas for title card
+        this.titleCanvas = document.createElement('canvas');
+        this.titleCanvas.width = this.camera.getCanvasWidth();
+        this.titleCanvas.height = 150; // Height enough for title card
+        this.titleCtx = this.titleCanvas.getContext('2d');
+        this.preRenderTitleCard();
     }
 
     start() {
@@ -138,6 +145,7 @@ export class Level {
         this.terrainManager.setJumpRampPercentage(this.jumpRampPercentage);
         this.numAxeOrcs = this.axeOrcs.length;
         this.numSpearOrcs = this.spearOrcs.length;
+        this.preRenderTitleCard();
     }
 
     isComplete() {
@@ -402,72 +410,18 @@ export class Level {
     }
 
     renderTitleFlyIn(ctx) {
-        const height = 100;
-        const skew = Math.tan(10 * Math.PI / 180) * height;
-        const cornerRadius = 7;
-        const padding = 5;
-        
         let titleX = calculateFlyInOut(
             this.camera.getCanvasWidth(),  // start
-            padding,           // dwell
-            -this.camera.getCanvasWidth(),        // out (off-screen to the left)
+            0,                             // dwell
+            -this.camera.getCanvasWidth(), // out
             titleFlyInTime,
             titleDwellTime,
             titleFlyOutTime,
             this.time
         );
-        let width = this.camera.getCanvasWidth() - 3 * padding - skew;
 
-
-        ctx.save();
-        ctx.translate(titleX, 25);
-        roundedParallelogram(ctx, 0, 0, width, height, skew, cornerRadius);
-        ctx.fillStyle = this.getDifficultyColor();
-        ctx.fill();
-
-        // Create gradient for the fade effect
-        let gradient = ctx.createLinearGradient(padding + skew, 0, width, 0);
-        gradient.addColorStop(0, this.getDifficultyColor());
-        gradient.addColorStop(1, 'white');
-
-        // Draw the fading rectangle
-        ctx.fillStyle = gradient;
-        ctx.fillRect(padding + skew, 36, width - padding - 5, 3);
-        ctx.font = "30px Roboto";
-        ctx.fillStyle = "white";
-        ctx.textAlign = "left";
-        ctx.fillText(this.name, padding + skew + 16, 32);
-
-        const goalTimeString = `Time to Beat: ${Math.floor(this.goalTime)}:${(this.goalTime % 1).toFixed(2).slice(2)}s`;
-        const distanceString = 'Run Length: ' + this.length.toFixed(0) + 'ft';
-        ctx.font = "16px Roboto";
-        const y_start = 58;
-        const y_gap = 20;
-        ctx.fillText(goalTimeString, padding + skew + 16, y_start);
-        ctx.fillText(distanceString, padding + skew + 16, y_start + y_gap);
-
-        const mobBoxSize = 20;
-        const mobBoxSmallSize = 10;
-        const mobBoxPadding = 3;
-        const mobBoxStartX = width - 30;
-        const mobBoxStartY = 47;
-        let i = 0
-        for (let j = 0; j < this.numAxeOrcs; j++) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
-            ctx.fillStyle = 'orange';
-            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
-            i++;
-        }
-        for (let j = 0; j < this.numSpearOrcs; j++) {
-            ctx.fillStyle = 'white';
-            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
-            ctx.fillStyle = 'black';
-            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
-            i++;
-        }
-
-        ctx.restore();
+        // Draw the pre-rendered title card
+        ctx.drawImage(this.titleCanvas, titleX, 0);
     }
 
     renderStatChips(ctx) {
@@ -540,6 +494,72 @@ export class Level {
             default:
                 return BLACK;
         }
+    }
+
+    preRenderTitleCard() {
+        const height = 100;
+        const skew = Math.tan(10 * Math.PI / 180) * height;
+        const cornerRadius = 7;
+        const padding = 5;
+        const width = this.camera.getCanvasWidth() - 3 * padding - skew;
+
+        const ctx = this.titleCtx;
+        ctx.save();
+        ctx.translate(padding, 25);
+        
+        // Draw the parallelogram background
+        roundedParallelogram(ctx, 0, 0, width, height, skew, cornerRadius);
+        ctx.fillStyle = this.getDifficultyColor();
+        ctx.fill();
+
+        // Create gradient for the fade effect
+        let gradient = ctx.createLinearGradient(padding + skew, 0, width, 0);
+        gradient.addColorStop(0, this.getDifficultyColor());
+        gradient.addColorStop(1, 'white');
+
+        // Draw the fading rectangle
+        ctx.fillStyle = gradient;
+        ctx.fillRect(padding + skew, 36, width - padding - 5, 3);
+        
+        // Draw text elements
+        ctx.font = "30px Roboto";
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left";
+        ctx.fillText(this.name, padding + skew + 16, 32);
+
+        const goalTimeString = `Time to Beat: ${Math.floor(this.goalTime)}:${(this.goalTime % 1).toFixed(2).slice(2)}s`;
+        const distanceString = 'Run Length: ' + this.length.toFixed(0) + 'ft';
+        ctx.font = "16px Roboto";
+        const y_start = 58;
+        const y_gap = 20;
+        ctx.fillText(goalTimeString, padding + skew + 16, y_start);
+        ctx.fillText(distanceString, padding + skew + 16, y_start + y_gap);
+
+        // Draw mob boxes
+        const mobBoxSize = 20;
+        const mobBoxSmallSize = 10;
+        const mobBoxPadding = 3;
+        const mobBoxStartX = width - 30;
+        const mobBoxStartY = 47;
+        let i = 0;
+        
+        for (let j = 0; j < this.numAxeOrcs; j++) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
+            ctx.fillStyle = 'orange';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
+            i++;
+        }
+        
+        for (let j = 0; j < this.numSpearOrcs; j++) {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSize, mobBoxSize);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(mobBoxStartX - (mobBoxSize + mobBoxPadding) * i, mobBoxStartY, mobBoxSmallSize, mobBoxSmallSize);
+            i++;
+        }
+
+        ctx.restore();
     }
 }
 
