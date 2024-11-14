@@ -19,7 +19,7 @@ class Renderer {
         this.mobManager.drawUnderProjectile(this.ctx);
     
         // Copy lists to manipulate them
-        let trees = [...this.treeManager.entities];
+        let trees = [...this.treeManager.entities].filter(entity => entity.active !== false);
         let mobs = [...this.mobManager.mobs];
         let projectiles = [...this.mobManager.projectiles];
         let characterInserted = false;

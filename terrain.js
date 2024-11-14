@@ -345,7 +345,7 @@ export class TerrainManager {
             if (tree.y + tree.height / 2 < box.top) break;
     
             // Check if the tree collides with the box
-            if (_isColliding(tree, box)) {
+            if (tree.active !== false && _isColliding(tree, box)) {
                 collidingTrees.push(tree);
             }
         }
