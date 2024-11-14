@@ -377,7 +377,6 @@ export class Tree {
         this.coneWidth = 30 + this.coneHeight / 5 + randomCentered(5);
         this.numCones = Math.floor(3 + randomCentered(1.0));
         this.active = false;
-
     }
 
     reset(x, y) {
@@ -421,22 +420,19 @@ export class Tree {
         ctx.fillRect(this.x, this.y - this.height * 2, this.width, this.height * 2);
         function drawCone(ctx, color, x, y, height, ratio) {
             const width = height * ratio;
-            
-            ctx.save();
             setFillColor(ctx, color);
-            ctx.translate(x, y + height);
-            ctx.scale(1, 0.5);
             ctx.beginPath();
-            ctx.arc(0, -1, width/2, 0, Math.PI);
-            ctx.lineTo(0, -height * 2);  // still in the scaled context
+            ctx.arc(x, (y + height - 1) * 2, width/2, 0, Math.PI);
+            ctx.lineTo(x, (y - 1) * 2);  // still in the scaled context
             ctx.closePath();
             ctx.fill();
-            ctx.restore();
         }
 
         const ratio = this.coneWidth / this.coneHeight;
         let prevConeHeight = 0;
         let prevConeBottom = 0;
+        ctx.save();
+        ctx.scale(1, 0.5);
         for (let i = 0; i < this.numCones; i++) {
             const scale = 1 - (i * 0.25);
             const coneBottom = this.y - this.height - this.trunkExtra - this.coneHeight * i * 0.4;
@@ -467,6 +463,7 @@ export class Tree {
                 ratio
             );
         }
+        ctx.restore();
     }
 
     drawUnder(ctx) {
