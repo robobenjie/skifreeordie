@@ -22,7 +22,7 @@ export const LevelDifficultyNames = [
 export const GREEN = "#008c55";
 export const BLUE = "#0069ac";
 export const BLACK = "#000000";
-
+const ROTATION_SPEED = 1.0;
 
 
 
@@ -178,7 +178,7 @@ export class Level {
             const easeInOut = Math.sin(ease * Math.PI / 2);
             
             // Max rotation speed of 0.2, scaled by ease factor
-            let rotation = 0.3 * dt * Math.sign(this.goalAngle) * (1 - easeInOut);
+            let rotation = ROTATION_SPEED * dt * Math.sign(this.goalAngle) * (1 - easeInOut);
             
             this.terrainManager.rotateAbout(this.character.x, this.character.y, -rotation);
             this.mobManager.rotateAbout(this.character.x, this.character.y, -rotation);

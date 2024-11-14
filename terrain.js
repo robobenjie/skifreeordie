@@ -163,7 +163,7 @@ export class TerrainManager {
         ctx.restore();
 
         for (let entity of this.entities) {
-            if (entity.type !== 'tree' && entity.drawUnder && entity.active && this.camera.isOnScreen(entity.x, entity.y, 100)) {
+            if (entity.type !== 'tree' && entity.drawUnder && entity.active !== false && this.camera.isOnScreen(entity.x, entity.y, 100)) {
                 entity.drawUnder(ctx);
             }
         }
