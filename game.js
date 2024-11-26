@@ -13,6 +13,7 @@ import { Sword, Sword2, Pistol, SpeedJacket } from './equipment.js';
 import OrkModel from './ork_model.js';
 import GoblinModel from './goblin_model.js';
 import TrollModel from './troll_model.js';
+import SkiLift from './skilift.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -55,6 +56,17 @@ async function initializeGame() {
     character.mobManager = mobManager;
     let renderer = new Renderer(ctx, character, treeManager, particleEngine, mobManager, camera);
 
+
+    let x = 0;
+    let y = 0;
+    for (let i = 0; i < 10; i++) {
+        treeManager.addSkiLift(
+            {x: x + 250, y: y + 550},
+            {x: x, y: y}
+        );
+        x += 250;
+        y += 550;
+    }
 
     let shop = new Shop(character, ctx, canvas, camera);
     const svgObject = document.getElementById('shopSvg');
@@ -159,7 +171,6 @@ async function initializeGame() {
             shop.update(dt);
             shop.draw(ctx);
         } else {
-
             character.update(dt, ctx);
             camera.update(dt);
             particleEngine.update(dt);

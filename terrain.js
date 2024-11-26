@@ -1,6 +1,7 @@
 import { getThreeLevels, LevelDifficulty } from "./level.js";
 import randomCentered from "./utils.js";
 import { setFillColor } from "./utils.js";
+import SkiLift from "./skilift.js";
 
 const TREE_POOL_SIZE = 200;
 
@@ -41,6 +42,9 @@ export class TerrainManager {
             if (entity.type === 'skiRunSign') {
                 entity.angle += angle;
             }
+            if (entity.type === 'skiLift') {
+                entity.rotateAbout(x, y, angle);
+            }
         }
     }
 
@@ -72,6 +76,12 @@ export class TerrainManager {
         if (!this.camera) {
             console.warn("Camera not set for TerrainManager.");
             return;
+        }
+
+        for (let entity of this.entities) {
+            if (entity.update) {
+                entity.update(dt);
+            }
         }
 
         if (this.camera.character.startedRun()) {
@@ -195,6 +205,12 @@ export class TerrainManager {
         this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 120, .02);
 
 
+    }
+
+    addSkiLift(p1, p2) {
+        let skiLift = new SkiLift(p1, p2);
+        const index = this._findInsertIndex(skiLift.y);
+        this.entities.splice(index, 0, skiLift);
     }
 
     addSkierBoundary(x1, y1, x2, y2) {

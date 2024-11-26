@@ -76,7 +76,7 @@ class Renderer {
     
         // Draw all entities in the merged array
         for (let entity of entitiesToDraw) {
-            if (this.camera.isOnScreen(entity.x, entity.y, 100)) {
+            if (this.shouldDraw(entity)) {
                 entity.draw(this.ctx);
             }
         }
@@ -92,6 +92,14 @@ class Renderer {
         if (this.character.level ) {
             this.character.level.render(this.ctx)
         }
+    }
+    
+
+    shouldDraw(entity) {
+        if (entity.type === 'skiLift') {
+            return true;
+        }
+        return this.camera.isOnScreen(entity.x, entity.y, 100);
     }
 
     processSkiBoundary(skiBoundary, mobs, projectiles, characterInserted, entitiesToDraw) {
