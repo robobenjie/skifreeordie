@@ -93,6 +93,11 @@ class SkiPhysics {
         }
     }
 
+    impulse(impulseVec) {
+        this.velocity.x += impulseVec.x / this.mass;
+        this.velocity.y += impulseVec.y / this.mass;
+    }
+
     bump(velocity, mass) {
         this.velocity.x += velocity.x * mass / this.mass;
         this.velocity.y += velocity.y * mass / this.mass

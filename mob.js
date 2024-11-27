@@ -501,6 +501,9 @@ class AxeBoarderOrc extends Mob {
 class SpearOrc extends Mob {
     constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
+        this.spearDamage = 15;
+        this.pokeDistance = 80;
+
         this.terrain = terrain;
         this.snowParticles = snowParticles;
         this.colors = ["#252422", "#83BCA9","#252422", "#83BCA9","#CC444B"];
@@ -511,6 +514,7 @@ class SpearOrc extends Mob {
             this.targetAngle = Math.PI / 2;
         }
         this.model = new OrkModel();
+        this.spearPokeTimer = 0;
     }
 
     onCollideWithCharacter(character) {
@@ -549,6 +553,25 @@ class SpearOrc extends Mob {
         this.skiPhysics.maxInAirTurnRate = 12;
 
         let angleToTarget = Math.atan2(dx, -dy);
+        const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
+        let poking = false;
+        if (distanceToTarget < this.pokeDistance) {
+            this.spearPokeTimer += dt;
+            if (this.spearPokeTimer > 0.5) {
+                console.log("Poking spear");
+                poking = true;
+                this.spearPokeTimer = 0;
+                this.character.damage(this.spearDamage);
+                const impulseVec = {
+                    x: Math.cos(angleToTarget) * 800 * this.spearDamage,
+                    y: Math.sin(angleToTarget) * 800 * this.spearDamage
+                }
+                this.character.skiPhysics.impulse(impulseVec);
+                this.skiPhysics.impulse({x: -impulseVec.x, y: -impulseVec.y});
+            }
+        } else {
+            this.spearPokeTimer = 0;
+        }
 
        
         if (dy > 0 || this.shouldBackOff) {
@@ -586,7 +609,10 @@ class SpearOrc extends Mob {
         this.x = this.skiPhysics.x;
         this.y = this.skiPhysics.y;
         this.z = this.skiPhysics.z;
-        let spearDownAmount = Math.min(Math.abs(this.skiPhysics.velocity.y) / 400, 1);
+        let spearDownAmount = Math.max(
+            Math.min(Math.abs(this.skiPhysics.velocity.y) / 400, 1),
+            Math.min(Math.max((150 - distanceToTarget) / (150 - this.pokeDistance), 0), 1)
+        );
 
         // periodic crouch
         let randomCrouchAmount = Math.max((Math.sin(this.timeSinceDamagedCharacter * 3) - 0.5), 0) * 1.6;
@@ -599,7 +625,7 @@ class SpearOrc extends Mob {
             torsoTurn += Math.PI * 2;
         }
 
-        this.model.update(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount * Math.PI *0.6, torsoTurn);
+        this.model.update(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount, torsoTurn, poking);
     }
 
     drawShadow(ctx) {

@@ -29,9 +29,31 @@ const TIP_WIDTH = 0.3;
 
 export default class OrkModel {
 
-    update(dt, skiAngle, crouchAngle, spearAngle, torsoTurn) {
+    update(dt, skiAngle, crouchAngle, spearAngle, torsoTurn, pokingSpear) {
+        
+        let handAngle = 0;
         torsoTurn = this.torsoFilter.runFilter(dt, torsoTurn);
         spearAngle = this.spearFilter.runFilter(dt, spearAngle);
+        if (pokingSpear) {
+            this.poking = true;
+        }
+        if (this.poking) {
+            this.timeSincePokeStart += dt;
+            if (this.timeSincePokeStart > this.pokeTime) {
+                this.poking = false;
+            }
+        } else {
+            this.timeSincePokeStart = 0;
+        }
+        let pokingAmount = this.pokeFilter.runFilter(dt, this.poking ? 1.0 : 0.0);
+
+        
+        const pokeAngle = -pokingAmount * Math.PI * 0.7;
+        
+
+        spearAngle = spearAngle * Math.PI * 0.6 + pokeAngle;
+        handAngle = -pokeAngle;
+
         this.model.update(dt, {
             neg_ski_angle: -skiAngle,
             crouch_angle: crouchAngle,
@@ -39,13 +61,19 @@ export default class OrkModel {
             neg_torso_turn: -torsoTurn,
             neg_2_crouch_angle: -2 * crouchAngle,
             hill_angle: HILL_SLOPE * Math.PI / 180 * Math.cos(skiAngle),
+            hand_angle: handAngle,
         });
     }
 
     constructor() {
 
         this.torsoFilter = new LowPassFilter(0, 0.2, -1.4, 1.4);
-        this.spearFilter = new LowPassFilter(0, 0.5);
+        this.spearFilter = new LowPassFilter(0, 0.2);
+        this.pokeFilter = new LowPassFilter(0, 0.04);
+
+        this.pokeTime = 0.2;
+        this.timeSincePokeStart = 0;
+        this.poking = false;
 
         this.skiColor = "#252422"; // eerie black
         this.shirtColor = "#252422"; // eerie black
@@ -181,17 +209,18 @@ export default class OrkModel {
         );
         let handFrame = rightShoulderFrame.translate(ARM_SEGMENT_LENGTH, 0, -ARM_SEGMENT_LENGTH - 0.1);
         handFrame = handFrame.rotate_about_x(-WING_ANGLE).rotate_about_y(-hillAngle);
+        let spearFrame = handFrame.rotate_about_y(0, "hand_angle", true);
 
         this.model.lineSegment(
             [{x: 0, y: 0, z: -SPEAR_LENGTH * SPEAR_BELOW},
              {x: 0, y: 0, z: SPEAR_LENGTH * (1 - SPEAR_BELOW)},
             ],
-            handFrame,
+            spearFrame,
             this.red,
             SPEAR_WIDTH,
             1,
         );
-        const tipFrame = handFrame.translate(0, 0, SPEAR_LENGTH * (1 - SPEAR_BELOW));
+        const tipFrame = spearFrame.translate(0, 0, SPEAR_LENGTH * (1 - SPEAR_BELOW));
         this.model.polygon(
             [{x: 0, y: -TIP_WIDTH, z: 0},
              {x: 0, y: TIP_WIDTH, z: 0},
