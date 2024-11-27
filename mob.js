@@ -502,7 +502,7 @@ class SpearOrc extends Mob {
     constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
         super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
         this.spearDamage = 15;
-        this.pokeDistance = 80;
+        this.pokeDistance = 30;
         this.pokeDelay = 0.5;
         this.pokeAnimationStart = 0.1;
 
@@ -556,7 +556,7 @@ class SpearOrc extends Mob {
 
         let angleToTarget = Math.atan2(dx, -dy);
         const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
-        if (distanceToTarget < this.pokeDistance) {
+        if (distanceToTarget < this.pokeDistance && Math.abs(angleToTarget - this.skiPhysics.skiAngle) < Math.PI / 4) {
             this.spearPokeTimer += dt;
             if (this.spearPokeTimer > this.pokeDelay) {
                 console.log("Poking spear");
