@@ -503,6 +503,8 @@ class SpearOrc extends Mob {
         super(x, y, vx, vy, 5, 15, 25, 'black', character, deathEffect);
         this.spearDamage = 15;
         this.pokeDistance = 80;
+        this.pokeDelay = 0.5;
+        this.pokeAnimationStart = 0.1;
 
         this.terrain = terrain;
         this.snowParticles = snowParticles;
@@ -554,12 +556,10 @@ class SpearOrc extends Mob {
 
         let angleToTarget = Math.atan2(dx, -dy);
         const distanceToTarget = Math.sqrt(dx * dx + dy * dy);
-        let poking = false;
         if (distanceToTarget < this.pokeDistance) {
             this.spearPokeTimer += dt;
-            if (this.spearPokeTimer > 0.5) {
+            if (this.spearPokeTimer > this.pokeDelay) {
                 console.log("Poking spear");
-                poking = true;
                 this.spearPokeTimer = 0;
                 this.character.damage(this.spearDamage);
                 const impulseVec = {
@@ -624,6 +624,8 @@ class SpearOrc extends Mob {
         while (torsoTurn < -Math.PI) {
             torsoTurn += Math.PI * 2;
         }
+
+        let poking = this.spearPokeTimer > this.pokeDelay - this.pokeAnimationStart;
 
         this.model.update(dt, this.skiPhysics.skiAngle, crouchAmount, spearDownAmount, torsoTurn, poking);
     }
