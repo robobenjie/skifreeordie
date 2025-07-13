@@ -30,6 +30,7 @@ export class Shop {
       this.hammerArm = null;
       this.overlay = null;
       this.cable = null;
+      this.doneClickable = null;
       this.medalImage = new Image();
       this.medalImage.src = "images/mono_medal.svg";
       this.elapsedTime = 0;
@@ -38,7 +39,7 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this._levelsTillNextShop = 1;
+      this._levelsTillNextShop = 0;
 
       this.checkingOut = false;
       this.confirmLedReady = false;
@@ -47,6 +48,35 @@ export class Shop {
       this.checkoutItem = null;
       this.selectedDraggable = null;
       this.chosenSlot = null;
+
+      // Toast message properties
+      this.toastMessage = null;
+      this.toastStartTime = 0;
+      this.toastDuration = 2.0; // 2 seconds
+      this.pleaseSignMessages = [
+        "Can you sign here, bro?",
+        "Can I get a signature, bro?",
+        "Bro, I need you to sign"
+        ];
+      this.greenButtonMessages = [
+        "Flashing green button, my man",
+        "Green button to confirm, dude",
+        "Green means yes, red means no"
+      ];
+
+      this.idleMessages = [
+        "What can I hook you up with?",
+        "We have some knarly gear",
+        "Sweet look, bro. Need accessories?",
+        "Nothing beats fresh pow and forged steel",
+        "I’m not just a shopkeeper, I’m a legend",
+        "Goin’ off-piste? Take a mace",
+        "Stay frosty, broheim",
+        "Powder’s prime today, broheim",
+        "Keep yer beard frosty",
+        "Wicked carve, righteous swing",
+        "Skis waxed, axes sharpened"
+      ]
 
       this.treesImages = [
         new Image(),
@@ -78,6 +108,9 @@ export class Shop {
       this.resetShop();
       this.loadImages();
       this.initDropAreas();
+
+      // Add global touch handler for toast messages
+      this.setupGlobalTouchHandler();
 
   }
 
@@ -111,6 +144,10 @@ export class Shop {
     this.clearImageEffects();
   }
 
+  isSignatureValid() {
+    return this.signature.points.length > 20;
+  }
+
   initializeClickables() {
     // Example clickable for the card reader
     const cardReaderClickable = new Clickable(275, 730, 610, 830, this.canvas);
@@ -118,12 +155,12 @@ export class Shop {
     this.cardReaderClickables.push(cardReaderClickable);
     this.signature = new Signature(cardReaderClickable);
     cardReaderClickable.addDragEndListener(() => {
-      if (this.signature.points.length > 20) {
+      if (this.isSignatureValid()) {
         this.confirmLedReady = true;
       }
     });
     cardReaderClickable.addTapListener(() => {
-      if (this.signature.points.length > 20) {
+      if (this.isSignatureValid()) {
           this.confirmLedReady = true;
         }
     });
@@ -166,6 +203,44 @@ export class Shop {
     this.character.spendMedals(this.checkoutItem.getPrice());
     this.character.equip(this.checkoutItem, this.chosenSlot);
     this.loadImages();
+  }
+
+  setupGlobalTouchHandler() {
+    this.canvas.addEventListener('touchstart', (event) => {
+      if (this.checkingOut) {
+        event.preventDefault();
+        const touch = event.touches[0];
+        const rect = this.canvas.getBoundingClientRect();
+        const canvasX = touch.clientX - rect.left;
+        const canvasY = touch.clientY - rect.top;
+        const target = this.canvas;
+        const x = Math.round((canvasX * target.width) / rect.width);
+        const y = Math.round((canvasY * target.height) / rect.height);
+        
+        // Check if the touch is outside all clickables
+        let isInsideClickable = false;
+        for (const clickable of this.clickables) {
+          if (clickable.isPointInside(x, y)) {
+            isInsideClickable = true;
+            break;
+          }
+        }
+        
+        if (!isInsideClickable) {
+          // check if there is a signature
+          if (!this.isSignatureValid()) {
+            this.showToast(this.pleaseSignMessages);
+          } else {
+            this.showToast(this.greenButtonMessages);
+          }
+        }
+      }
+    }, false);
+  }
+
+  showToast(messageList) {
+    this.toastMessage = messageList[Math.floor(Math.random() * messageList.length)];
+    this.toastStartTime = this.elapsedTime;
   }
 
   update(dt) {
@@ -271,6 +346,9 @@ export class Shop {
         this.screenClickables.splice(this.screenClickables.indexOf(this.doneClickable), 1);
       }
       ctx.drawImage(this.cable, 0, 0, width, height);
+      if (!checkingOut) {
+        ctx.drawImage(this.doneButton, 0, 0, width, height);
+      }
       ctx.save();
       const pivot = {x: 530, y: 300};
       rotateInImageFrame(pivot, Math.sin(this.elapsedTime * 1) * 0.02);
@@ -371,17 +449,61 @@ export class Shop {
       }
       drawCheckoutText(ctx, width, this.checkoutItem);
       this.signature.draw(ctx);
+      
+      // Draw toast message if active
+      if (this.toastMessage && this.elapsedTime < this.toastStartTime + this.toastDuration) {
+        this.drawToast(ctx, width, height);
+      }
+
+
+      // You can add debug drawing for clickables if needed
+      // this.clickables.forEach(clickable => {
+      //     ctx.strokeStyle = 'red';
+      //     ctx.strokeRect(clickable.x - clickable.width/2, clickable.y - clickable.height/2, clickable.width, clickable.height);
+      // });
+      
       ctx.restore();
 
-    } else {
-      console.log("no chair");
     }
+  }
 
-    // You can add debug drawing for clickables if needed
-    // this.clickables.forEach(clickable => {
-    //     ctx.strokeStyle = 'red';
-    //     ctx.strokeRect(clickable.x - clickable.width/2, clickable.y - clickable.height/2, clickable.width, clickable.height);
-    // });
+  drawToast(ctx, width, height) {
+    const toastAge = this.elapsedTime - this.toastStartTime;
+    const fadeInDuration = 0.3;
+    const fadeOutDuration = 0.5;
+    
+    let alpha = 1.0;
+    if (toastAge < fadeInDuration) {
+      alpha = toastAge / fadeInDuration;
+    } else if (toastAge > this.toastDuration - fadeOutDuration) {
+      alpha = (this.toastDuration - toastAge) / fadeOutDuration;
+    }
+    
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    
+    // Draw toast background
+    ctx.fillStyle = "#00000011";
+    const toastWidth = 300;
+    const toastHeight = 60;
+    const toastX = (width - toastWidth) / 2;
+    const toastY = height * 0.57;
+    
+    //ctx.fillRect(toastX, toastY, toastWidth, toastHeight)
+    
+    // Draw toast text
+    ctx.fillStyle = "#aa0000ff";
+    ctx.font = "70px Macondo";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(this.toastMessage, width / 2, toastY + toastHeight / 2 + 2);
+    ctx.fillText(this.toastMessage, width / 2, toastY + toastHeight / 2 - 2);
+    ctx.fillText(this.toastMessage, width / 2 + 2, toastY + toastHeight / 2);
+    ctx.fillText(this.toastMessage, width / 2 - 2, toastY + toastHeight / 2);
+    ctx.fillStyle = "#ffcc00ff";
+    ctx.fillText(this.toastMessage, width / 2, toastY + toastHeight / 2);
+    
+    ctx.restore();
   }
 
   drawStoreOverlay(ctx, width, height) {
@@ -536,6 +658,15 @@ export class Shop {
         console.error("Error loading cable image:", err);
     });
 
+    getModifiedSvg("images/shop_lift.svg", "done_button", {
+        replace_colors: [],
+        hide: [""]
+    }).then(img => {
+        this.doneButton = img;
+    }).catch(err => {
+        console.error("Error loading done button image:", err);
+    });
+
     getModifiedSvg("images/shop_lift.svg", "dwarf_payment_arm", {
         replace_colors: [],
         hide: []
@@ -687,6 +818,7 @@ function drawCheckoutText(ctx, width, item) {
   y += smallGap;
   ctx.fillText("Signature:", x, y);
 }
+
 
 class Signature {
     constructor(clickable) {
