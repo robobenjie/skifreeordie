@@ -59,6 +59,11 @@ export class Camera {
 
         if (this.character.startedRun()) {
             this.targetScale = 0.8 + 0.5 * Math.abs(this.character.velocity.y) / 500;
+        }
+        else if (this.postShop) {
+            if (this.character.velocity.y > 100) {
+                this.postShop = false;
+            }
         } else {
             if (!this.startOfGame || this.character.velocity.y > 1) {
                 this.startOfGame = false;
@@ -74,6 +79,15 @@ export class Camera {
         this._bottomOfScreen = (this.canvasHeight - this.canvasHeight * this.characterFraction) * this.scale + this.y;
         this._leftOfScreen = (-this.canvasWidth / 2) * this.scale + this.x;
         this._rightOfScreen = (this.canvasWidth / 2) * this.scale + this.x;
+    }
+
+    setPostShop() {
+        this.postShop = true;
+        this.scale = 0.4;
+        this.targetScale = 0.2;
+        setTimeout(() => {
+            this.postShop = false;
+        }, 1500);
     }
 
 

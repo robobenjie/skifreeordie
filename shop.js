@@ -147,13 +147,13 @@ export class Shop {
     });
 
     const doneClickable = new Clickable(600, 1020, 1840, 1970, this.canvas);
-    this.clickables.push(doneClickable);
-    this.screenClickables.push(doneClickable);
+    this.doneClickable = doneClickable; // Store reference to done button
     doneClickable.addTapListener(() => {
       if (!this.checkingOut) {
         this._levelsTillNextShop += 1;
         console.log("done! tapped");
         this.resetShop();
+        this.camera.setPostShop();
       }
     });
 
@@ -262,6 +262,14 @@ export class Shop {
       ctx.translate(this.camera.getCanvasWidth() / 2 / scale - width / 2, 0);
       // Update the transform for each clickable
       this.screenClickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
+      // Add done button to clickables only when not checking out
+      if (!checkingOut && this.doneClickable && !this.clickables.includes(this.doneClickable)) {
+        this.clickables.push(this.doneClickable);
+        this.screenClickables.push(this.doneClickable);
+      } else if (checkingOut && this.doneClickable && this.clickables.includes(this.doneClickable)) {
+        this.clickables.splice(this.clickables.indexOf(this.doneClickable), 1);
+        this.screenClickables.splice(this.screenClickables.indexOf(this.doneClickable), 1);
+      }
       ctx.drawImage(this.cable, 0, 0, width, height);
       ctx.save();
       const pivot = {x: 530, y: 300};
