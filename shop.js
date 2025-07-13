@@ -39,7 +39,7 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this._levelsTillNextShop = 0;
+      this._levelsTillNextShop = 1;
 
       this.checkingOut = false;
       this.confirmLedReady = false;
@@ -52,7 +52,9 @@ export class Shop {
       // Toast message properties
       this.toastMessage = null;
       this.toastStartTime = 0;
-      this.toastDuration = 2.0; // 2 seconds
+      this.toastDuration = 3.0; // 2 seconds
+      this.lastInteractionTime = 0;
+      this.idleTimeout = 7.0; // 5 seconds
       this.pleaseSignMessages = [
         "Can you sign here, bro?",
         "Can I get a signature, bro?",
@@ -67,16 +69,17 @@ export class Shop {
       this.idleMessages = [
         "What can I hook you up with?",
         "We have some knarly gear",
-        "Sweet look, bro. Need accessories?",
-        "Nothing beats fresh pow and forged steel",
-        "I’m not just a shopkeeper, I’m a legend",
+        "Powder’s prime today, broheim",
+        "Sweet look, bro.\nNeed accessories?",
+        "Nothing beats fresh pow\nand forged steel",
         "Goin’ off-piste? Take a mace",
         "Stay frosty, broheim",
-        "Powder’s prime today, broheim",
         "Keep yer beard frosty",
-        "Wicked carve, righteous swing",
+        "Wicked carve\nrighteous swing",
         "Skis waxed, axes sharpened"
       ]
+
+      this.activeIdleMessages = [];
 
       this.treesImages = [
         new Image(),
@@ -195,6 +198,14 @@ export class Shop {
     });
 
     // Add more clickables as needed...
+    // For each clickable, add a tap and drag listener to update lastInteractionTime
+    const updateLastInteraction = () => { this.lastInteractionTime = this.elapsedTime; };
+    this.clickables.forEach(clickable => {
+      clickable.addTapListener(updateLastInteraction);
+      clickable.addDragStartListener(updateLastInteraction);
+      clickable.addDragMoveListener(updateLastInteraction);
+      clickable.addDragEndListener(updateLastInteraction);
+    });
   }
 
   purchaseItem() {
@@ -207,6 +218,7 @@ export class Shop {
 
   setupGlobalTouchHandler() {
     this.canvas.addEventListener('touchstart', (event) => {
+      this.lastInteractionTime = this.elapsedTime;
       if (this.checkingOut) {
         event.preventDefault();
         const touch = event.touches[0];
@@ -239,7 +251,8 @@ export class Shop {
   }
 
   showToast(messageList) {
-    this.toastMessage = messageList[Math.floor(Math.random() * messageList.length)];
+    const msg = messageList[Math.floor(Math.random() * messageList.length)];
+    this.toastMessage = msg;
     this.toastStartTime = this.elapsedTime;
   }
 
@@ -247,6 +260,15 @@ export class Shop {
       // Update logic here
       let wind = -60
       this.elapsedTime += dt;
+      // Idle toast logic
+      if (!this.toastMessage && this.elapsedTime - this.lastInteractionTime > this.idleTimeout) {
+        this.lastInteractionTime = this.elapsedTime;
+        if (this.activeIdleMessages.length === 0) {
+          this.activeIdleMessages = this.idleMessages.slice();
+        }
+        this.showToast(this.activeIdleMessages);
+        this.activeIdleMessages.splice(this.activeIdleMessages.indexOf(this.toastMessage), 1);
+      }
       this.snowEffect.update(dt, wind, this.ctx);
       this.backgroundSnowEffect.update(dt, wind, this.ctx);
       if (!this.checkingOut && this.elapsedTime > this.checkoutEndTime + 1.0) {  
@@ -440,6 +462,7 @@ export class Shop {
         ctx.stroke();
         this.selectedDraggable.draw(ctx);
       }
+      ctx.save(); // card reader
       ctx.translate(0, y);
       this.cardReaderClickables.forEach(clickable => clickable.setCtxTransform(this.ctx));
       ctx.drawImage(this.cardReader, 0, 0, width, height);
@@ -449,9 +472,11 @@ export class Shop {
       }
       drawCheckoutText(ctx, width, this.checkoutItem);
       this.signature.draw(ctx);
-      
+      ctx.restore(); // card reader
+
+
       // Draw toast message if active
-      if (this.toastMessage && this.elapsedTime < this.toastStartTime + this.toastDuration) {
+      if (this.toastMessage) {
         this.drawToast(ctx, width, height);
       }
 
@@ -479,6 +504,10 @@ export class Shop {
       alpha = (this.toastDuration - toastAge) / fadeOutDuration;
     }
     
+    if (toastAge > this.toastDuration) {
+      this.toastMessage = null;
+    }
+
     ctx.save();
     ctx.globalAlpha = alpha;
     
@@ -493,7 +522,7 @@ export class Shop {
     
     // Draw toast text
     ctx.fillStyle = "#aa0000ff";
-    ctx.font = "70px Macondo";
+    ctx.font = "60px Macondo";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(this.toastMessage, width / 2, toastY + toastHeight / 2 + 2);
