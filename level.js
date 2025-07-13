@@ -267,7 +267,7 @@ export class Level {
         let timeOverGoal = Math.max(0, this.time - this.goalTime);
         let bonus = Math.max(0, Math.round(timeUnderGoal * timeUnderGoal) * this.timeBonusMultiplier);
         let value = Math.max(0, 20 - timeOverGoal) + this.timeMultiplier;
-        return Math.max(0, Math.round(bonus + value));
+        return Math.max(0, Math.round(bonus + value) * 3);
     }
 
     getCashForAirTime() {
