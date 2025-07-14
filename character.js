@@ -4,6 +4,10 @@ import Sword from "./weapons.js";
 import getModifiedSvg from "./svg_utils.js";
 import CharacterModel from "./character_model.js";
 
+
+function normalizeAngle(angle) {
+    return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
+  }
 class Character {
     constructor(x, y, particleEngine, treeManager, joystick, camera) {
         this.level = undefined;
@@ -118,6 +122,7 @@ class Character {
             equipment.equip(this, this.mobManager);
         }
         this.skiPhysics.equipment = this.getAllEquipment();
+        this.skiPhysics.calculateParams();
         console.log(this.getAllEquipment());
     }
 
@@ -282,10 +287,21 @@ class Character {
         
         this.tuck = this.tuck * Math.pow(0.8, dt * 60) + this.targetTuck * (1 - Math.pow(0.8, dt * 60));
 
-        const targetSkiAngle = Math.min(
-            Math.max(Math.PI / 2 - this.maxUphillAngle, (this.targetSkiAngle + 2 * Math.PI) % (2 * Math.PI)),
-            Math.PI * 1.5 + this.maxUphillAngle
-        );
+        let targetSkiAngle = this.targetSkiAngle;
+        if (this.skis.getAllowUphill()) {
+              const currentAngle = this.skiPhysics.skiAngle;
+              const targetAngle = this.targetSkiAngle;
+              
+              const diff = normalizeAngle(targetAngle - currentAngle);
+              const closestTarget = currentAngle + diff;
+              
+              targetSkiAngle = closestTarget;
+        } else {
+            targetSkiAngle = Math.min(
+                Math.max(Math.PI / 2 - this.maxUphillAngle, (this.targetSkiAngle + 2 * Math.PI) % (2 * Math.PI)),
+                Math.PI * 1.5 + this.maxUphillAngle
+            );
+        }
 
         this.skiPhysics.update(dt, targetSkiAngle, this.tuck);
 

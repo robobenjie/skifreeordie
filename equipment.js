@@ -54,6 +54,9 @@ class Equipment {
     getDragMultiplier() {
         return this.getHiddenStats().dragMultiplier || 1;
     }
+    getAllowUphill() {
+        return this.getHiddenStats().allowUphill || false;
+    }
     getLayerGroup() {
         return this.data.layer_group;
     }
@@ -103,6 +106,7 @@ function makeSkis(displayName, description, price, color, speed, turning, edges)
             turning: turning,
             sharp_edges: edges
         },
+        hidden_stats: {},
         slots: ["skis"],
         colors: {
             skis_base: color
@@ -117,7 +121,11 @@ function makeSkis(displayName, description, price, color, speed, turning, edges)
 
 export const regularSkis = makeSkis("Regular Skis", ["A pair of regular skis"], 50, "#333333", 2, 2, 2);
 export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#D62246", 6, 1, 2);
-export const turningSkis = makeSkis("Turning Skis", ["Razor edged"], 800, "#FFF200", 2, 2, 6);
+export const turningSkis = makeSkis("Turning Skis", ["Razor edged"], 800, "#FFF200", 2, 6, 4);
+export const edgeSkis = makeSkis("Edge Skis", ["Razor edge skis"], 800, "#0F7173", 2, 3, 6);
+
+export const uphillSkis = makeSkis("Uphill Skis", ["Ski backwards!"], 800, "#BC9EC1", 2, 3, 6);
+uphillSkis.data.hidden_stats.allowUphill = true;
 
 
 

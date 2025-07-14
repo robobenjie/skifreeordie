@@ -41,6 +41,19 @@ const StatToEdgeMultiplier = {
     6: 0.2,
 }
 
+function throttled(func, delay) {
+    let lastCall = 0;
+    return function(...args) {
+        const now = Date.now();
+        if (now - lastCall >= delay) {
+            lastCall = now;
+            func.apply(this, args);
+        }
+    }
+}
+
+const throttledLog = throttled(console.log, 100);
+
 class SkiPhysics {
     constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass, camera) {
         this.x = x;
@@ -96,6 +109,7 @@ class SkiPhysics {
 
         this.onTreeCollision = (entity) => {};
         this.onLand = (airTime) => {};
+        this.calculateParams();
     }
 
     setIsSnowboard(isSnowboard) {
@@ -113,10 +127,13 @@ class SkiPhysics {
         this.onLand = onLand;
     }
 
-    getParams(tuck) {
+    
+
+    calculateParams() {
         let drag = this.drag;
         let turnMultiplier = 1;
         let edgeMultiplier = 1;
+        let allowUphill = false;
         
         for (let equipment of Object.values(this.equipment)) {            
             if (!equipment) {
@@ -136,18 +153,24 @@ class SkiPhysics {
             if (equipment.getStats().sharp_edges) {
                 edgeMultiplier *= StatToEdgeMultiplier[equipment.getStats().sharp_edges];
             }
+
+            if (equipment.getAllowUphill()) {
+                allowUphill = true;
+            }
         }
         
-        if (tuck !== undefined) {
-            drag *= this.tuckDragMultiplier * tuck + (1 - tuck);
-        }
         
-        return {
+        this.params = {
             drag: drag,
             maxTurnRate: this.maxTurnRate * turnMultiplier,
             steering: 1 - (1 - this.steering) * edgeMultiplier,
-            edgeDrag: this.edgeDrag / edgeMultiplier
+            edgeDrag: this.edgeDrag / edgeMultiplier,
+            allowUphill: allowUphill
         };
+    }
+
+    getParams() {
+        return this.params;
     }
 
     jump(jumpVel) {
@@ -229,7 +252,12 @@ class SkiPhysics {
     }   
 
     update(dt, targetSkiAngle, tuck) {
-        let params = this.getParams(tuck);
+        throttledLog(targetSkiAngle, this.skiAngle);
+        let params = this.getParams();
+        let drag = params.drag;
+        if (tuck !== undefined) {
+            drag *= this.tuckDragMultiplier * tuck + (1 - tuck);
+        }
 
 
         while (this.forces.length > 0) {
@@ -240,7 +268,9 @@ class SkiPhysics {
         let prevSkiAngle = this.skiAngle;   
         
         this.skiAngle = targetSkiAngle;
-        let angleChangeRate = Math.abs(this.skiAngle - prevSkiAngle) / dt;
+
+        let angleChangeRate = (this.skiAngle - prevSkiAngle) / dt;
+
         if (this.state == CharacterState.JUMPING) {
             if (angleChangeRate > this.maxInAirTurnRate) {
                 this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxInAirTurnRate * dt;
@@ -315,8 +345,8 @@ class SkiPhysics {
                 y: this.skiUnitVector.y * gravity_dot_ski
             };
             const dragForce = {
-                x: -this.velocity.x * params.drag,
-                y: -this.velocity.y * params.drag
+                x: -this.velocity.x * drag,
+                y: -this.velocity.y * drag
             };
 
             if (this.trails.length == 0) {

@@ -9,7 +9,7 @@ import MobManager from './mob.js';
 import Shop from './shop.js';
 import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks, BlackDiamond} from './level.js';
 import { getItemsForSale } from './equipment.js';
-import { Sword, Sword2, Pistol, SpeedJacket, turningSkis} from './equipment.js';
+import { Sword, Sword2, Pistol, SpeedJacket, turningSkis, uphillSkis} from './equipment.js';
 import OrkModel from './ork_model.js';
 import GoblinModel from './goblin_model.js';
 import TrollModel from './troll_model.js';
@@ -126,7 +126,7 @@ async function initializeGame() {
     let level3 = new GreenCircle(treeManager, mobManager, camera, character);
     let level4 = new BlackDiamond(treeManager, mobManager, camera, character);
 
-    character.equip(turningSkis, "skis");
+    character.equip(uphillSkis, "skis");
     character.update(0.01, ctx);
     camera.update(0.01);
 
