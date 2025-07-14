@@ -14,6 +14,15 @@ const CharacterState = {
     JUMPING: 1,
 };
 
+const speedToDragMultiplier = {
+    1: 1.3,
+    2: 1.0,
+    3: 0.9,
+    4: 0.8,
+    5: 0.65,
+    6: 0.5,
+}
+
 class SkiPhysics {
     constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass, camera) {
         this.x = x;
@@ -31,7 +40,7 @@ class SkiPhysics {
 
         this.accelleration = 400;
         this.drag = 0.5;
-        this.tuckDrag = 0.4
+        this.tuckDragMultiplier = 0.8;
         this.edgeDrag = 1.5;
 
         this.steering = 0.95;
@@ -65,6 +74,8 @@ class SkiPhysics {
         this.skiSplay = 0;
         this.jumpStartTime = 0;
 
+        this.equipment = [];
+
         this.onTreeCollision = (entity) => {};
         this.onLand = (airTime) => {};
     }
@@ -82,6 +93,26 @@ class SkiPhysics {
 
     setOnLand(onLand) {
         this.onLand = onLand;
+    }
+
+    getDrag(tuck) {
+        let drag = this.drag;
+        for (let equipment of Object.values(this.equipment)) {            
+            if (!equipment) {
+                continue;
+            }
+
+            drag *= equipment.getDragMultiplier();
+
+            if (equipment.getStats().speed) {
+                drag *= speedToDragMultiplier[equipment.getStats().speed];
+            }
+        }
+        if (tuck !== undefined) {
+            drag *= this.tuckDragMultiplier * tuck + (1 - tuck);
+            console.log(drag);
+        }
+        return drag;
     }
 
     jump(jumpVel) {
@@ -163,10 +194,9 @@ class SkiPhysics {
     }   
 
     update(dt, targetSkiAngle, tuck) {
-        let drag = this.drag;
-        if (tuck !== undefined) {
-            drag = this.tuckDrag * tuck + (1 - tuck) * this.drag;
-        }
+
+        let drag = this.getDrag(tuck);
+
         while (this.forces.length > 0) {
             let force = this.forces.pop();
             this.velocity.x += force.x * dt;
@@ -186,7 +216,10 @@ class SkiPhysics {
                 this.zVelocity -= this.jumpGravityDown * dt;
             }
             const windSpeed = this.zVelocity - this.velocity.y * this.mountainSlope;
-            const windForce = windSpeed * this.currFloatDrag;
+            let windForce = windSpeed * this.currFloatDrag;
+            if (windForce > this.jumpGravityDown) {
+                windForce = this.jumpGravityDown * 0.95;
+            }
             this.zVelocity -= windForce * dt;
 
             this.z += this.zVelocity * dt;

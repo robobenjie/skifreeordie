@@ -12,6 +12,7 @@ const SLOT_TO_GROUP_MAP = {
   "right_hand": ["right_glove"],
   "left_weapon": ["left_hand"],
   "right_weapon": ["right_hand"],
+  "skis": ["skis"]
 };
 export class Shop {
   constructor(character, ctx, canvas, camera) {
@@ -39,7 +40,7 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this._levelsTillNextShop = 1;
+      this._levelsTillNextShop = 0;
 
       this.checkingOut = false;
       this.confirmLedReady = false;
@@ -598,6 +599,8 @@ export class Shop {
     this.dropAreas.push(rightHandDrop);
     let leftHandDrop = new DropArea(300, 450, 1330, 1540, this.canvas, "left_hand");
     this.dropAreas.push(leftHandDrop);
+    let skisDrop = new DropArea(50, 540, 1650, 1950, this.canvas, "skis");
+    this.dropAreas.push(skisDrop);
   }
 
   clearImageEffects() {
@@ -627,6 +630,7 @@ export class Shop {
 
     // Only call loadImages if the effects have changed
     if (JSON.stringify(this.currentEffects) !== JSON.stringify(effects)) {
+        console.log("new effects", effects);
         this.currentEffects = effects;
         this.loadImages();
     }
@@ -717,7 +721,9 @@ export class Shop {
     getModifiedSvg("images/shop_lift.svg", "player_left_leg", {
         replace_colors: replaceColors,
         hide: [""],
-        show: show
+        show: show,
+        stroke_yellow: strokeYellow,
+        stroke_green: strokeGreen,
     }).then(img => {
         this.characterLeftLeg = img;
     }).catch(err => {
@@ -727,7 +733,9 @@ export class Shop {
     getModifiedSvg("images/shop_lift.svg", "player_right_leg", {
         replace_colors: replaceColors,
         hide: [""],
-        show: show
+        show: show,
+        stroke_yellow: strokeYellow,
+        stroke_green: strokeGreen,
     }).then(img => {
         this.characterRightLeg = img;
     }).catch(err => {
@@ -983,13 +991,13 @@ class DraggableItem extends Clickable {
 
             if (newSlot) {
               effectMapping.stroke_green.push(newSlot);
-                  if (newSlot === 'left_hand') {
-                      effectMapping.ghost.push('left_weapon');
-                  } 
-                  if (newSlot === 'right_hand') {
-                      effectMapping.ghost.push('right_weapon');
-                  }
+              if (newSlot === 'left_hand') {
+                  effectMapping.ghost.push('left_weapon');
+              } 
+              if (newSlot === 'right_hand') {
+                  effectMapping.ghost.push('right_weapon');
               }
+            }
 
 
             const unhoveredSlots = this.item.getSlots().filter(slot => slot !== newSlot);

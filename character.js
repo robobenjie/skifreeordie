@@ -117,6 +117,7 @@ class Character {
             this.leftHand = equipment;
             equipment.equip(this, this.mobManager);
         }
+        this.skiPhysics.equipment = this.getAllEquipment();
         console.log(this.getAllEquipment());
     }
 

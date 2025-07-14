@@ -48,10 +48,17 @@ class Equipment {
     getStats() {
         return this.data.stats || {};
     }
+    getHiddenStats() {
+        return this.data.hidden_stats || {};
+    }
+    getDragMultiplier() {
+        return this.getHiddenStats().dragMultiplier || 1;
+    }
     getLayerGroup() {
         return this.data.layer_group;
     }
     async loadImage() {
+        console.log("loading image", this.data.shop_image, "with color changes", this.getColorChanges());
         try {
             this.image = await getModifiedSvg(
                 `images/${this.data.shop_image}`,
@@ -82,6 +89,34 @@ class Equipment {
 }
 
 const JACKET_BASE = "#ff6600";
+const SKIS_BASE = "#333333";
+
+function makeSkis(displayName, description, price, color, speed, turning) {
+    return new Equipment({
+        id: "skis",
+        layer_group: "skis",
+        shop_image: "ski.svg",
+        display_name: displayName,
+        description: description,
+        stats: {
+            speed: speed,
+            turning: turning
+        },
+        slots: ["skis"],
+        colors: {
+            skis_base: color
+        },
+        color_changes: [
+            [SKIS_BASE, color]
+        ],
+        unhide: ["skis"],
+        price: price
+    })
+}
+
+export const regularSkis = makeSkis("Regular Skis", ["A pair of regular skis"], 50, "#333333", 2, 2);
+export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#ff1111", 6, 2);
+
 
 
 function makeSpeedJacket() {
@@ -90,22 +125,24 @@ function makeSpeedJacket() {
         layer_group: "jacket",
         shop_image: "jacket.svg",   
         display_name: "Speed Jacket",
-        description: ["Increases speed by 10%"],
+        description: ["Reduces drag by 10%"],
         stats: {
-        speed: 3,
-        armor: 1
-    },
-    slots: ["jacket"],
-    colors: {
-        jacket_base: "#545E75",
-            jacket_big_stripe: "#28a8ff",
-            jacket_trim: "#fff200",
+            armor: 1
         },
+        hidden_stats: {
+            dragMultiplier: 0.9,
+        },
+        slots: ["jacket"],
+        colors: {
+            jacket_base: "#545E75",
+                jacket_big_stripe: "#28a8ff",
+                jacket_trim: "#fff200",
+            },
         color_changes: [
             [JACKET_BASE, "#545E75"],
             ["#d45500", "#00aaaa"]
-    ],
-    unhide: ["jacket_trim_stripe", "jacket_big_stripe"],
+        ],
+        unhide: ["jacket_trim_stripe", "jacket_big_stripe"],
         price: 150
     })
 };
@@ -213,7 +250,7 @@ export const Pistol = makePistol();
 export const Pistol2 = makePistol();
 
 export function getItemsForSale(character) {
-    return [SpeedJacket, Sword, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
+    return [regularSkis, speedSkis, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
 }
 
 export default Equipment;

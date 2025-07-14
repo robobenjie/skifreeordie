@@ -56,10 +56,14 @@ export default class CharacterModel {
 
     getColor(part) {
         if (part == "left_ski") {
-            return "#333333";
+            if (this.character.skis) {
+                return this.character.skis.data.colors.skis_base;
+            }
         }
         if (part == "right_ski") {
-            return "#333333";
+            if (this.character.skis) {
+                return this.character.skis.data.colors.skis_base;
+            }
         }
         if (part == "left_boot") {
             return "#666666";

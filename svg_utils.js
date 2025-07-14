@@ -232,6 +232,7 @@ function processSvg(svgDoc, label, { replace_colors, hide, show, stroke_red, str
 
         // Convert the modified SVG to an Image object
         let svgData = new XMLSerializer().serializeToString(svgDoc);
+        console.log("replace colors", replace_colors);
         replace_colors.forEach(([oldColor, newColor]) => {
             svgData = svgData.replace(new RegExp(oldColor, 'g'), newColor);
         });
