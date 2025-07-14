@@ -91,7 +91,7 @@ class Equipment {
 const JACKET_BASE = "#ff6600";
 const SKIS_BASE = "#333333";
 
-function makeSkis(displayName, description, price, color, speed, turning) {
+function makeSkis(displayName, description, price, color, speed, turning, edges) {
     return new Equipment({
         id: "skis",
         layer_group: "skis",
@@ -100,7 +100,8 @@ function makeSkis(displayName, description, price, color, speed, turning) {
         description: description,
         stats: {
             speed: speed,
-            turning: turning
+            turning: turning,
+            sharp_edges: edges
         },
         slots: ["skis"],
         colors: {
@@ -114,9 +115,9 @@ function makeSkis(displayName, description, price, color, speed, turning) {
     })
 }
 
-export const regularSkis = makeSkis("Regular Skis", ["A pair of regular skis"], 50, "#333333", 2, 2);
-export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#D62246", 6, 1);
-export const turningSkis = makeSkis("Turning Skis", ["Razor edged"], 800, "#FFF200", 2, 6);
+export const regularSkis = makeSkis("Regular Skis", ["A pair of regular skis"], 50, "#333333", 2, 2, 2);
+export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#D62246", 6, 1, 2);
+export const turningSkis = makeSkis("Turning Skis", ["Razor edged"], 800, "#FFF200", 2, 2, 6);
 
 
 
