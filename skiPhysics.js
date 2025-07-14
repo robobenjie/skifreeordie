@@ -23,6 +23,15 @@ const speedToDragMultiplier = {
     6: 0.5,
 }
 
+const StatToTurningMultiplier = {
+    1: 0.5,
+    2: 0.8,
+    3: 1.0,
+    4: 1.5,
+    5: 2.0,
+    6: 3.5,
+}
+
 class SkiPhysics {
     constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass, camera) {
         this.x = x;
@@ -115,6 +124,19 @@ class SkiPhysics {
         return drag;
     }
 
+    getMaxTurnRate() {
+        let multiplier = 1;
+        for (let equipment of Object.values(this.equipment)) {
+            if (!equipment) {
+                continue;
+            }
+            if (equipment.getStats().turning) {
+                multiplier *= StatToTurningMultiplier[equipment.getStats().turning];
+            }
+        }
+        return this.maxTurnRate * multiplier;
+    }
+
     jump(jumpVel) {
         if (this.state == CharacterState.NORMAL) {
             this.jumpStartTime = performance.now();
@@ -196,6 +218,7 @@ class SkiPhysics {
     update(dt, targetSkiAngle, tuck) {
 
         let drag = this.getDrag(tuck);
+        let maxTurnRate = this.getMaxTurnRate();
 
         while (this.forces.length > 0) {
             let force = this.forces.pop();
@@ -207,7 +230,7 @@ class SkiPhysics {
         this.skiAngle = targetSkiAngle;
         let angleChangeRate = Math.abs(this.skiAngle - prevSkiAngle) / dt;
         if (this.state == CharacterState.JUMPING) {
-            if (angleChangeRate > this.maxTurnRate) {
+            if (angleChangeRate > this.maxInAirTurnRate) {
                 this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxInAirTurnRate * dt;
             }
             if (this.zVelocity > 0) {
@@ -248,8 +271,8 @@ class SkiPhysics {
                 this.trails.push(new Trail(this.isSnowboard, this.camera));
             }
         } else if (this.state == CharacterState.NORMAL) {
-            if (angleChangeRate > this.maxTurnRate) {
-                this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxTurnRate * dt;
+            if (angleChangeRate > maxTurnRate) {
+                this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * maxTurnRate * dt;
             }
             this.zVelocity = 0;
             this.z = 0;

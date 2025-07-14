@@ -115,7 +115,8 @@ function makeSkis(displayName, description, price, color, speed, turning) {
 }
 
 export const regularSkis = makeSkis("Regular Skis", ["A pair of regular skis"], 50, "#333333", 2, 2);
-export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#ff1111", 6, 2);
+export const speedSkis = makeSkis("Speed Skis", ["The fastest skis in the world"], 800, "#D62246", 6, 1);
+export const turningSkis = makeSkis("Turning Skis", ["Razor edged"], 800, "#FFF200", 2, 6);
 
 
 
@@ -250,7 +251,7 @@ export const Pistol = makePistol();
 export const Pistol2 = makePistol();
 
 export function getItemsForSale(character) {
-    return [regularSkis, speedSkis, Pistol, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol, SpeedJacket];
+    return [regularSkis, speedSkis, turningSkis, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol];
 }
 
 export default Equipment;
