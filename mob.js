@@ -377,6 +377,7 @@ class AxeBoarderOrc extends Mob {
         this.skiPhysics.sprayFactor = 0.25;
         this.skiPhysics.maxTurnRate = 7;
         this.skiPhysics.maxInAirTurnRate = 12;
+        this.skiPhysics.calculateParams();
 
         if (Math.random() < 0.5) {
             this.targetDistanceX *= -1;
@@ -510,6 +511,8 @@ class SpearOrc extends Mob {
         this.snowParticles = snowParticles;
         this.colors = ["#252422", "#83BCA9","#252422", "#83BCA9","#CC444B"];
         this.skiPhysics = new SkiPhysics(x, y, vx, vy, snowParticles, 45, terrain, this.mass, camera);
+        this.skiPhysics.calculateParams();
+
         if (x < character.x) {
             this.targetAngle = -Math.PI / 2;
         } else {
@@ -671,6 +674,8 @@ class Goblin extends Mob {
         this.skiPhysics.drag = 3.5 + randomCentered(0.05);
         this.skiPhysics.maxTurnRate = 5;
         this.skiPhysics.skiSpacing = 15;
+        this.skiPhysics.calculateParams();
+
         this.skiSplay = 0.2;
 
         this.gameTime = 0;

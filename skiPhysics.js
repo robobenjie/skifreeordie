@@ -252,7 +252,6 @@ class SkiPhysics {
     }   
 
     update(dt, targetSkiAngle, tuck) {
-        throttledLog(targetSkiAngle, this.skiAngle);
         let params = this.getParams();
         let drag = params.drag;
         if (tuck !== undefined) {

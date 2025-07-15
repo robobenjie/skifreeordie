@@ -49,8 +49,8 @@ export default class TrollModel {
     constructor() {
         this.model = new KinematicRenderer(4);
 
-        this.hipFilter = new LowPassFilter(0, 1.0, -Math.PI/3, Math.PI/3);
-        this.neckFilter = new LowPassFilter(0, 0.2, -Math.PI * 9, Math.PI * 9);
+        this.hipFilter = new LowPassFilter(0, 0.2   , Infinity, Infinity, true);
+        this.neckFilter = new LowPassFilter(0, 0.2, Infinity, Infinity, true);
 
         let worldFrame = this.model.frame();
         const hillFrame = worldFrame.rotate_about_y(HILL_SLOPE * Math.PI / 180);

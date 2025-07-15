@@ -479,46 +479,68 @@ class Hemisphere {
 }
 
 export class Circle {
-    constructor(radius, frame, color, startAngle = 0, endAngle = 2 * Math.PI) {
+    constructor(position, radius, frame, color) {
+        this.position = position;
         this.radius = radius;
         this.frame = frame;
         this.color = color;
-        this.startAngle = startAngle;
-        this.endAngle = endAngle;
         this.calculate();
     }
 
     calculate() {
-        this.positionInWorldFrame = this.frame.toWorld({x: 0, y: 0, z: 0});
+        this.positionInWorldFrame = this.frame.toWorld(this.position);
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
-        this.topPoint = this.frame.toWorld({x: 0, y: 0, z: 1.0});
+        this.quadCorners = [
+            this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y - this.radius, z: this.position.z}),
+            this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y - this.radius, z: this.position.z}),
+            this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y + this.radius, z: this.position.z}),
+            this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y + this.radius, z: this.position.z}),
+        ];
     }
 
     draw(ctx) {
-        const center = getXYScreen(this.positionInWorldFrame);
+        const k = 0.5522847;
+        setFillColor(ctx, this.color);
+        const midpoints = [];
+        const tangents = [];
+        const points = this.quadCorners.map(p => {
+            const [x, y] = getXYScreen(p);
+            return { x, y };
+          });
 
-        const topUnit = getXYScreen(this.topPoint);
-        const unitVector3D = {x: this.topPoint.x - this.positionInWorldFrame.x, y: this.topPoint.y - this.positionInWorldFrame.y, z: this.topPoint.z - this.positionInWorldFrame.z};
-        const crossProduct = {
-            x: unitVector3D.y * CAMERA_UNIT_VECTOR.z - unitVector3D.z * CAMERA_UNIT_VECTOR.y, 
-            y: unitVector3D.z * CAMERA_UNIT_VECTOR.x - unitVector3D.x * CAMERA_UNIT_VECTOR.z, 
-            z: unitVector3D.x * CAMERA_UNIT_VECTOR.y - unitVector3D.y * CAMERA_UNIT_VECTOR.x};
-        const newVectorEndpoint = {x: this.positionInWorldFrame.x + crossProduct.x, y: this.positionInWorldFrame.y + crossProduct.y, z: this.positionInWorldFrame.z + crossProduct.z};
-        const EndPointInPixels = getXYScreen(newVectorEndpoint);
-        const vectorAtExtreme = {x: EndPointInPixels[0] - center[0], y: EndPointInPixels[1] - center[1]};
-        const vectorToTop = {x: topUnit[0] - center[0], y: topUnit[1] - center[1]};
-        const angleFromVertical = Math.atan2(vectorAtExtreme.y, vectorAtExtreme.x) + Math.PI / 2;
-        let squash = 1 - Math.sqrt(vectorToTop.x * vectorToTop.x + vectorToTop.y * vectorToTop.y) / PIXELS_PER_METER;
-        setFillColor(ctx, color);
-        ctx.save(); {
-            ctx.translate(center[0], center[1]);
-            ctx.rotate(angleFromVertical);
-            ctx.scale(squash, 1);
-            ctx.beginPath();
-            ctx.arc(0, 0, this.radius * PIXELS_PER_METER, this.startAngle, this.endAngle);
-            ctx.fill();
+        for (let i = 0; i < 4; i++) {
+            const p1 = points[i];
+            const p2 = points[(i + 1) % 4];
 
-        } ctx.restore();
+            const mx = (p1.x + p2.x) / 2;
+            const my = (p1.y + p2.y) / 2;
+            midpoints.push({ x: mx, y: my });
+
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const len = Math.hypot(dx, dy);
+            tangents.push({ x: (dx / len) * len * k / 2, y: (dy / len) * len * k / 2 });
+        }
+
+
+        ctx.beginPath();
+        for (let i = 0; i < 4; i++) {
+            const p0 = midpoints[i];
+            const p1 = {
+            x: p0.x + tangents[i].x,
+            y: p0.y + tangents[i].y
+            };
+            const p3 = midpoints[(i + 1) % 4];
+            const p2 = {
+            x: p3.x - tangents[(i + 1) % 4].x,
+            y: p3.y - tangents[(i + 1) % 4].y
+            };
+
+            if (i === 0) ctx.moveTo(p0.x, p0.y);
+            ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+        }
+        ctx.closePath();
+        ctx.fill();
     }
 }
 
@@ -846,9 +868,9 @@ export class KinematicRenderer {
         return polygon;
     }
 
-    circle(radius, frame, color, startAngle = 0, endAngle = 2 * Math.PI, layer) {
+    circle(position, radius, frame, color, layer) {
         this.addFrame(frame);
-        const circle = new Circle(radius, frame, color, startAngle, endAngle);
+        const circle = new Circle(position, radius, frame, color);
         this.addComponent(circle, layer);
         return circle;
     }
@@ -865,6 +887,68 @@ export class KinematicRenderer {
         const cylinderProjection = new CylinderProjection(topRadiusX, topRadiusY, bottomRadiusX, bottomRadiusY, height, points, frame, color);
         this.addComponent(cylinderProjection, layer);
         return cylinderProjection;
+    }
+    
+    _mirroredAbout(component, layer, transformPoint) {
+        if (component instanceof Polygon) {
+            // It is a polygon
+            const mirrored = new Polygon(component.points.map(transformPoint), component.frame, component.color);
+            this.addComponent(mirrored, layer);
+            return mirrored;
+        } else if (component instanceof BodySegment) {
+            // It is a body segment
+            const first_point = {
+                position: transformPoint(component.first_point.position), 
+                radius: component.first_point.radius, 
+                color: component.first_point.color,
+                frame: component.first_point.frame
+            };
+            const second_point = {
+                position: transformPoint(component.second_point.position),
+                radius: component.second_point.radius,
+                color: component.second_point.color,
+                frame: component.second_point.frame
+            };
+            const mirrored = new BodySegment(first_point, second_point, component.frame, component.color);
+            this.addComponent(mirrored, layer);
+            return mirrored;
+        } else if (component instanceof LineSegment) {
+            // It is a line segment
+            const mirrored = new LineSegment(component.points.map(transformPoint), component.frame, component.color, component.thickness);
+            this.addComponent(mirrored, layer);
+            return mirrored;
+        } else if (component instanceof Circle) {
+            // It is a circle
+            const mirrored = new Circle(transformPoint(component.position), component.radius, component.frame, component.color);
+            this.addComponent(mirrored, layer);
+            return mirrored;
+        } else {
+            throw new Error("Mirroring not implemented for this component type", component);
+        }
+    }
+
+    addMirroredAboutX(component, layer) {
+        return this._mirroredAbout(component, layer, point => ({
+            x: -point.x,
+            y: point.y, 
+            z: point.z
+        }));
+    }
+
+    addMirroredAboutY(component, layer) {
+        return this._mirroredAbout(component, layer, point => ({
+            x: point.x,
+            y: -point.y,
+            z: point.z
+        }));
+    }
+
+    addMirroredAboutZ(component, layer) {
+        return this._mirroredAbout(component, layer, point => ({
+            x: point.x,
+            y: point.y,
+            z: -point.z
+        }));
     }
 
     addComponent(component, layer) {

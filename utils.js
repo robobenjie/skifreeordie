@@ -33,20 +33,36 @@ export function augmentCtx(ctx) {
 }
 
 export class LowPassFilter {
-    constructor(initialVal, timeConstant, minVal = -Infinity, maxVal = Infinity) {
+    constructor(initialVal, timeConstant, minVal = -Infinity, maxVal = Infinity, angle = false) {
         this.value = initialVal;
         this.timeConstant = timeConstant;
         this.minVal = minVal;
         this.maxVal = maxVal;
+        this.angle = angle;
+    }
+
+    normalizeAngle(angle) {
+        return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
     }
 
     runFilter(dt, newVal) {
         const alpha = dt / (this.timeConstant + dt);
-        this.value = this.value + alpha * (newVal - this.value);
-        this.value = Math.min(Math.max(this.value, this.minVal), this.maxVal);
+
+        if (this.angle) {
+            // Compute wrapped difference
+            const diff = this.normalizeAngle(newVal - this.value);
+            this.value += alpha * diff;
+            // Wrap result back to [-π, π]
+            this.value = this.normalizeAngle(this.value);
+        } else {
+            this.value += alpha * (newVal - this.value);
+            this.value = Math.min(Math.max(this.value, this.minVal), this.maxVal);
+        }
+
         return this.value;
     }
 }
+
 
 
 export function clipPath(path, xmin, xmax) {
