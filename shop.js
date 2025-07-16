@@ -8,6 +8,7 @@ const SHOP_TEXT_COLOR = "#293241";
 
 const SLOT_TO_GROUP_MAP = {
   "jacket": ["player_jacket"],
+  "food": ["player_jacket"],
   "left_hand": ["left_glove"],
   "right_hand": ["right_glove"],
   "left_weapon": ["left_hand"],
@@ -15,8 +16,9 @@ const SLOT_TO_GROUP_MAP = {
   "skis": ["skis"]
 };
 export class Shop {
-  constructor(character, ctx, canvas, camera) {
+  constructor(character, ctx, canvas, camera, preloadedEquipment = null) {
       this.character = character;
+      this.preloadedEquipment = preloadedEquipment;
       this.chair = null;  // Initialize the chair as null
       this.purchaseChair = null;
       this.characterLeftLeg = null;
@@ -40,7 +42,7 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this._levelsTillNextShop = 1;
+      this._levelsTillNextShop = 0;
 
       this.checkingOut = false;
       this.confirmLedReady = false;
@@ -310,7 +312,11 @@ export class Shop {
   }
 
   initItems() {
-    this.forSaleItems = getItemsForSale(this.character);
+    if (this.preloadedEquipment) {
+      this.forSaleItems = this.preloadedEquipment;
+    } else {
+      this.forSaleItems = getItemsForSale(this.character);
+    }
   }
 
   hammerSparks() {
@@ -595,6 +601,8 @@ export class Shop {
   initDropAreas() {
     let jacketDrop = new DropArea(160, 450, 1260, 1530, this.canvas, "jacket");
     this.dropAreas.push(jacketDrop);
+    let foodDrop = new DropArea(160, 450, 1260, 1530, this.canvas, "food");
+    this.dropAreas.push(foodDrop);
     let rightHandDrop = new DropArea(150, 300, 1330, 1540, this.canvas, "right_hand");
     this.dropAreas.push(rightHandDrop);
     let leftHandDrop = new DropArea(300, 450, 1330, 1540, this.canvas, "left_hand");

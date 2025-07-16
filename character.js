@@ -121,6 +121,10 @@ class Character {
             this.leftHand = equipment;
             equipment.equip(this, this.mobManager);
         }
+        if (equipment.getSlots().includes("food")) {
+            this.health += equipment.getStats().health * this.maxHealth * 10 / 100;
+            this.health = Math.min(this.health, this.maxHealth);
+        }
         this.skiPhysics.equipment = this.getAllEquipment();
         this.skiPhysics.calculateParams();
         console.log(this.getAllEquipment());

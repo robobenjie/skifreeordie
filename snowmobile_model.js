@@ -418,7 +418,7 @@ export class SnowmobileTracks {
         }
     }
 
-    draw(ctx) {
+    draw(ctx) { 
         ctx.strokeStyle = "#E8E8F0";
         ctx.lineWidth = 6;
         ctx.beginPath();

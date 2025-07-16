@@ -3,6 +3,7 @@ import { Frame, BodySegment, Ball, Polygon, KinematicRenderer } from './kinemati
 const STANCE_WIDTH = 0.45;
 const STANCE_LEAD = 0.3;
 const SKI_LENGTH = 3.0;
+const SKI_TIP_LENGTH = 0.6;
 const SKI_WIDTH = 0.12;
 const SKI_REAR_FRACTION = 0.4;
 const HILL_SLOPE = 15; // degrees
@@ -61,9 +62,21 @@ export default class CharacterModel {
             }
             else return "#000000";
         }
+        if (part == "left_ski_tip") {
+            if (this.character.skis) {
+                return this.character.skis.data.colors.skis_extra;
+            }
+            else return "#000000";
+        }
         if (part == "right_ski") {
             if (this.character.skis) {
                 return this.character.skis.data.colors.skis_base;
+            }
+            else return "#000000";
+        }
+        if (part == "right_ski_tip") {
+            if (this.character.skis) {
+                return this.character.skis.data.colors.skis_extra;
             }
             else return "#000000";
         }
@@ -156,18 +169,32 @@ export default class CharacterModel {
 
         // left ski
         this.kinematicRenderer.bodySegment(
-            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION), y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION) - SKI_TIP_LENGTH, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
             {position: { x: -SKI_LENGTH * SKI_REAR_FRACTION, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
             leftSkiFrame,
             this.getColor("left_ski"),
             0,
         );
+        this.kinematicRenderer.bodySegment(
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION) - SKI_TIP_LENGTH, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION), y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            leftSkiFrame,
+            this.getColor("left_ski_tip"),
+            0,
+        );
         // right ski
         this.kinematicRenderer.bodySegment(
-            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION), y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION) - SKI_TIP_LENGTH, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
             {position: { x: -SKI_LENGTH * SKI_REAR_FRACTION, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
             rightSkiFrame,
             this.getColor("right_ski"),
+            0,
+        );
+        this.kinematicRenderer.bodySegment(
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION) - SKI_TIP_LENGTH, y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            {position: { x: SKI_LENGTH * (1 - SKI_REAR_FRACTION), y: 0, z: 0 }, radius: SKI_WIDTH / 2},
+            rightSkiFrame,
+            this.getColor("right_ski_tip"),
             0,
         );
 

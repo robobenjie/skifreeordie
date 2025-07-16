@@ -68,7 +68,11 @@ async function initializeGame() {
         y += 550;
     }
 
-    let shop = new Shop(character, ctx, canvas, camera);
+    // Load all equipment images before creating the shop
+    const equipment = getItemsForSale(character);
+    await Promise.all(equipment.map(item => item.loadImage()));
+
+    let shop = new Shop(character, ctx, canvas, camera, equipment);
     const svgObject = document.getElementById('shopSvg');
     svgObject.contentDocument.documentElement.style.display = 'none';
 
@@ -100,8 +104,6 @@ async function initializeGame() {
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
     
-        console.log("dpr is ", dpr);
-        // Scale the canvas context to match the device pixel ratio
         ctx.scale(dpr, dpr);
     
         // Set CSS dimensions to maintain the correct visual size (CSS pixels)
@@ -156,6 +158,7 @@ async function initializeGame() {
     }
 
     mobManager.spawnSnowmobile();
+    character.damage(80);
     
 
 
@@ -192,12 +195,11 @@ async function initializeGame() {
     // Resize the canvas to fill browser window dynamically
     window.addEventListener('resize', resizeCanvas, false);
 
-    // Initial call to set the canvas size correctly and start the update loop
+    // Initial call to set the canvas size correctly
     resizeCanvas();
 
-    const equipment = getItemsForSale(character);
-    await Promise.all(equipment.map(item => item.loadImage()));
-
-    // Start the game loop only after all images are loaded
-    requestAnimationFrame(update);
+    // Start the game loop
+    setTimeout(() => {
+        requestAnimationFrame(update);
+    }, 1);
 }
