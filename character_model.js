@@ -59,11 +59,13 @@ export default class CharacterModel {
             if (this.character.skis) {
                 return this.character.skis.data.colors.skis_base;
             }
+            else return "#000000";
         }
         if (part == "right_ski") {
             if (this.character.skis) {
                 return this.character.skis.data.colors.skis_base;
             }
+            else return "#000000";
         }
         if (part == "left_boot") {
             return "#666666";

@@ -288,7 +288,7 @@ class Character {
         this.tuck = this.tuck * Math.pow(0.8, dt * 60) + this.targetTuck * (1 - Math.pow(0.8, dt * 60));
 
         let targetSkiAngle = this.targetSkiAngle;
-        if (this.skis.getAllowUphill()) {
+        if (this.skis && this.skis.getAllowUphill()) {
               const currentAngle = this.skiPhysics.skiAngle;
               const targetAngle = this.targetSkiAngle;
               

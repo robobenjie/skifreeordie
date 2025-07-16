@@ -5,6 +5,8 @@ import { MobDeathParticleEffect } from "./particle_engine.js";
 import OrkModel from "./ork_model.js";
 import GoblinModel from "./goblin_model.js";
 import TrollModel from "./troll_model.js";
+import SnowmobileModel from "./snowmobile_model.js";
+import {normalizeAngle, throttledLog, LowPassFilter} from "./utils.js";
 
 class MobManager {
     constructor(character, terrain, snowParticles, camera
@@ -41,6 +43,14 @@ class MobManager {
         return this.mobs.filter(mob => mob instanceof Goblin).length;
     }
 
+    numSnowmobiles() {
+        return this.getSnowmobiles().length;
+    }
+
+    getSnowmobiles() {
+        return this.mobs.filter(mob => mob instanceof Snowmobile);
+    }
+
     spawnGoblin() {
         console.log("Spawning goblin");
         let loc = this.camera.offBottomOfScreen(); // {x: this.character.x, y:this.character.y + 100}; //
@@ -61,6 +71,11 @@ class MobManager {
         const onLeft = Math.random() < 0.5;
         let loc = onLeft? this.camera.offLeftOfScreen(this.character) : this.camera.offRightOfScreen(this.character);
         this.addMob(new SpearOrc(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
+    }
+
+    spawnSnowmobile() {
+        let loc = this.camera.offBottomOfScreen(this.character);
+        this.addMob(new Snowmobile(loc.x, loc.y, 0, 0, this.character, this.terrain, this.snowParticles, this.deathEffect, this.camera));
     }
 
     rotateAbout(x, y, angle) {
@@ -240,6 +255,10 @@ class Mob {
         return this.camera.isOnScreen(this.x, this.y);
     }
 
+    onCollideWithTerrain(terrainCollisions) {
+        // Override this method in subclasses
+    }
+
     update(dt) {
         this.timeSinceDamagedCharacter += dt;
         this.x += this.velocity.x * dt;
@@ -249,22 +268,26 @@ class Mob {
         }
         if (this.isOnScreen()) {    
             let terrainCollisions = this.terrain.collidesWith(this.x, this.y, this.width, this.width, this.velocity.y * dt);
-            for (let entity of terrainCollisions) {
-                if (entity.type == "tree") {
-                    if (this.x > entity.x) {
-                        this.skiPhysics.setVelocity({
-                            x: 10.0,
-                            y: 0
-                        });
-                    } else {
-                        this.skiPhysics.setVelocity({
-                            x: 10.0,
-                            y: 0
-                        });
+            this.onCollideWithTerrain(terrainCollisions);
+            if (this.skiPhysics) {
+
+                for (let entity of terrainCollisions) {
+                    if (entity.type == "tree") {
+                        if (this.x > entity.x) {
+                            this.skiPhysics.setVelocity({
+                                x: 10.0,
+                                y: 0
+                            });
+                        } else {
+                            this.skiPhysics.setVelocity({
+                                x: -10.0,
+                                y: 0
+                            });
+                        }
                     }
-                }
-                if (entity.type == "jumpRamp") {
-                    this.skiPhysics.rampJump()
+                    if (entity.type == "jumpRamp") {
+                        this.skiPhysics.rampJump()
+                    }
                 }
             }
         }
@@ -645,6 +668,139 @@ class SpearOrc extends Mob {
         ctx.save();
         ctx.translate(this.x, this.y -this.skiPhysics.z * 70);
 
+        this.model.draw(ctx);
+        ctx.restore();
+        super.draw(ctx);
+    }
+}
+
+class Snowmobile extends Mob {
+    constructor(x, y, vx, vy, character, terrain, snowParticles, deathEffect, camera) {
+        super(x, y, vx, vy, 10, 8, 15, 'green', character, deathEffect);
+        this.type = "snowmobile";
+        this.maxHealth = 10;
+        this.health = 10;
+        this.camera = camera;
+        this.colors = ["#222222", "#1C5D99", "#E54B4B", "#83BCA9"]
+
+        this.terrain = terrain;
+        this.snowParticles = snowParticles;
+        this.damageCooldown = 0.25;
+        this.treeCollisionCooldown = 1.5;
+        this.timeSinceTreeCollision = 0;
+
+        this.snowmobileInteractionDistanceSquared = 30*30;
+        
+
+        this.angle = 0; // Down the mountain
+        this.steeringAngle = 0; //straight ahead
+        this.steeringAngleFilter = new LowPassFilter(0, 0.1);
+        
+        this.maxSteeringAngle = Math.PI / 4;
+        this.maxDriveVel = 150 + randomCentered(10);
+        this.driveVel = this.maxDriveVel;
+        this.gameTime = 0;
+        this.model = new SnowmobileModel();
+        
+    }
+
+
+    onCollideWithTerrain(terrainCollisions) {
+        for (let entity of terrainCollisions) {
+            if (entity.type == "tree") {
+
+                if (this.timeSinceTreeCollision > this.treeCollisionCooldown) {
+                    this.health -= 1;
+                    this.driveVel = -50;
+                    this.timeSinceTreeCollision = 0;
+                }
+            }
+        }
+    }
+
+    onCollideWithCharacter(character) {
+
+        character.collideWithMob(this);        
+        if (this.timeSinceDamagedCharacter < this.damageCooldown) return;
+        this.timeSinceDamagedCharacter = 0;
+        const angleToTarget = Math.atan2(this.character.y - this.y, this.character.x - this.x) + Math.PI / 2;
+        const deltaAngle = -normalizeAngle(angleToTarget - this.angle + Math.PI);
+        if (Math.abs(deltaAngle) > Math.PI / 4) {
+            return;
+        }
+
+        character.damage(10);
+        character.skiPhysics.impulse({
+            y: -Math.cos(angleToTarget) * 40000,
+            x: Math.sin(angleToTarget) * 40000
+        });
+        character.skiPhysics.jump(6);
+    }
+
+    update(dt) {
+        this.gameTime += dt;
+        this.timeSinceDamagedCharacter += dt;
+        this.timeSinceTreeCollision += dt;
+
+        this.cheatBackCloseToCharacter();
+
+        if (!this.shouldBackOff) {
+            const angleToTarget = Math.atan2(this.character.y - this.y, this.character.x - this.x) + Math.PI / 2;
+            const deltaAngle = -normalizeAngle(angleToTarget - this.angle + Math.PI);
+            this.steeringAngle = Math.max(Math.min(deltaAngle, this.maxSteeringAngle), -this.maxSteeringAngle);
+            const toDegrees = (angle) => angle * 180 / Math.PI;
+            throttledLog(toDegrees(angleToTarget), toDegrees(this.angle), toDegrees(deltaAngle), toDegrees(this.steeringAngle));
+        } else {
+            this.steeringAngle = 0;
+        }
+
+        for (let mob of this.manager.getSnowmobiles()) {
+            if (mob != this) {
+                const dx = this.x - mob.x;
+                const dy = this.y - mob.y;
+                const distanceSquared = dx * dx + dy * dy;
+                if (distanceSquared < this.snowmobileInteractionDistanceSquared) {
+                    // Get angle to other snowmobile relative to this snowmobile's heading
+                    const angleToOther = Math.atan2(dy, dx) - this.angle;
+                    // Normalize angle to -PI to PI range
+                    const normalizedAngle = normalizeAngle(angleToOther);
+                    // If angle is positive, other snowmobile is on the left
+                    const isOnLeft = normalizedAngle > 0;
+                    // Steer away from other snowmobile
+                    this.steeringAngle = isOnLeft ? -this.maxSteeringAngle : this.maxSteeringAngle;
+                }
+            }
+        }
+
+        this.steeringAngle = this.steeringAngleFilter.runFilter(dt, this.steeringAngle);
+
+        if (this.driveVel < this.maxDriveVel) {
+            this.driveVel += 150 * dt;
+        }
+        if (this.driveVel > this.maxDriveVel) {
+            this.driveVel = this.maxDriveVel;
+        }
+        const rotVel = - this.steeringAngle * 2.0 / 50 * this.driveVel;
+
+        this.angle += rotVel * dt;
+        this.velocity = {
+            y: Math.cos(this.angle) * this.driveVel,
+            x: -Math.sin(this.angle) * this.driveVel,
+        }
+        this.x += this.velocity.x * dt;
+        this.y += this.velocity.y * dt;
+
+        if (this.camera.isOnScreen(this.x, this.y)) {
+            this.model.update(dt, this.angle, this.steeringAngle, 1);
+        }
+
+        super.update(dt);
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.scale(0.4, 0.4);
         this.model.draw(ctx);
         ctx.restore();
         super.draw(ctx);

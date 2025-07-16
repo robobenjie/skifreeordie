@@ -79,6 +79,7 @@ export class Level {
         this.yPerGoblin = 300;
         this.axeOrcs = [];
         this.spearOrcs = [];
+        this.snowmobiles = [];
         this.name = generateSkiRunName(difficulty);
 
         this.goblinsKilled = 0;
@@ -241,6 +242,10 @@ export class Level {
         if (this.spearOrcs.length > 0 && y > this.spearOrcs[0]) {
             this.mobManager.spawnSpearOrc();
             this.spearOrcs.shift();
+        }
+        if (this.snowmobiles.length > 0 && y > this.snowmobiles[0]) {
+            this.mobManager.spawnSnowmobile();
+            this.snowmobiles.shift();
         }
         if ((this.camera.bottomOfScreen() - this.startY) / 10 > this.endGuideStart && !this.endingPlaced) {
             let bottom = this.camera.bottomOfScreen()
@@ -608,7 +613,7 @@ export class BlueSquare extends Level {
         this.jumpRampPercentage = 0.5;
         this.yPerGoblin = 50;
 
-        const spawnYs = [100,120, 300, 400,440,445, 600];
+        const spawnYs = [100,120, 300, 400, 440, 445, 600];
         for (let y of spawnYs) {
             if (Math.random() < 0.5) {
                 this.axeOrcs.push(y);
@@ -669,6 +674,19 @@ export class BlackDiamond extends Level {
     }
 }
 
+export class BlackDiamondSnowmobile extends Level {
+    constructor(terrainManager, MobManager, camera, character) {
+        super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.BLACK_DIAMOND);
+        this.treePercentage = 1;
+        this.jumpRampPercentage = 0.5;
+        this.yPerGoblin = 20;
+
+        this.snowmobiles.push(100);
+        this.snowmobiles.push(100);
+        this.snowmobiles.push(100);
+    }
+}
+
 export class DoubleBlackDiamondSnowBoarder extends Level {
     constructor(terrainManager, MobManager, camera, character) {
         super(2000, 60, terrainManager, MobManager, camera, character, LevelDifficulty.DOUBLE_BLACK_DIAMOND);
@@ -687,7 +705,7 @@ export class DoubleBlackDiamondSnowBoarder extends Level {
 const LevelsByDifficulty = new Map([
     [LevelDifficulty.GREEN_CIRCLE, [GreenCircle, BabyGoblins, JumpLand]],
     [LevelDifficulty.BLUE_SQUARE, [BlueSquare, BlueSquareSnowBoarder, BlueSquareSpearOrks]],
-    [LevelDifficulty.BLACK_DIAMOND, [BlackDiamond]],
+    [LevelDifficulty.BLACK_DIAMOND, [BlackDiamond, BlackDiamondSnowmobile]],
     [LevelDifficulty.DOUBLE_BLACK_DIAMOND, [DoubleBlackDiamondSnowBoarder]],
     [LevelDifficulty.TRIPLE_BLACK_DIAMOND, [DoubleBlackDiamondSnowBoarder]]
 ]);

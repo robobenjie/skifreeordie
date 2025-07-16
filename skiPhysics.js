@@ -41,18 +41,6 @@ const StatToEdgeMultiplier = {
     6: 0.2,
 }
 
-function throttled(func, delay) {
-    let lastCall = 0;
-    return function(...args) {
-        const now = Date.now();
-        if (now - lastCall >= delay) {
-            lastCall = now;
-            func.apply(this, args);
-        }
-    }
-}
-
-const throttledLog = throttled(console.log, 100);
 
 class SkiPhysics {
     constructor(x, y, vx, vy, particleEngine, skiLength, terrainManager, mass, camera) {

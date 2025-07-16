@@ -7,7 +7,7 @@ import TerrainManager from './terrain.js';
 import Renderer from './renderer.js';
 import MobManager from './mob.js';
 import Shop from './shop.js';
-import { GreenCircle, BlueSquareSnowBoarder, JumpLand, DoubleBlackDiamondSnowBoarder, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks, BlackDiamond} from './level.js';
+import { GreenCircle, BlueSquareSnowBoarder, JumpLand, BlackDiamondSnowmobile, getThreeLevels, LevelDifficulty, BlueSquareSpearOrks, BlackDiamond} from './level.js';
 import { getItemsForSale } from './equipment.js';
 import { Sword, Sword2, Pistol, SpeedJacket, turningSkis, uphillSkis} from './equipment.js';
 import OrkModel from './ork_model.js';
@@ -122,11 +122,11 @@ async function initializeGame() {
     }
 
     let level1 = new BlueSquareSpearOrks(treeManager, mobManager, camera, character);
-    let level2 = new BlueSquareSnowBoarder(treeManager, mobManager, camera, character);
+    let level2 = new BlackDiamondSnowmobile(treeManager, mobManager, camera, character);
     let level3 = new GreenCircle(treeManager, mobManager, camera, character);
     let level4 = new BlackDiamond(treeManager, mobManager, camera, character);
 
-    character.equip(uphillSkis, "skis");
+    //character.equip(uphillSkis, "skis");
     character.update(0.01, ctx);
     camera.update(0.01);
 
@@ -154,13 +154,9 @@ async function initializeGame() {
         let y = character.y + r * Math.sin(theta);
         treeManager.addTree(x, y);
     }
-
     
 
-
     function update(time) {
-
-
         let dt = (time - lastTime) / 1000.0;
         dt = Math.min(dt, 0.050);
         ctx.fillStyle = "#F4F4F8"

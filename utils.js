@@ -32,6 +32,16 @@ export function augmentCtx(ctx) {
     };
 }
 
+export function normalizeAngle(angle) {
+    angle = angle % (2 * Math.PI);
+    if (angle > Math.PI) {
+        angle -= 2 * Math.PI;
+    } else if (angle < -Math.PI) {
+        angle += 2 * Math.PI;
+    }
+    return angle;
+}
+
 export class LowPassFilter {
     constructor(initialVal, timeConstant, minVal = -Infinity, maxVal = Infinity, angle = false) {
         this.value = initialVal;
@@ -41,19 +51,17 @@ export class LowPassFilter {
         this.angle = angle;
     }
 
-    normalizeAngle(angle) {
-        return ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
-    }
+
 
     runFilter(dt, newVal) {
         const alpha = dt / (this.timeConstant + dt);
 
         if (this.angle) {
             // Compute wrapped difference
-            const diff = this.normalizeAngle(newVal - this.value);
+            const diff = normalizeAngle(newVal - this.value);
             this.value += alpha * diff;
             // Wrap result back to [-π, π]
-            this.value = this.normalizeAngle(this.value);
+            this.value = normalizeAngle(this.value);
         } else {
             this.value += alpha * (newVal - this.value);
             this.value = Math.min(Math.max(this.value, this.minVal), this.maxVal);
@@ -62,6 +70,19 @@ export class LowPassFilter {
         return this.value;
     }
 }
+
+export function throttled(func, delay) {
+    let lastCall = 0;
+    return function(...args) {
+        const now = Date.now();
+        if (now - lastCall >= delay) {
+            lastCall = now;
+            func.apply(this, args);
+        }
+    }
+}
+
+export const throttledLog = throttled(console.log, 100);
 
 
 
