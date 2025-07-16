@@ -5,7 +5,7 @@ import { MobDeathParticleEffect } from "./particle_engine.js";
 import OrkModel from "./ork_model.js";
 import GoblinModel from "./goblin_model.js";
 import TrollModel from "./troll_model.js";
-import SnowmobileModel from "./snowmobile_model.js";
+import {SnowmobileModel, SnowmobileTracks} from "./snowmobile_model.js";
 import {normalizeAngle, throttledLog, LowPassFilter} from "./utils.js";
 
 class MobManager {
@@ -690,6 +690,8 @@ class Snowmobile extends Mob {
         this.timeSinceTreeCollision = 0;
 
         this.snowmobileInteractionDistanceSquared = 30*30;
+
+        this.tracks = new SnowmobileTracks(camera);
         
 
         this.angle = 0; // Down the mountain
@@ -742,14 +744,11 @@ class Snowmobile extends Mob {
         this.timeSinceDamagedCharacter += dt;
         this.timeSinceTreeCollision += dt;
 
-        this.cheatBackCloseToCharacter();
-
         if (!this.shouldBackOff) {
+            this.cheatBackCloseToCharacter();
             const angleToTarget = Math.atan2(this.character.y - this.y, this.character.x - this.x) + Math.PI / 2;
             const deltaAngle = -normalizeAngle(angleToTarget - this.angle + Math.PI);
             this.steeringAngle = Math.max(Math.min(deltaAngle, this.maxSteeringAngle), -this.maxSteeringAngle);
-            const toDegrees = (angle) => angle * 180 / Math.PI;
-            throttledLog(toDegrees(angleToTarget), toDegrees(this.angle), toDegrees(deltaAngle), toDegrees(this.steeringAngle));
         } else {
             this.steeringAngle = 0;
         }
@@ -794,6 +793,8 @@ class Snowmobile extends Mob {
             this.model.update(dt, this.angle, this.steeringAngle, 1);
         }
 
+        this.tracks.update(dt, {x: this.x, y: this.y}, this.driveVel, this.velocity);
+
         super.update(dt);
     }
 
@@ -805,6 +806,12 @@ class Snowmobile extends Mob {
         ctx.restore();
         super.draw(ctx);
     }
+
+    drawTrail(ctx) {
+        this.tracks.draw(ctx);
+    }
+
+    
 }
 
 class Goblin extends Mob {

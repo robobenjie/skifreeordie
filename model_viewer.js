@@ -1,7 +1,7 @@
 import GoblinModel from './goblin_model.js';
 import OrkModel from './ork_model.js';
 import TrollModel from './troll_model.js';
-import SnowmobileModel from './snowmobile_model.js';
+import {SnowmobileModel}     from './snowmobile_model.js';
 
 class ModelViewer {
     constructor() {

@@ -259,8 +259,25 @@ function makePistol() {
 export const Pistol = makePistol();
 export const Pistol2 = makePistol();
 
+function makeFood(image, displayName, description, price, healthGain) {
+    return new Equipment({
+        id: "food",
+        layer_group: "food",
+        shop_image: image,
+        display_name: displayName,
+        description: description,
+        stats: {
+            health: healthGain
+        },
+        slots: ["food"],
+        price: price
+    })
+}
+
+const chillibowl = makeFood("bread_bowl.svg", "Chilli", ["Chilli in a bread bowl"], 50, 2);
+
 export function getItemsForSale(character) {
-    return [regularSkis, speedSkis, turningSkis, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol];
+    return [chillibowl, regularSkis, speedSkis, turningSkis, SpeedJacket,SpeedJacket, Sword, Pistol2, SpeedJacket,SpeedJacket, Sword, Pistol];
 }
 
 export default Equipment;

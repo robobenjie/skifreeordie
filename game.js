@@ -154,9 +154,14 @@ async function initializeGame() {
         let y = character.y + r * Math.sin(theta);
         treeManager.addTree(x, y);
     }
+
+    mobManager.spawnSnowmobile();
     
 
+
     function update(time) {
+
+
         let dt = (time - lastTime) / 1000.0;
         dt = Math.min(dt, 0.050);
         ctx.fillStyle = "#F4F4F8"

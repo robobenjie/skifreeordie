@@ -259,7 +259,7 @@ class SkiPhysics {
         let angleChangeRate = (this.skiAngle - prevSkiAngle) / dt;
 
         if (this.state == CharacterState.JUMPING) {
-            if (angleChangeRate > this.maxInAirTurnRate) {
+            if (Math.abs(angleChangeRate) > this.maxInAirTurnRate) {
                 this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * this.maxInAirTurnRate * dt;
             }
             if (this.zVelocity > 0) {
@@ -302,7 +302,7 @@ class SkiPhysics {
 
             }
         } else if (this.state == CharacterState.NORMAL) {
-            if (angleChangeRate > params.maxTurnRate) {
+            if (Math.abs(angleChangeRate) > params.maxTurnRate) {
                 this.skiAngle = prevSkiAngle + Math.sign(this.skiAngle - prevSkiAngle) * params.maxTurnRate * dt;
             }
             this.zVelocity = 0;

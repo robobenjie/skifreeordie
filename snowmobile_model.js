@@ -1,5 +1,5 @@
 import { KinematicRenderer } from './kinematic_renderer.js';
-import { LowPassFilter } from './utils.js';
+import { LowPassFilter, throttledLog } from './utils.js';
 
 const HILL_SLOPE = 15; // degrees
 
@@ -26,7 +26,7 @@ const BACK_HEIGHT = 1.0;
 
 const SEAT_HEIGHT = NOSE_BOTTOM_HEIGHT + 2.0;
 
-export default class SnowmobileModel {
+export class SnowmobileModel {
     constructor() {
         this.model = new KinematicRenderer(4);
         let worldFrame = this.model.frame();
@@ -360,16 +360,8 @@ export default class SnowmobileModel {
             GRAY,
             arm_radius,
             2
-        );
-        
-        
-
-
-
-        
-        
+        );   
     }
-
 
     update(dt, skiAngle, steeringAngle, forwardLean) {
 
@@ -388,5 +380,52 @@ export default class SnowmobileModel {
 
     draw(ctx) {
         this.model.draw(ctx);
+    }
+}
+
+export class SnowmobileTracks {
+    constructor(camera) {
+        this.camera = camera;
+        this.tracks = [];
+        this.distanceSinceLastTrack = 0;
+        this.trackSpacing = 4;
+    }
+    update(dt, position, speed, velocity) {
+        this.distanceSinceLastTrack += speed * dt;
+
+        const unitNormalToVelocity = {x: -velocity.y / speed, y: velocity.x / speed};
+        const trackWidth = 12;
+        if (this.distanceSinceLastTrack > this.trackSpacing) {
+            this.tracks.push(
+                [
+                    {x: position.x + unitNormalToVelocity.x * trackWidth, y: position.y + unitNormalToVelocity.y * trackWidth},
+                    {x: position.x - unitNormalToVelocity.x * trackWidth, y: position.y - unitNormalToVelocity.y * trackWidth},
+                ]
+            );
+            this.distanceSinceLastTrack = 0;
+        }
+        for (let i = 0; i < this.tracks.length; i++) {
+            if (this.camera.distanceOffScreenY(this.tracks[i][0].y) < -20) {
+                this.tracks.splice(i, 1);
+                i--;
+            } else {
+                break;
+            }
+        }
+        const maxTracks = 300;
+        if (this.tracks.length > maxTracks) {
+            this.tracks.splice(0, this.tracks.length - maxTracks);
+        }
+    }
+
+    draw(ctx) {
+        ctx.strokeStyle = "#E8E8F0";
+        ctx.lineWidth = 6;
+        ctx.beginPath();
+        for (let track of this.tracks) {
+            ctx.moveTo(track[0].x, track[0].y);
+            ctx.lineTo(track[1].x, track[1].y);
+        }
+        ctx.stroke();
     }
 }
