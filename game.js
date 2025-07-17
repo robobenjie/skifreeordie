@@ -157,10 +157,6 @@ async function initializeGame() {
         treeManager.addTree(x, y);
     }
 
-    mobManager.spawnSnowmobile();
-    character.damage(80);
-    
-
 
     function update(time) {
 

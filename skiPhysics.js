@@ -33,11 +33,11 @@ const StatToTurningMultiplier = {
 }
 
 const StatToEdgeMultiplier = {
-    1: 3.0,
-    2: 2.5,
-    3: 1.0,
-    4: 0.7,
-    5: 0.5,
+    1: 2.0,
+    2: 1.0,
+    3: 0.8,
+    4: 0.6,
+    5: 0.4,
     6: 0.2,
 }
 

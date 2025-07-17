@@ -127,6 +127,8 @@ class Character {
         }
         this.skiPhysics.equipment = this.getAllEquipment();
         this.skiPhysics.calculateParams();
+        console.log("Equipped " + equipment);
+        console.log(this.skiPhysics.getParams());
         console.log(this.getAllEquipment());
     }
 
@@ -141,6 +143,10 @@ class Character {
             pants: this.pants,
             skis: this.skis
         };
+    }
+
+    getSkis() {
+        return this.skis;
     }
 
     equipRightHand(weapon) {

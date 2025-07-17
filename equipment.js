@@ -8,18 +8,29 @@ class Equipment {
         this.image = null;
 
         this.weapon = null;
+        this._isGun = false;
+        this._isMelee = false;
 
         if (data.melee_weapon) {
             this.weapon = new MeleeWeapon(this);
+            this._isMelee = true;
         }
         if (data.gun) {
             this.weapon = new Gun(this);
+            this._isGun = true;
         }
     }
+    
     equip(character, mobManager) {
         if (this.weapon) {
             this.weapon.equip(character, mobManager);
         }
+    }
+    isGun() {
+        return this._isGun;
+    }
+    isMelee() {
+        return this._isMelee;
     }
     getID() {
         return this.data.id;
@@ -126,45 +137,52 @@ const turningColors = ["#133c55","#386fa4","#59a5d8","#84d2f6","#91e5f6"];
 const speedColors = ["#e89005","#ec7505","#d84a05","#f42b03","#e70e02"];
 const edgeColors = ["#642ca9","#ff36ab","#ff74d4","#ffb8de","#ffdde1"];
 
-const speedWords = ["", "Waxed", "Fast", "Danger", "Epic"];
-const turningWords = ["", "Agile", "Nimble", "Topsy-Turny", "Tornado"];
-const edgeWords = ["Drifty", "Sliding", "", "Griping", "Razor"];
+const speedWords = ["Slow", "Medium", "Waxed", "Fast", "Danger", "Epic"];
+const turningWords = ["Awkward", "Balanced", "Agile", "Nimble", "Topsy-Turny", "Tornado"];
+const edgeWords = ["Drifty", "Sliding", "", "Griping", "Razor", "Monofilament"];
 
 const allSkis = [];
+
+function getSkiName(speed, turning, edge) {
+    return "MK" + speed + "-T" + turning + "-E" + edge;
+}
+function getSkiDescription(speed, turning, edge) {
+    return [speedWords[speed - 1] + " " + turningWords[turning - 1] + " " + edgeWords[edge - 1] + " Skis"];
+}
 // speed primary
 for (let speed = 3; speed <= 6; speed++) {
-    allSkis.push(makeSkis(speedWords[speed - 2], ["Skis that go fast"], 50 * speed, speedColors[speed - 2], speed, 2, 2));
+    allSkis.push(makeSkis(getSkiName(speed, 2, 2), getSkiDescription(speed, 2, 2), 50 * speed, speedColors[speed - 2], speed, 2, 2));
     // turning secondary
     for (let turning = 3; turning < speed; turning++) {
-        allSkis.push(makeSkis(speedWords[speed - 2] + "-T" + turning, ["Skis that turn and go fast"], 50 * speed + 50 * turning, speedColors[speed - 2], speed, turning, 2, turningColors[turning - 2]));
+        allSkis.push(makeSkis(getSkiName(speed, turning, 2), getSkiDescription(speed, turning, 2), 50 * speed + 50 * turning, speedColors[speed - 2], speed, turning, 2, turningColors[turning - 2]));
     }
     // edge secondary
     for (let edge = 3; edge < speed; edge++) {
-        allSkis.push(makeSkis(speedWords[speed - 2] + "-E" + edge, ["Skis that go fast"], 50 * speed + 50 * edge, speedColors[speed - 2], speed, 2, edge, edgeColors[edge - 2]));
+        allSkis.push(makeSkis(getSkiName(speed, 2, edge), getSkiDescription(speed, 2, edge), 50 * speed + 50 * edge, speedColors[speed - 2], speed, 2, edge, edgeColors[edge - 2]));
     }
 }
 // Turning Primary
 for (let turning = 3; turning <= 6; turning++) {
-    allSkis.push(makeSkis(turningWords[turning - 2] + " Skis", ["Skis that turn well"], 50 * turning, turningColors[turning - 2], 2, turning, 2));
+    allSkis.push(makeSkis(getSkiName(2, turning, 2), getSkiDescription(2, turning, 2), 50 * turning, turningColors[turning - 2], 2, turning, 2));
     // speed secondary
     for (let speed = 3; speed < turning; speed++) {
-        allSkis.push(makeSkis(turningWords[turning - 2] + "-S" + speed, ["Skis that turn and go fast"], 50 * turning + 50 * speed, turningColors[turning - 2], speed, turning, 2, speedColors[speed - 2]));
+        allSkis.push(makeSkis(getSkiName(speed, turning, 2), getSkiDescription(speed, turning, 2), 50 * turning + 50 * speed, turningColors[turning - 2], speed, turning, 2, speedColors[speed - 2]));
     }
     // edge secondary
     for (let edge = 3; edge < turning; edge++) {
-        allSkis.push(makeSkis(turningWords[turning - 2] + "-E" + edge, ["Skis that turn and edge well"], 50 * turning + 50 * edge, turningColors[turning - 2], 2, turning, edge, edgeColors[edge - 2]));
+        allSkis.push(makeSkis(getSkiName(2, turning, edge), getSkiDescription(2, turning, edge), 50 * turning + 50 * edge, turningColors[turning - 2], 2, turning, edge, edgeColors[edge - 2]));
     }
 }
 // Edge Primary
 for (let edge = 3; edge <= 6; edge++) {
-    allSkis.push(makeSkis(edgeWords[edge - 2] + " Skis", ["Skis that edge well"], 50 * edge, edgeColors[edge - 2], 2, 2, edge));
+    allSkis.push(makeSkis(getSkiName(2, 2, edge), getSkiDescription(2, 2, edge), 50 * edge, edgeColors[edge - 2], 2, 2, edge));
     // speed secondary
     for (let speed = 3; speed < edge; speed++) {
-        allSkis.push(makeSkis(edgeWords[edge - 2] + "-S" + speed, ["Skis that edge and go fast"], 50 * edge + 50 * speed, edgeColors[edge - 2], speed, 2, edge, speedColors[speed - 2]));
+        allSkis.push(makeSkis(getSkiName(speed, 2, edge), getSkiDescription(speed, 2, edge), 50 * edge + 50 * speed, edgeColors[edge - 2], speed, 2, edge, speedColors[speed - 2]));
     }
     // turning secondary
     for (let turning = 3; turning < edge; turning++) {
-        allSkis.push(makeSkis(edgeWords[edge - 2] + "-T" + turning, ["Skis that edge and turn well"], 50 * edge + 50 * turning, edgeColors[edge - 2], 2, edge, turning, turningColors[turning - 2]));
+        allSkis.push(makeSkis(getSkiName(2, turning, edge), getSkiDescription(2, turning, edge), 50 * edge + 50 * turning, edgeColors[edge - 2], 2, edge, turning, turningColors[turning - 2]));
     }
 }
 
@@ -307,8 +325,94 @@ function makePistol() {
     })
 };
 
+function makeFlintlock() {
+    const pistolModel = new KinematicRenderer();
+    const pistolModelFrame = pistolModel.frame();
+    pistolModel.lineSegment(
+        [{x: 0, y: 0, z: 0.15}, {x: 0.85, y: 0, z: .15}],
+        pistolModelFrame,
+        "#784421",
+        0.2,
+        0,
+    );
+    pistolModel.ball(
+        {x: 0.9, y: 0, z: .18},
+        .08,
+        pistolModelFrame,
+        "#d8a700",
+        0,
+    );
+    pistolModel.ball(
+        {x: 0.4, y: 0, z: .2},
+        .08,
+        pistolModelFrame,
+        "#999999",
+        0,
+    );
+    return new Equipment({
+        id: "flintlock",
+        layer_group: "flintlock",
+        shop_image: "flintlock.svg",
+        display_name: "Flintlock",
+        description: ["A Pirate's Favorite. Yarrr!"],
+        stats: {
+        speed: 1,
+        damage: 1
+        },
+        slots: ["right_hand", "left_hand"],
+        unhide: ["flintlock"],
+        gun: {
+            coolDown: 2.5,
+            damage: 5,
+            knockback: 80000,
+            firingArc: 35,
+            firingDistance: 300,
+            hitPercentage: 0.7
+        },
+        price: 100,
+        model: pistolModel
+    })
+};
+
+function makeKlobb() {
+    const klobbModel = new KinematicRenderer();
+    const klobbModelFrame = klobbModel.frame();
+    klobbModel.lineSegment(
+        [{x: 0, y: 0, z: 0.15}, {x: 0.60, y: 0, z: .25}],
+        klobbModelFrame,
+        "#666666",
+        0.35,
+        0,
+    );
+    return new Equipment({
+        id: "klobb",
+        layer_group: "klobb",
+        shop_image: "klobb.svg",
+        display_name: "Klobb",
+        description: ["I prefer slappers only"],
+        stats: {
+            speed: 1,
+            damage: 1
+        },
+        slots: ["right_hand", "left_hand"],
+        unhide: ["klobb"],
+        gun: {
+            coolDown: 0.01,
+            damage: 0.3,
+            knockback: 10000,
+            firingArc: 45,
+            firingDistance: 300,
+            hitPercentage: 0.3
+        },
+        price: 100,
+        model: klobbModel
+    })
+}
+export const Klobb = makeKlobb();
+
 export const Pistol = makePistol();
 export const Pistol2 = makePistol();
+export const Flintlock = makeFlintlock();
 
 function makeFood(image, displayName, description, price, healthGain) {
     return new Equipment({
@@ -325,12 +429,51 @@ function makeFood(image, displayName, description, price, healthGain) {
     })
 }
 
-const chillibowl = makeFood("bread_bowl.svg", "Chilli", "Chilli in a bread bowl", 50, 5);
-const candybar = makeFood("candy.svg", "Candy Bar", "A candy bar", 10, 2);
-const candy2 = makeFood("candy.svg", "Candy Bar", "A candy bar", 10, 2);
+const chillibowl = makeFood("bread_bowl.svg", "Magma Chilli", "Magma Chilli in a bread bowl", 50, 5);
+const yetiburger = makeFood("yetiburger.svg", "Yeti Burger", "The pinkest burger in the world", 70, 7);
+const candybar = makeFood("candy.svg", "Candy Bar", "A candy bar", 20, 2);
+const candy2 = makeFood("candy.svg", "Candy Bar", "A candy bar", 20, 2);
+
+function getSkisForSale(character, numSkis) {
+    const skis = character.getSkis();
+    let currSpeed, currTurning, currEdge;
+    if (skis) {
+        currSpeed = skis.getStats().speed;
+        currTurning = skis.getStats().turning;
+        currEdge = skis.getStats().edge;
+    } else {
+        currSpeed = 2;
+        currTurning = 2;
+        currEdge = 2;
+    }
+    // Filter skis where sum is >= current sum and no stat is too much higher
+    const currentSum = currSpeed + currTurning + currEdge;
+    const validSkis = allSkis.filter(ski => {
+        const stats = ski.getStats();
+        const sum = stats.speed + stats.turning + stats.sharp_edges;
+        
+        // Check total sum is equal or higher
+        if (sum < currentSum) {
+            return false;
+        }
+
+        // Check no individual stat is more than 2 higher
+        if (stats.speed > currSpeed + 2) return false;
+        if (stats.turning > currTurning + 2) return false; 
+        if (stats.sharp_edges > currEdge + 2) return false;
+
+        return true;
+    });
+
+    // Shuffle and take requested number
+    return validSkis
+        .sort(() => Math.random() - 0.5)
+        .slice(0, numSkis);
+
+}
 
 export function getItemsForSale(character) {
-    let possible = allSkis.concat([chillibowl, candybar, candy2, regularSkis, speedSkis, turningSkis, SpeedJacket, Sword, Pistol2, Pistol]);
+    let possible = getSkisForSale(character, 4).concat([Klobb, Flintlock, chillibowl, candybar, candy2, yetiburger,SpeedJacket, Sword, Pistol2, Pistol]);
     return possible.sort(() => Math.random() - 0.5).slice(0, 12);
 }
 

@@ -841,10 +841,35 @@ function drawCheckoutText(ctx, width, item) {
   ctx.fillText(item.getDisplayName().toUpperCase(), x, y);
   y += bigGap;
   ctx.font = "35px Tiny5";
-  for (let [stat, value] of Object.entries(item.getStats())) {
-    let statText = stat.toUpperCase() + ' - ' + 'X '.repeat(value);
-    ctx.fillText(statText, x, y);
+  
+  // Check if item is a gun and display gun-specific stats
+  if (item.isGun()) {
+    const gunStats = item.weapon;
+    
+    // Firing Speed (convert coolDown to rate)
+    const firingSpeed = gunStats.coolDown.toFixed(2);
+    ctx.fillText(`FIRING SPEED: ${firingSpeed} S`, x, y);
     y += smallGap;
+    
+    // Damage
+    ctx.fillText(`DAMAGE: ${gunStats.damage}`, x, y);
+    y += smallGap;
+    
+    // Firing Arc
+    ctx.fillText(`FIRING ARC: ${gunStats.firingArc} DEG`, x, y);
+    y += smallGap;
+    
+    // Accuracy (convert hitPercentage to percentage)
+    const accuracy = Math.round(gunStats.hitPercentage * 100);
+    ctx.fillText(`ACCURACY: ${accuracy}%`, x, y);
+    y += smallGap;
+  } else {
+    // Regular stats display for non-gun items
+    for (let [stat, value] of Object.entries(item.getStats())) {
+      let statText = stat.toUpperCase() + ' - ' + 'X '.repeat(value);
+      ctx.fillText(statText, x, y);
+      y += smallGap;
+    }
   }
   ctx.fillText(item.getDescription()[0] || "", x, y);
   y += smallGap;
