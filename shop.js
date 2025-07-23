@@ -42,7 +42,7 @@ export class Shop {
       this.snowRate = 120;
       this.signature = null;
 
-      this._levelsTillNextShop = 0;
+      this._levelsTillNextShop = 1;
 
       this.checkingOut = false;
       this.confirmLedReady = false;
