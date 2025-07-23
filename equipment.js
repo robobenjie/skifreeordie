@@ -473,7 +473,7 @@ function getSkisForSale(character, numSkis) {
 }
 
 export function getItemsForSale(character) {
-    let possible = getSkisForSale(character, 4).concat([Klobb, Flintlock, chillibowl, candybar, candy2, yetiburger,SpeedJacket, Sword, Pistol2, Pistol]);
+    let possible = getSkisForSale(character, 4).concat([Klobb, Flintlock, chillibowl, candybar, candy2, yetiburger,SpeedJacket, Sword, Pistol]);
     return possible.sort(() => Math.random() - 0.5).slice(0, 12);
 }
 
