@@ -375,8 +375,9 @@ export class TerrainManager {
             i++;
         }
 
-        // Remove all entities up to index i
-        this.entities = this.entities.slice(i);
+        if (i > 0) {
+            this.entities.splice(0, i);  // Remove first i items in-place
+        }
     }
 
     collidesWith(x, y, sizeX, sizeY, deltaYSinceLastFrame) {

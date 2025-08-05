@@ -36,6 +36,7 @@ export class Frame {
         this.name = null;
         this.staticCachedTransformTo = null;
         this.dynamicCachedTransformTo = null;
+        this.dynamicPreAllocatedRotationMatrix = [[0,0,0], [0,0,0], [0,0,0]];
         this.dynamic = false;
         this.update_callback = null;
     }
@@ -63,9 +64,21 @@ export class Frame {
         };
     }
 
-    getRotationAboutX(rad) {
+    getRotationAboutX(rad, out = null) {
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
+        if (out) {
+            out[0][0] = 1;
+            out[0][1] = 0;
+            out[0][2] = 0;
+            out[1][0] = 0;
+            out[1][1] = cos;
+            out[1][2] = -sin;
+            out[2][0] = 0;
+            out[2][1] = sin;
+            out[2][2] = cos;
+            return out;
+        }
         return [
             [1, 0, 0],
             [0, cos, -sin],
@@ -73,9 +86,21 @@ export class Frame {
         ];
     }
 
-    getRotationAboutY(rad) {
+    getRotationAboutY(rad, out = null) {
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
+        if (out) {
+            out[0][0] = cos;
+            out[0][1] = 0;
+            out[0][2] = sin;
+            out[1][0] = 0;
+            out[1][1] = 1;
+            out[1][2] = 0;
+            out[2][0] = -sin;
+            out[2][1] = 0;
+            out[2][2] = cos;
+            return out;
+        }
         return [
             [cos, 0, sin],
             [0, 1, 0],
@@ -83,9 +108,21 @@ export class Frame {
         ];
     }
 
-    getRotationAboutZ(rad) {
+    getRotationAboutZ(rad, out = null) {
         const cos = Math.cos(rad);
         const sin = Math.sin(rad);
+        if (out) {
+            out[0][0] = cos;
+            out[0][1] = -sin;
+            out[0][2] = 0;
+            out[1][0] = sin;
+            out[1][1] = cos;    
+            out[1][2] = 0;
+            out[2][0] = 0;
+            out[2][1] = 0;
+            out[2][2] = 1;
+            return out;
+        }
         return [
             [cos, -sin, 0],
             [sin, cos, 0],
@@ -101,8 +138,9 @@ export class Frame {
         newFrame.dynamic = dynamic;
         newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
+            const scratchRotationMatrix = [[0,0,0], [0,0,0], [0,0,0]];
             newFrame.update_callback = (rad) => {
-                newFrame.rotationMatrix = this.getRotationAboutX(rad);
+                newFrame.rotationMatrix = this.getRotationAboutX(rad, scratchRotationMatrix);
             }
         }
         return newFrame;
@@ -116,8 +154,9 @@ export class Frame {
         newFrame.dynamic = dynamic;
         newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
+            const scratchRotationMatrix = [[0,0,0], [0,0,0], [0,0,0]];
             newFrame.update_callback = (rad) => {
-                newFrame.rotationMatrix = this.getRotationAboutY(rad);
+                newFrame.rotationMatrix = this.getRotationAboutY(rad, scratchRotationMatrix);
             }
         }
         return newFrame;
@@ -153,8 +192,8 @@ export class Frame {
     }
 
     // Matrix multiplication helper function
-    static matrixMultiply(A, B) {
-        const result = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+    static matrixMultiply(A, B, out = null) {
+        const result = out || [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
         // Row 0
         result[0][0] = A[0][0] * B[0][0] + A[0][1] * B[1][0] + A[0][2] * B[2][0];
         result[0][1] = A[0][0] * B[0][1] + A[0][1] * B[1][1] + A[0][2] * B[2][1];
@@ -210,7 +249,8 @@ export class Frame {
             // Combine the cached transform with parent transform
             const combinedRotationMatrix = Frame.matrixMultiply(
                 parentTransform.rotationMatrix, 
-                cachedTransform.rotationMatrix
+                cachedTransform.rotationMatrix,
+                this.dynamicPreAllocatedRotationMatrix
             );
             const rotatedTranslation = Frame.applyRotationMatrix(
                 cachedTransform.translation,
@@ -264,20 +304,26 @@ export class Frame {
     }
 
     // Transforms a point to the world frame or a target frame
-    toWorld(point, targetFrame = null) {
+    toWorld(point, targetFrame = null, out = null) {
+
         const compositeTransform = this.getTransformTo(targetFrame);
 
         // Apply the composite rotation to the point
         const rotatedPoint = Frame.applyRotationMatrix(point, compositeTransform.rotationMatrix);
 
         // Apply the composite translation
-        const transformedPoint = {
-            x: rotatedPoint.x + compositeTransform.translation.x,
-            y: rotatedPoint.y + compositeTransform.translation.y,
-            z: rotatedPoint.z + compositeTransform.translation.z
-        };
-
-        return transformedPoint;
+        if (out) {
+            out.x = rotatedPoint.x + compositeTransform.translation.x;
+            out.y = rotatedPoint.y + compositeTransform.translation.y;
+            out.z = rotatedPoint.z + compositeTransform.translation.z;
+            return out;
+        } else {
+            return {
+                x: rotatedPoint.x + compositeTransform.translation.x,
+                y: rotatedPoint.y + compositeTransform.translation.y,
+                z: rotatedPoint.z + compositeTransform.translation.z
+            };
+        }
     }
 }
 
@@ -493,18 +539,19 @@ export class Circle {
         } else {
             this.color = color;
         }
+        this.positionInWorldFrame = [0,0,0];
+        this.quadCorners = [[0,0,0], [0,0,0], [0,0,0], [0,0,0]];
         this.calculate();
+
     }
 
     calculate() {
-        this.positionInWorldFrame = this.frame.toWorld(this.position);
+        this.positionInWorldFrame = this.frame.toWorld(this.position, null, this.positionInWorldFrame);
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
-        this.quadCorners = [
-            this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y - this.radius, z: this.position.z}),
-            this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y - this.radius, z: this.position.z}),
-            this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y + this.radius, z: this.position.z}),
-            this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y + this.radius, z: this.position.z}),
-        ];
+        this.quadCorners[0] = this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y - this.radius, z: this.position.z}, null, this.quadCorners[0]);
+        this.quadCorners[1] = this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y - this.radius, z: this.position.z}, null, this.quadCorners[1]);
+        this.quadCorners[2] = this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y + this.radius, z: this.position.z}, null, this.quadCorners[2]);
+        this.quadCorners[3] = this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y + this.radius, z: this.position.z}, null, this.quadCorners[3]);
     }
 
     draw(ctx) {
