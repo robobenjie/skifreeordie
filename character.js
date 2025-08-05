@@ -391,6 +391,10 @@ class Character {
                     this.level = entity.level;
                     this.level.start();
                 }
+                if (entity.type == "coin") {
+                    this.medals += 10;
+                    this.treeManager.removeEntity(entity);
+                }
             }
         }
         this.x = this.skiPhysics.x;

@@ -145,8 +145,8 @@ export class Frame {
         newFrame.dynamic = dynamic;
         newFrame.calculateStaticCachedTransformTo();
         if (dynamic) {
-            newFrame.update_callback = (x, y, z) => {
-                newFrame.translation = { x, y, z };
+            newFrame.update_callback = (pos) => {
+                newFrame.translation = pos;
             }
         }
         return newFrame;
@@ -479,11 +479,20 @@ class Hemisphere {
 }
 
 export class Circle {
-    constructor(position, radius, frame, color) {
+    constructor(position, radius, frame, color, stroke = null) {
         this.position = position;
         this.radius = radius;
         this.frame = frame;
-        this.color = color;
+        this.stroke = stroke;
+        this.update_callbacks = {};
+        if (color.dynamic) {
+            this.color = color.value;
+            this.update_callbacks[color.name] = (color) => {
+                this.color = color;
+            };
+        } else {
+            this.color = color;
+        }
         this.calculate();
     }
 
@@ -522,7 +531,6 @@ export class Circle {
             tangents.push({ x: (dx / len) * len * k / 2, y: (dy / len) * len * k / 2 });
         }
 
-
         ctx.beginPath();
         for (let i = 0; i < 4; i++) {
             const p0 = midpoints[i];
@@ -541,6 +549,13 @@ export class Circle {
         }
         ctx.closePath();
         ctx.fill();
+        
+        // Draw stroke if specified
+        if (this.stroke) {
+            ctx.strokeStyle = this.stroke.color;
+            ctx.lineWidth = this.stroke.thickness;
+            ctx.stroke();
+        }
     }
 }
 
@@ -807,6 +822,15 @@ export class KinematicRenderer {
                 frame.update_callback(data[frame.name]);
             }
         }
+        for (let layer of this.components) {
+            for (let component of layer) {
+                for (let name in component.update_callbacks) {
+                    if (data[name]) {
+                        component.update_callbacks[name](data[name]);
+                    }
+                }
+            }
+        }
         this.calculate();
     }
 
@@ -868,9 +892,9 @@ export class KinematicRenderer {
         return polygon;
     }
 
-    circle(position, radius, frame, color, layer) {
+    circle(position, radius, frame, color, layer, stroke = null) {
         this.addFrame(frame);
-        const circle = new Circle(position, radius, frame, color);
+        const circle = new Circle(position, radius, frame, color, stroke);
         this.addComponent(circle, layer);
         return circle;
     }
@@ -919,7 +943,7 @@ export class KinematicRenderer {
             return mirrored;
         } else if (component instanceof Circle) {
             // It is a circle
-            const mirrored = new Circle(transformPoint(component.position), component.radius, component.frame, component.color);
+            const mirrored = new Circle(transformPoint(component.position), component.radius, component.frame, component.color, component.stroke);
             this.addComponent(mirrored, layer);
             return mirrored;
         } else {

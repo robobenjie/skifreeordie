@@ -14,6 +14,7 @@ import OrkModel from './ork_model.js';
 import GoblinModel from './goblin_model.js';
 import TrollModel from './troll_model.js';
 import SkiLift from './skilift.js';
+import { Coin } from './terrain.js';
 
 window.addEventListener('load', function () {
     // Wait for the #shopSvg to load before initializing the game
@@ -67,6 +68,14 @@ async function initializeGame() {
         x += 250;
         y += 550;
     }
+
+    //treeManager.addCoinSine(150, 150, 0, 50);
+    //for (let x = 0; x < 1000; x += 20) {
+    //    treeManager.addCoinLine(x, 150, 0, 350, 20);
+    //}
+
+
+
 
     // Load all equipment images before creating the shop
     const equipment = getItemsForSale(character);

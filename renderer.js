@@ -24,6 +24,7 @@ class Renderer {
         let projectiles = [...this.mobManager.projectiles];
         let characterInserted = false;
         const entitiesToDraw = [];
+        const bottomOfScreen = this.camera.bottomOfScreen() + this.camera.height;
     
         while (trees.length > 0 || mobs.length > 0 || projectiles.length > 0 || !characterInserted) {
             // Determine the next entity to draw based on y-values
@@ -45,6 +46,9 @@ class Renderer {
             ].reduce((min, current) => current.y < min.y ? current : min);
 
             if (!nextEntity.y || nextEntity.y == Infinity) {
+                break;
+            }
+            if (nextEntity.y > bottomOfScreen) {
                 break;
             }
 

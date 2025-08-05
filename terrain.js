@@ -1,9 +1,11 @@
 import { getThreeLevels, LevelDifficulty } from "./level.js";
-import randomCentered from "./utils.js";
+import randomCentered, { throttledLog } from "./utils.js";
 import { setFillColor } from "./utils.js";
 import SkiLift from "./skilift.js";
+import { Coin as CoinModel } from "./collectable_models.js";
 
 const TREE_POOL_SIZE = 200;
+const RESORT_ROTATION_THRESHOLD = 0.03;
 
 export class TerrainManager {
     constructor(canvas) {
@@ -28,6 +30,8 @@ export class TerrainManager {
         // Initialize tree pool
         this.treePool = Array(TREE_POOL_SIZE).fill(null).map(() => new Tree(0, 0));
         this.nextTreeIndex = 0;
+
+        this.rotationSinceResort = 0;
     }
 
     rotateAbout(x, y, angle) {
@@ -46,6 +50,14 @@ export class TerrainManager {
                 entity.rotateAbout(x, y, angle);
             }
         }
+
+        this.rotationSinceResort += angle;
+        if (this.rotationSinceResort > RESORT_ROTATION_THRESHOLD) {
+            this.rotationSinceResort = 0;
+            console.log("Resorting");
+            this.entities.sort((a, b) => a.y - b.y);
+        }
+
     }
 
     setTreePercentage(percentage) {
@@ -165,7 +177,7 @@ export class TerrainManager {
         ctx.beginPath();
 
         for (let entity of this.entities) {
-            if (entity.type === 'tree' && entity.active && this.camera.isOnScreen(entity.x, entity.y, 30)) {
+            if ((entity.type === 'tree' || entity.type === 'coin') && entity.active && this.camera.isOnScreen(entity.x, entity.y, 30)) {
                 entity.drawUnder(ctx);
             }
         }
@@ -205,6 +217,12 @@ export class TerrainManager {
         this.addTreeLine(centerX + spacing * 0.5, y, centerX + spacing * 1.5, y + 600, 120, .02);
 
 
+    }
+
+    addCoin(x, y) {
+        let coin = new Coin(x, y, this.camera);
+        const index = this._findInsertIndex(coin.y);
+        this.entities.splice(index, 0, coin);
     }
 
     addSkiLift(p1, p2) {
@@ -313,6 +331,28 @@ export class TerrainManager {
         this.entities.splice(index, 0, tree);
     }
 
+    addCoinLine(x, y, angle, count, spacing = 50) {
+        const dx = Math.sin(angle) * spacing;
+        const dy = Math.cos(angle) * spacing;
+        for (let i = 0; i < count; i++) {
+            this.addCoin(x + i * dx, y + i * dy);
+        }
+    }
+
+    addCoinSine(x, y, angle, count, spacing = 50) {
+        const amplitude = 300;
+        const frequency = 0.1;
+        const dx = Math.sin(angle) * spacing;
+        const dy = Math.cos(angle) * spacing;
+        const tangent_x = Math.cos(angle);
+        const tangent_y = Math.sin(angle);
+        for (let i = 0; i < count; i++) {
+            const ypos = y + dy * i + Math.sin(i * frequency) * amplitude * tangent_y;
+            const xpos = x + dx * i + Math.sin(i * frequency) * amplitude * tangent_x;
+            this.addCoin(xpos, ypos);
+        }
+    }
+
     addJumpRamp(x, y) {
         var jumpRamp = new JumpRamp(x, y);
         const index = this._findInsertIndex(jumpRamp.y);
@@ -380,6 +420,13 @@ export class TerrainManager {
         }
     
         return collidingTrees;
+    }
+
+    removeEntity(entity) {
+        const index = this.entities.indexOf(entity);
+        if (index !== -1) {
+            this.entities.splice(index, 1);
+        }
     }
 }
 
@@ -706,6 +753,53 @@ export class FirstAid {
 
     claim() {
         this.claimed = true;
+    }
+}
+
+export class Coin {
+    constructor(x, y, camera) {
+        this.x = x;
+        this.y = y;
+        this.type = "coin";
+        this.model = new CoinModel(this.width);
+        this.active = true;
+        this.width = 25;
+        this.height = 25;
+        this.radius = 0.5
+        this.camera = camera;
+        this.onScreen = false;
+    }
+
+    update(dt) {
+        if (!this.camera.isOnScreen(this.x, this.y, 30)) {
+            this.onScreen = false;
+            return;
+        }
+        this.onScreen = true;
+        const time = Date.now() / 1000;
+        const rot_val = (time * 100 + this.y * 30 + this.x) / 20;
+        const height_val = time * 4 + (this.y * 3 + this.x) / 30;
+        const rotation = rot_val % (2 * Math.PI);
+        const height = Math.sin(height_val) * 0.5 + 1.3;
+        this.model.update(dt, rotation, height);
+    }
+
+    draw(ctx) {
+        if (!this.onScreen) {
+            return;
+        }
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        this.model.draw(ctx);
+        ctx.restore();
+    }
+
+    drawUnder(ctx) {
+        if (!this.onScreen) {
+            return;
+        }
+        ctx.moveTo(this.x + this.radius/2, this.y * 2);
+        ctx.arc(this.x + this.radius/2, this.y * 2, 5, 0, 2 * Math.PI);
     }
 }
 

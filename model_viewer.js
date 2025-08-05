@@ -2,6 +2,7 @@ import GoblinModel from './goblin_model.js';
 import OrkModel from './ork_model.js';
 import TrollModel from './troll_model.js';
 import {SnowmobileModel}     from './snowmobile_model.js';
+import {Coin} from './collectable_models.js';
 
 class ModelViewer {
     constructor() {
@@ -75,11 +76,20 @@ class ModelViewer {
                     values.angleToTarget || 0, 
                     values.armDown || 0
                 ]
+            },
+            {
+                name: 'Coin',
+                model: new Coin(),
+                controls: [
+                    { id: 'rotation', label: 'Rotation', min: 0, max: 2*Math.PI, step: 0.1, value: 0 },
+                    { id: 'height', label: 'Height', min: 0, max: 1, step: 0.1, value: 0.5 }
+                ],
+                updateArgs: (dt, skiAngle, values) => [dt, values.rotation || 0, values.height || 0.5]
             }
         ];
         
         // Current model index - start with Snowmobile (index 0)
-        this.currentModelIndex = 0;
+        this.currentModelIndex = 4;
         this.updateModelInfo();
         
         // Animation state
