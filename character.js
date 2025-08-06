@@ -392,7 +392,7 @@ class Character {
                     this.level.start();
                 }
                 if (entity.type == "coin") {
-                    this.medals += 10;
+                    this.medals += 1;
                     this.treeManager.removeEntity(entity);
                 }
             }

@@ -18,12 +18,15 @@ export class TerrainManager {
         this.treeDensityX = 64000;      // Trees per horizontal exposed area
         this.jumpRampDensityY = 600000; // Jump ramps per vertical exposed area
         this.firstAidDensityY = 4220000; // First aid per vertical exposed area
+        this.coinDensityY = 900000;     // Coins per vertical exposed area
+
 
         // Accumulated exposed area
         this.accumulatedExposedAreaY = 0;
         this.accumulatedExposedAreaX = 0;
         this.accumulatedExposedAreaJumpRampY = 0;
         this.accumulatedExposedAreaFirstAidY = 0;
+        this.accumulatedExposedAreaCoinY = 0;
 
         this.lastPlacedLevelSelect = 0;
 
@@ -70,6 +73,11 @@ export class TerrainManager {
     setJumpRampPercentage(percentage) {
         this.accumulatedExposedAreaJumpRampY = 0;
         this.jumpRampDensityY = 600000 / percentage;
+    }
+
+    setCoinPercentage(percentage) {
+        this.accumulatedExposedAreaCoinY = 0;
+        this.coinDensityY = 300000 / percentage;
     }
 
     /**
@@ -127,6 +135,7 @@ export class TerrainManager {
         this.accumulatedExposedAreaX += exposedAreaX;
         this.accumulatedExposedAreaJumpRampY += exposedAreaY;
         this.accumulatedExposedAreaFirstAidY += exposedAreaY;
+        this.accumulatedExposedAreaCoinY += exposedAreaY;
 
         // Spawn vertical trees based on accumulated vertical exposed area
         while (this.accumulatedExposedAreaY >= this.treeDensityY) {
@@ -163,6 +172,13 @@ export class TerrainManager {
             const loc = this.camera.offBottomOfScreen();
             this.addFirstAid(loc.x, loc.y);
             this.accumulatedExposedAreaFirstAidY -= this.firstAidDensityY;
+        }
+
+        // Coins
+        while (this.accumulatedExposedAreaCoinY >= this.coinDensityY) {
+            const loc = this.camera.offBottomOfScreen();
+            this.addCoins(loc);
+            this.accumulatedExposedAreaCoinY -= this.coinDensityY;
         }
 
         // Remove entities that are no longer relevant
@@ -219,10 +235,58 @@ export class TerrainManager {
 
     }
 
+    
+    addCoins(loc) {
+        const singleCoinProbability = 0.5;
+        const lineCoinProbability = 0.2;
+        const sineCoinProbability = 0.3;
+
+        const rand = Math.random();
+        if (rand < singleCoinProbability) {
+            const spacing = 15;
+            this.addCoin(loc.x, loc.y);
+            this.addCoin(loc.x + spacing, loc.y);
+            this.addCoin(loc.x - spacing, loc.y);
+            this.addCoin(loc.x, loc.y + spacing);
+            this.addCoin(loc.x, loc.y - spacing);
+        } else if (rand < singleCoinProbability + lineCoinProbability) {
+            const angle = randomCentered(Math.PI/3);
+            const count = 10 + randomCentered(10);
+            this.addCoinLine(loc.x, loc.y, angle, count);
+        } else if (rand < singleCoinProbability + lineCoinProbability + sineCoinProbability) {
+            const angle = randomCentered(Math.PI/3);
+            const count = 30 + randomCentered(20);
+            this.addCoinSine(loc.x, loc.y, angle, count);
+        }
+    }
+
     addCoin(x, y) {
         let coin = new Coin(x, y, this.camera);
         const index = this._findInsertIndex(coin.y);
         this.entities.splice(index, 0, coin);
+    }
+
+
+    addCoinLine(x, y, angle, count, spacing = 50) {
+        const dx = Math.sin(angle) * spacing;
+        const dy = Math.cos(angle) * spacing;
+        for (let i = 0; i < count; i++) {
+            this.addCoin(x + i * dx, y + i * dy);
+        }
+    }
+
+    addCoinSine(x, y, angle, count, spacing = 50) {
+        const amplitude = 300;
+        const frequency = 0.2;
+        const dx = Math.sin(angle) * spacing;
+        const dy = Math.cos(angle) * spacing;
+        const tangent_x = Math.cos(angle);
+        const tangent_y = Math.sin(angle);
+        for (let i = 0; i < count; i++) {
+            const ypos = y + dy * i + Math.sin(i * frequency) * amplitude * tangent_y;
+            const xpos = x + dx * i + Math.sin(i * frequency) * amplitude * tangent_x;
+            this.addCoin(xpos, ypos);
+        }
     }
 
     addSkiLift(p1, p2) {
@@ -329,28 +393,6 @@ export class TerrainManager {
         // Insert into entities array
         const index = this._findInsertIndex(tree.y);
         this.entities.splice(index, 0, tree);
-    }
-
-    addCoinLine(x, y, angle, count, spacing = 50) {
-        const dx = Math.sin(angle) * spacing;
-        const dy = Math.cos(angle) * spacing;
-        for (let i = 0; i < count; i++) {
-            this.addCoin(x + i * dx, y + i * dy);
-        }
-    }
-
-    addCoinSine(x, y, angle, count, spacing = 50) {
-        const amplitude = 300;
-        const frequency = 0.1;
-        const dx = Math.sin(angle) * spacing;
-        const dy = Math.cos(angle) * spacing;
-        const tangent_x = Math.cos(angle);
-        const tangent_y = Math.sin(angle);
-        for (let i = 0; i < count; i++) {
-            const ypos = y + dy * i + Math.sin(i * frequency) * amplitude * tangent_y;
-            const xpos = x + dx * i + Math.sin(i * frequency) * amplitude * tangent_x;
-            this.addCoin(xpos, ypos);
-        }
     }
 
     addJumpRamp(x, y) {

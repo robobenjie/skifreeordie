@@ -628,6 +628,33 @@ export class Circle {
             {x: position.x + radius, y: position.y + radius, z: position.z},
             {x: position.x - radius, y: position.y + radius, z: position.z}
         ];
+        
+        // Pre-allocate objects for draw method to avoid allocations
+        this.screenPoints = [
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0}
+        ];
+        this.midpoints = [
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0}
+        ];
+        this.tangents = [
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0}
+        ];
+        this.bezierPoints = [
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0},
+            {x: 0, y: 0}
+        ];
+        
         this.calculate();
 
     }
@@ -646,42 +673,47 @@ export class Circle {
     draw(ctx) {
         const k = 0.5522847;
         setFillColor(ctx, this.color);
-        const midpoints = [];
-        const tangents = [];
-        const points = this.quadCorners.map(p => {
-            const [x, y] = getXYScreen(p);
-            return { x, y };
-          });
-
+        
+        // Convert quad corners to screen coordinates using pre-allocated objects
         for (let i = 0; i < 4; i++) {
-            const p1 = points[i];
-            const p2 = points[(i + 1) % 4];
+            const [x, y] = getXYScreen(this.quadCorners[i]);
+            this.screenPoints[i].x = x;
+            this.screenPoints[i].y = y;
+        }
+
+        // Calculate midpoints and tangents using pre-allocated objects
+        for (let i = 0; i < 4; i++) {
+            const p1 = this.screenPoints[i];
+            const p2 = this.screenPoints[(i + 1) % 4];
 
             const mx = (p1.x + p2.x) / 2;
             const my = (p1.y + p2.y) / 2;
-            midpoints.push({ x: mx, y: my });
+            this.midpoints[i].x = mx;
+            this.midpoints[i].y = my;
 
             const dx = p2.x - p1.x;
             const dy = p2.y - p1.y;
             const len = Math.hypot(dx, dy);
-            tangents.push({ x: (dx / len) * len * k / 2, y: (dy / len) * len * k / 2 });
+            this.tangents[i].x = (dx / len) * len * k / 2;
+            this.tangents[i].y = (dy / len) * len * k / 2;
         }
 
         ctx.beginPath();
         for (let i = 0; i < 4; i++) {
-            const p0 = midpoints[i];
-            const p1 = {
-            x: p0.x + tangents[i].x,
-            y: p0.y + tangents[i].y
-            };
-            const p3 = midpoints[(i + 1) % 4];
-            const p2 = {
-            x: p3.x - tangents[(i + 1) % 4].x,
-            y: p3.y - tangents[(i + 1) % 4].y
-            };
+            const p0 = this.midpoints[i];
+            this.bezierPoints[0].x = p0.x + this.tangents[i].x;
+            this.bezierPoints[0].y = p0.y + this.tangents[i].y;
+            
+            const p3 = this.midpoints[(i + 1) % 4];
+            this.bezierPoints[1].x = p3.x - this.tangents[(i + 1) % 4].x;
+            this.bezierPoints[1].y = p3.y - this.tangents[(i + 1) % 4].y;
 
             if (i === 0) ctx.moveTo(p0.x, p0.y);
-            ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+            ctx.bezierCurveTo(
+                this.bezierPoints[0].x, this.bezierPoints[0].y,
+                this.bezierPoints[1].x, this.bezierPoints[1].y,
+                p3.x, p3.y
+            );
         }
         ctx.closePath();
         ctx.fill();
