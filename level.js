@@ -281,17 +281,17 @@ export class Level {
     getCashForLevelDifficulty() {
         switch (this.LevelDifficulty) {
             case LevelDifficulty.GREEN_CIRCLE:
-                return 5;
+                return 25;
             case LevelDifficulty.BLUE_SQUARE:
-                return 20;
+                return 75;
             case LevelDifficulty.BLACK_DIAMOND:
-                return 50;
+                return 150;
             case LevelDifficulty.DOUBLE_BLACK_DIAMOND:
-                return 100;
-            case LevelDifficulty.TRIPLE_BLACK_DIAMOND:
                 return 200;
-            case LevelDifficulty.SKULL:
+            case LevelDifficulty.TRIPLE_BLACK_DIAMOND:
                 return 500;
+            case LevelDifficulty.SKULL:
+                return 1000;
         }
     }
 
