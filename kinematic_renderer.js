@@ -313,7 +313,7 @@ export class Frame {
             
             const compositeTransform = {
                 rotationMatrix: combinedRotationMatrix,
-                translation: combinedTranslation
+                translation: {x: translationX, y: translationY, z: translationZ}
             };
 
             // Cache the world transform if this is a transform to world
@@ -342,7 +342,8 @@ export class Frame {
             const parentTransform = this.parent.getTransformTo(targetFrame, this.parent.getTransformScratch(targetFrame));
             const combinedRotationMatrix = Frame.matrixMultiply(
                 parentTransform.rotationMatrix,
-                this.rotationMatrix
+                this.rotationMatrix,
+                this.dynamicPreAllocatedRotationMatrix
             );
             const rotatedTranslation = Frame.applyRotationMatrix(
                 this.translation,
@@ -613,8 +614,13 @@ export class Circle {
         } else {
             this.color = color;
         }
-        this.positionInWorldFrame = [0,0,0];
-        this.quadCorners = [[0,0,0], [0,0,0], [0,0,0], [0,0,0]];
+        this.positionInWorldFrame = {x: 0, y: 0, z: 0};
+        this.quadCorners = [
+            {x: 0, y: 0, z: 0},
+            {x: 0, y: 0, z: 0},
+            {x: 0, y: 0, z: 0},
+            {x: 0, y: 0, z: 0}
+        ];
         // Pre-calculate the corner points since position and radius are constant
         this.quadCornerPoints = [
             {x: position.x - radius, y: position.y - radius, z: position.z},
