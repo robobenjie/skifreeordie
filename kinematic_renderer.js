@@ -40,12 +40,25 @@ export class Frame {
         // Pre-allocated objects to avoid allocations in getTransformTo
         this.preAllocatedRotatedTranslation1 = { x: 0, y: 0, z: 0 };
         this.preAllocatedRotatedTranslation2 = { x: 0, y: 0, z: 0 };
+        // Pre-allocated transform objects for different target frames
+        this.transformScratchObjects = {};
         this.dynamic = false;
         this.update_callback = null;
     }
 
     reset() {
         this.dynamicCachedTransformTo = null;
+    }
+
+    getTransformScratch(targetFrame) {
+        const key = targetFrame === null ? 'null' : (typeof targetFrame === 'string' ? targetFrame : targetFrame.name || 'object');
+        if (!this.transformScratchObjects[key]) {
+            this.transformScratchObjects[key] = {
+                rotationMatrix: [[0,0,0], [0,0,0], [0,0,0]],
+                translation: { x: 0, y: 0, z: 0 }
+            };
+        }
+        return this.transformScratchObjects[key];
     }
 
     calculateStaticCachedTransformTo() {
@@ -56,7 +69,7 @@ export class Frame {
         }
         
         // Calculate transform from this frame to the next dynamic parent
-        const transform = this.parent ? this.getTransformTo(nextDynamicParent) : {
+        const transform = this.parent ? this.getTransformTo(nextDynamicParent, this.getTransformScratch(nextDynamicParent)) : {
             rotationMatrix: IDENTITY_MATRIX,
             translation: {x: 0, y: 0, z: 0}
         };
@@ -234,7 +247,7 @@ export class Frame {
     // Recursive method to get the composite transformation to the target frame
     // Target frame can be null, which means the world frame, a string, which is
     // a frame name, or a Frame object
-    getTransformTo(targetFrame = null) {
+    getTransformTo(targetFrame = null, out = null) {
         if (targetFrame !== null) {
             //debugger;
         }
@@ -252,7 +265,7 @@ export class Frame {
                 return this.staticCachedTransformTo.transform;
             }
             
-            const parentTransform = nextDynamicFrame.getTransformTo(targetFrame);
+            const parentTransform = nextDynamicFrame.getTransformTo(targetFrame, nextDynamicFrame.getTransformScratch(targetFrame));
             const cachedTransform = this.staticCachedTransformTo.transform;
 
             // Combine the cached transform with parent transform
@@ -266,12 +279,38 @@ export class Frame {
                 parentTransform.rotationMatrix,
                 this.preAllocatedRotatedTranslation1
             );
-            const combinedTranslation = {
-                x: parentTransform.translation.x + rotatedTranslation.x,
-                y: parentTransform.translation.y + rotatedTranslation.y,
-                z: parentTransform.translation.z + rotatedTranslation.z
-            };
 
+            const translationX =  parentTransform.translation.x + rotatedTranslation.x;
+            const translationY = parentTransform.translation.y + rotatedTranslation.y;
+            const translationZ = parentTransform.translation.z + rotatedTranslation.z;
+
+            if (out) {
+                // Copy combined rotation matrix to out
+                out.rotationMatrix[0][0] = combinedRotationMatrix[0][0];
+                out.rotationMatrix[0][1] = combinedRotationMatrix[0][1];
+                out.rotationMatrix[0][2] = combinedRotationMatrix[0][2];
+                out.rotationMatrix[1][0] = combinedRotationMatrix[1][0];
+                out.rotationMatrix[1][1] = combinedRotationMatrix[1][1];
+                out.rotationMatrix[1][2] = combinedRotationMatrix[1][2];
+                out.rotationMatrix[2][0] = combinedRotationMatrix[2][0];
+                out.rotationMatrix[2][1] = combinedRotationMatrix[2][1];
+                out.rotationMatrix[2][2] = combinedRotationMatrix[2][2];
+                // Copy combined translation to out
+                out.translation.x = translationX;
+                out.translation.y = translationY;
+                out.translation.z = translationZ;
+                
+                // Cache the world transform if this is a transform to world
+                if (targetFrame === null) {
+                    this.dynamicCachedTransformTo = {
+                        rotationMatrix: combinedRotationMatrix,
+                        translation: {x: translationX, y: translationY, z: translationZ}
+                    };
+                }
+                
+                return out;
+            }
+            
             const compositeTransform = {
                 rotationMatrix: combinedRotationMatrix,
                 translation: combinedTranslation
@@ -287,12 +326,20 @@ export class Frame {
 
         // Calculate new transform
         if ((this.name && this.name === targetFrame) || this.parent === null || targetFrame === this) {
+            if (out) {
+                // Copy identity matrix to out
+                out.rotationMatrix[0][0] = 1; out.rotationMatrix[0][1] = 0; out.rotationMatrix[0][2] = 0;
+                out.rotationMatrix[1][0] = 0; out.rotationMatrix[1][1] = 1; out.rotationMatrix[1][2] = 0;
+                out.rotationMatrix[2][0] = 0; out.rotationMatrix[2][1] = 0; out.rotationMatrix[2][2] = 1;
+                out.translation.x = 0; out.translation.y = 0; out.translation.z = 0;
+                return out;
+            }
             return {
                 rotationMatrix: IDENTITY_MATRIX,
                 translation: {x: 0, y: 0, z: 0}
             };
         } else {
-            const parentTransform = this.parent.getTransformTo(targetFrame);
+            const parentTransform = this.parent.getTransformTo(targetFrame, this.parent.getTransformScratch(targetFrame));
             const combinedRotationMatrix = Frame.matrixMultiply(
                 parentTransform.rotationMatrix,
                 this.rotationMatrix
@@ -302,14 +349,30 @@ export class Frame {
                 parentTransform.rotationMatrix,
                 this.preAllocatedRotatedTranslation2
             );
-            const combinedTranslation = {
-                x: parentTransform.translation.x + rotatedTranslation.x,
-                y: parentTransform.translation.y + rotatedTranslation.y,
-                z: parentTransform.translation.z + rotatedTranslation.z
-            };
+            if (out) {
+                // Copy combined rotation matrix to out
+                out.rotationMatrix[0][0] = combinedRotationMatrix[0][0];
+                out.rotationMatrix[0][1] = combinedRotationMatrix[0][1];
+                out.rotationMatrix[0][2] = combinedRotationMatrix[0][2];
+                out.rotationMatrix[1][0] = combinedRotationMatrix[1][0];
+                out.rotationMatrix[1][1] = combinedRotationMatrix[1][1];
+                out.rotationMatrix[1][2] = combinedRotationMatrix[1][2];
+                out.rotationMatrix[2][0] = combinedRotationMatrix[2][0];
+                out.rotationMatrix[2][1] = combinedRotationMatrix[2][1];
+                out.rotationMatrix[2][2] = combinedRotationMatrix[2][2];
+                // Copy combined translation to out
+                out.translation.x = parentTransform.translation.x + rotatedTranslation.x;
+                out.translation.y = parentTransform.translation.y + rotatedTranslation.y;
+                out.translation.z = parentTransform.translation.z + rotatedTranslation.z;
+                return out;
+            }
             return {
                 rotationMatrix: combinedRotationMatrix,
-                translation: combinedTranslation
+                translation: {
+                    x: parentTransform.translation.x + rotatedTranslation.x,
+                    y: parentTransform.translation.y + rotatedTranslation.y,
+                    z: parentTransform.translation.z + rotatedTranslation.z
+                }
             };
         }
     }
@@ -317,7 +380,7 @@ export class Frame {
     // Transforms a point to the world frame or a target frame
     toWorld(point, targetFrame = null, out = null) {
 
-        const compositeTransform = this.getTransformTo(targetFrame);
+        const compositeTransform = this.getTransformTo(targetFrame, this.getTransformScratch(targetFrame));
 
         // Apply the composite rotation to the point
         const rotatedPoint = Frame.applyRotationMatrix(point, compositeTransform.rotationMatrix, out);
