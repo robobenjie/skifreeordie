@@ -59,15 +59,19 @@ export class Coin {
         
         this.model.circle({x: 0, y: 0, z: 0}, radius, coinFrame, {dynamic: true, name: "color", value: YELLOW}, 1, {color: "#EDDD53", thickness: 2});
 
+        this.params = {
+            rotation: 0,
+            translation: {x: 0, y: 0, z: 0},
+            color: YELLOW
+        }
     }
 
     update(dt, rotation, height) {
         const gradientColor = calculateGradientColor(rotation);
-        this.model.update(dt, {
-            rotation: rotation,
-            translation: {x: 0, y: 0, z: height},
-            color: gradientColor
-        });
+        this.params.rotation = rotation;
+        this.params.translation.z = height;
+        this.params.color = gradientColor;
+        this.model.update(dt, this.params);
     }
 
     draw(ctx) {

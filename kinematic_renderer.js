@@ -37,6 +37,9 @@ export class Frame {
         this.staticCachedTransformTo = null;
         this.dynamicCachedTransformTo = null;
         this.dynamicPreAllocatedRotationMatrix = [[0,0,0], [0,0,0], [0,0,0]];
+        // Pre-allocated objects to avoid allocations in getTransformTo
+        this.preAllocatedRotatedTranslation1 = { x: 0, y: 0, z: 0 };
+        this.preAllocatedRotatedTranslation2 = { x: 0, y: 0, z: 0 };
         this.dynamic = false;
         this.update_callback = null;
     }
@@ -213,8 +216,14 @@ export class Frame {
     }
 
     // Applies a rotation matrix to a point
-    static applyRotationMatrix(point, rotationMatrix) {
+    static applyRotationMatrix(point, rotationMatrix, out = null) {
         const { x, y, z } = point;
+        if (out) {
+            out.x = rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z;
+            out.y = rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z;
+            out.z = rotationMatrix[2][0] * x + rotationMatrix[2][1] * y + rotationMatrix[2][2] * z;
+            return out;
+        }
         return {
             x: rotationMatrix[0][0] * x + rotationMatrix[0][1] * y + rotationMatrix[0][2] * z,
             y: rotationMatrix[1][0] * x + rotationMatrix[1][1] * y + rotationMatrix[1][2] * z,
@@ -254,7 +263,8 @@ export class Frame {
             );
             const rotatedTranslation = Frame.applyRotationMatrix(
                 cachedTransform.translation,
-                parentTransform.rotationMatrix
+                parentTransform.rotationMatrix,
+                this.preAllocatedRotatedTranslation1
             );
             const combinedTranslation = {
                 x: parentTransform.translation.x + rotatedTranslation.x,
@@ -289,7 +299,8 @@ export class Frame {
             );
             const rotatedTranslation = Frame.applyRotationMatrix(
                 this.translation,
-                parentTransform.rotationMatrix
+                parentTransform.rotationMatrix,
+                this.preAllocatedRotatedTranslation2
             );
             const combinedTranslation = {
                 x: parentTransform.translation.x + rotatedTranslation.x,
@@ -309,7 +320,7 @@ export class Frame {
         const compositeTransform = this.getTransformTo(targetFrame);
 
         // Apply the composite rotation to the point
-        const rotatedPoint = Frame.applyRotationMatrix(point, compositeTransform.rotationMatrix);
+        const rotatedPoint = Frame.applyRotationMatrix(point, compositeTransform.rotationMatrix, out);
 
         // Apply the composite translation
         if (out) {
@@ -541,6 +552,13 @@ export class Circle {
         }
         this.positionInWorldFrame = [0,0,0];
         this.quadCorners = [[0,0,0], [0,0,0], [0,0,0], [0,0,0]];
+        // Pre-calculate the corner points since position and radius are constant
+        this.quadCornerPoints = [
+            {x: position.x - radius, y: position.y - radius, z: position.z},
+            {x: position.x + radius, y: position.y - radius, z: position.z},
+            {x: position.x + radius, y: position.y + radius, z: position.z},
+            {x: position.x - radius, y: position.y + radius, z: position.z}
+        ];
         this.calculate();
 
     }
@@ -548,10 +566,12 @@ export class Circle {
     calculate() {
         this.positionInWorldFrame = this.frame.toWorld(this.position, null, this.positionInWorldFrame);
         this.sortDepth = getSortDepth(this.positionInWorldFrame);
-        this.quadCorners[0] = this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y - this.radius, z: this.position.z}, null, this.quadCorners[0]);
-        this.quadCorners[1] = this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y - this.radius, z: this.position.z}, null, this.quadCorners[1]);
-        this.quadCorners[2] = this.frame.toWorld({x: this.position.x + this.radius, y: this.position.y + this.radius, z: this.position.z}, null, this.quadCorners[2]);
-        this.quadCorners[3] = this.frame.toWorld({x: this.position.x - this.radius, y: this.position.y + this.radius, z: this.position.z}, null, this.quadCorners[3]);
+        
+        // Transform the pre-calculated corner points to world coordinates
+        this.quadCorners[0] = this.frame.toWorld(this.quadCornerPoints[0], null, this.quadCorners[0]);
+        this.quadCorners[1] = this.frame.toWorld(this.quadCornerPoints[1], null, this.quadCorners[1]);
+        this.quadCorners[2] = this.frame.toWorld(this.quadCornerPoints[2], null, this.quadCorners[2]);
+        this.quadCorners[3] = this.frame.toWorld(this.quadCornerPoints[3], null, this.quadCorners[3]);
     }
 
     draw(ctx) {

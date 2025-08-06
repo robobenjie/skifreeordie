@@ -70,12 +70,9 @@ async function initializeGame() {
     }
 
     //treeManager.addCoinSine(150, 150, 0, 50);
-    //for (let x = 0; x < 1000; x += 20) {
-    //    treeManager.addCoinLine(x, 150, 0, 350, 20);
-    //}
-
-
-
+    for (let x = 0; x < 1000; x += 20) {
+        treeManager.addCoinLine(x, 150, 0, 350, 20);
+    }
 
     // Load all equipment images before creating the shop
     const equipment = getItemsForSale(character);
